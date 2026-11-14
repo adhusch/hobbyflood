@@ -21,6 +21,9 @@ ICON-D2 und Unsicherheitsband; Warnung ab HW 10. Die Abschnitte unten sind das A
 - **Anpassung und Radar:** zusätzlich `requirements-train.txt`.
 - **Immer eine Seite:** Bis zum ersten Lauf steht eine Platzhalterseite da; scheitert ein Lauf, bleibt die letzte Seite stehen und zeigt
   ab drei Stunden Alter den Hinweis „Stand veraltet“. Im Container lädt die Seite alle 15 Minuten neu.
+- **Szenario** (auf der Live-Seite unter der Ganglinie): Regenmenge als Gebietsmittel, Beginn und Dauer vorgeben, statt oder zusätzlich zur
+  Regenvorhersage; die Kette rechnet im Browser (`forecast_core.js`, gleiche Rechnung wie in Python, Abweichung unter 0,001 m³/s) für 48 h.
+  Der Regen fällt gleichmäßig über Gebiet und Zeitraum; eine Linie ohne Band, keine Warnung.
 - **Ausblick 7 Tage** (`live.outlook`): eine Linie je Pegel ohne Band. Regen je Station aus ICON-D2, nach dessen Ende aus ICON-EU (bis 120 h),
   danach aus ICON global (Open-Meteo); ICON-EU und global ohne Angleichfaktor. Für Vorläufe über 48 h gibt es keine Rückrechnung, die
   Warnung gilt weiter nur für 48 h.
