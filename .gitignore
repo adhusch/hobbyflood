@@ -218,3 +218,28 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Hochwasser-Vorhersage Prüm/Enz/Nims ---
+# Rohdaten Dritter und große Zwischenstände liegen nicht im Repository (siehe README, Abschnitt "Repository")
+data/lfu_pkg/
+data/wasserportal/
+data/hindcast/
+data/live/
+data/extreme/
+data/stand_*/
+data/radar/crop/
+data/radar/raw/
+data/radar/dem/
+data/radar/areal_*.csv
+data/verif/icon_d2_*.json
+data/chain_floods.json
+data/*_sim_floods.json
+data/*_event_*.csv
+data/real_5d.csv
+# erzeugte Seiten
+gui/*.html
+gui/*.js
+gui/*.png
+gui/archiv/
+figures/
+_routing_core.so

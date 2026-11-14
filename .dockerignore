@@ -1,0 +1,7 @@
+.git
+__pycache__
+*.so
+data/live
+gui/*.html
+gui/archiv
+figures
