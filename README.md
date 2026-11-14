@@ -504,3 +504,27 @@ Die Vorhersage selbst liegt bei den HQ10-Hochwassern jetzt viel näher an der Me
 Dateien: `extreme_fit.py` (Prüfgerüst), `data/extreme/*.json` (je Variante Modelle und Prüfwerte), `data/extreme/vergleich.csv`; `data/chain_models.json` enthält unter `sat` die gemeinsamen Parameter je Satz. Die Karte ist durch die Tabellen mit perfektem Regen größer geworden (7,6 MB).
 
 Nächste Schritte: Radarniederschlag (RADOLAN/RADKLIM) für die Gewitter (2016, 2018) und für die Oberläufe; Haltezeit für Warnungen; Schneemodul (Temperatur DWD) für Winterhochwasser.
+
+
+## Scheitel-Regel nur noch ohne Regenvorhersage (14.11.2026)
+
+Die Regel „solange an den Oberliegern kein Scheitel gemessen ist, fällt die Vorhersage nach ihrem Höchstwert nicht“ gilt nur noch für die Rechnung
+ohne Regenvorhersage (`kette`, `kette_regen`). Mit Regen als Vorhersage (`kette_vorhersage`, Live-Betrieb) ist sie entfallen.
+
+Prüfung (`hold_test.py`, `data/hold_test.csv`): alle Hochwasser 2004–2022 an den fünf Pegeln mit Oberliegern (113 bis 162 je Pegel), Modelle je Block
+ohne den Block, Abklingzeit der Regel 0 (aus), 6, 12, 24, 48 h und unendlich (streng). NSE mit dem gemessenen Regen als Vorhersage:
+
+| Pegel | 24 h streng | 24 h aus | 48 h streng | 48 h aus |
+|---|---|---|---|---|
+| Echtershausen | 0,28 | 0,28 | −0,46 | −0,15 |
+| Wiersdorf | 0,21 | 0,34 | −0,97 | −0,05 |
+| Prümzurlay | 0,08 | 0,25 | −0,99 | 0,02 |
+| Seffern | 0,18 | 0,33 | −0,70 | 0,09 |
+| Alsdorf-Oberecken | 0,03 | 0,30 | −1,07 | 0,14 |
+
+Die Scheitelhöhe ändert sich nicht (Median gleich, 90-%-Wert mit Regel bis 0,03 höher); der Scheitel kam mit Regel an Wiersdorf und Alsdorf-Oberecken
+im Median 2 h zu spät. Abklingzeiten bis 24 h sind gleich gut wie „aus“, eine weiche Form lohnt nicht. Ohne Regenvorhersage hilft die Regel
+(24 h: Echtershausen −1,55 statt −1,95), dort bleibt sie.
+
+Unsicherheitstabellen und Warnstatistik für `kette_vorhersage` sind neu gerechnet (`uncert.py archive --variants kette_vorhersage`, dann `tables`).
+Die Warnungen bei den 13 HQ10-Hochwassern sind praktisch gleich geblieben; Phasen ohne Hochwasser: Vorwarnung 41 statt 46, Warnung 3 statt 2.

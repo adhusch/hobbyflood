@@ -106,7 +106,7 @@ def rain_frames(Qindex: pd.DatetimeIndex, shift_h: float = 1.0, extra: dict | No
     radar = radar_hourly()
     if source == "radar" and radar is None:
         raise FileNotFoundError("data/radar/areal_hourly.csv fehlt (radar.py) - oder PRUEM_RAIN=station setzen")
-    exc = radar_excess()
+    exc = radar_excess() if os.environ.get("PRUEM_RADAR_X", "1") != "0" else None      # Radar-Zusatzgrößen (nur für "ml"; 0 spart Speicher)
     N = net()
     defs = lateral_defs(N)
     for k, a in (extra or {}).items():

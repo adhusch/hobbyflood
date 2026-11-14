@@ -148,7 +148,8 @@ const FC = (() => {
     return { p, api, aps, lead: LEAD, bf };
   }
 
-  /* Scheitel-Regel: kein Scheitel am Unterlieger, solange an seinen Oberliegern kein Scheitel gemessen ist (wie chain_fc.peak_passed / hold_after_max) */
+  /* Scheitel-Regel: kein Scheitel am Unterlieger, solange an seinen Oberliegern kein Scheitel gemessen ist (wie chain_fc.peak_passed / hold_after_max).
+     Seit 14.11.2026 nur noch ohne Regenvorhersage (kette, kette_regen); mit Regen als Vorhersage verschlechterte sie die Vorhersage (hold_test.py). */
   let HOLD = true;
   const PEAK_LAG = 2, PEAK_DROP = 0.01;   // Höchstwert >= 30 min zurück, jetzt >= 1 % darunter, über 30 min nicht gestiegen
   function peakPassed(q, i) {           // q: Messreihe des Oberliegers im Hochwasserfenster, i: Ausgabeindex
@@ -195,14 +196,14 @@ const FC = (() => {
       const err0 = obs[A] - sim[A], s = new Float64Array(A + H + 1);
       for (let t = 0; t <= A; t++) s[t] = obs[t];
       for (let t = 1; t <= H; t++) s[A + t] = Math.max(sim[A + t] + err0 * m.beta[t - 1], 0);
-      if (HOLD && variant !== "kette_ideal" && UPS[k] && !UPS[k].every(u => peakPassed(fl.q[DN[u]], i))) holdAfterMax(s, obs[A]);
+      if (HOLD && !FUTURE_RAIN.has(variant) && UPS[k] && !UPS[k].every(u => peakPassed(fl.q[DN[u]], i))) holdAfterMax(s, obs[A]);
       S[k] = s;
     }
     return S;
   }
 
   /* Hält die Regel für Pegel k zur Ausgabezeit i die Vorhersage nach dem Höchstwert? (für die Anzeige) */
-  function upstreamOpen(fl, k, i) { return !!(HOLD && UPS[k] && !UPS[k].every(u => peakPassed(fl.q[DN[u]], i))); }
+  function upstreamOpen(fl, k, i, variant) { return !!(HOLD && !FUTURE_RAIN.has(variant) && UPS[k] && !UPS[k].every(u => peakPassed(fl.q[DN[u]], i))); }
 
   return { forecast, isStorm, upstreamOpen, setConsts, chain, DN, ORDER, lateral, get A() { return A; }, get H() { return H; } };
 })();
