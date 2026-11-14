@@ -15,7 +15,7 @@ Rechnung:
     Stationsorten gelesen und mit dem Faktor Station / ICON je Station (verif_rain.py, 2024-2026) angeglichen, dann genauso gewichtet.
     Stunden zwischen der letzten Stationsmeldung und jetzt: ICON-D2 der jüngsten Läufe.
   - Kette (chain_fc, Modellsatz aus allen Ereignissen 2004-2022, Variante kette_vorhersage: Regen nach jetzt aus der Vorhersage, Umschalten
-    Winter / Starkregen, Scheitel-Regel) für den ICON-D2-Hauptlauf und jeden der 20 Ensemble-Läufe.
+    Winter / Starkregen; die Scheitel-Regel gilt nur noch in der Vergleichsrechnung ohne Regenvorhersage) für den ICON-D2-Hauptlauf und jeden der 20 Ensemble-Läufe.
   - Unsicherheit: Mischung aus den 21 Läufen (gleich gewichtet) und dem Restfehler des Abflussmodells bei bekanntem Regen (uncert.py,
     Variante kette_vorhersage mit gemessenem Regen, Klasse aus Zustand und Abflussstufe je Lauf). Band = Quantile der Mischung; Überschreitung
     = Mittel über die Läufe der Wahrscheinlichkeit, die Schwelle bis dahin zu erreichen; Höchststand in 48 h aus gewichteten Pfaden.

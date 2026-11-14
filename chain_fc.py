@@ -15,13 +15,17 @@ Vorhersage zur Ausgabezeit t0 (alle Messwerte bis t0 bekannt):
   kette_regen_1 Kette, Oberläufe und Zwischengebiete aus Regen, gemessen bis t0, danach 0 (keine Regenvorhersage); ein Modellsatz für alle Ereignisse.
   kette_regen   wie kette_regen_1, aber mit Umschalten zwischen zwei Modellsätzen (Winterhochwasser / Starkregenhochwasser), siehe unten.
   kette_ideal   wie kette_regen, aber mit dem gemessenen Regen auch nach t0 (perfekte Regenvorhersage, Obergrenze, nicht betrieblich).
-  kette_vorhersage  wie kette_ideal (Regen nach t0 aus frames, im Betrieb die Regenvorhersage), aber mit Scheitel-Regel; mit gemessenem Regen nach t0
+  kette_vorhersage  wie kette_ideal (Regen nach t0 aus frames, im Betrieb die Regenvorhersage), seit 14.11.2026 ohne Scheitel-Regel, also dieselbe Rechnung; mit gemessenem Regen nach t0
                 gerechnet liefert sie die Restfehler des Abflussmodells bei bekanntem Regen (uncert.py), im Betrieb rechnet live.py damit je
                 Ensemble-Lauf. Nicht Teil der Kreuzvalidierung in run().
   Umschalten: Starkregenhochwasser, wenn der Monat der Ausgabezeit Mai bis September ist UND der größte 1-h-Gebietsregen über dem Einzugsgebiet des
   Zielpegels in den 48 h bis zur Ausgabezeit mindestens 4 mm/h war; sonst Winterhochwasser. Gilt für die ganze Kette des Zielpegels. Die Modelle
   für Winterhochwasser sind an den Winterereignissen angepasst, die für Starkregenhochwasser an den (wenigen) Starkregenereignissen mit Strafterm
   zum Gesamtmodell (routing._run, prior). Die Trainingsereignisse werden mit derselben Regel zur Scheitelzeit eingeteilt.
+  Seit 14.11.2026 gilt die Scheitel-Regel nur noch ohne Regenvorhersage (kette, kette_regen): Mit Regen als Vorhersage (kette_vorhersage, Live-Betrieb)
+  verschlechterte sie alle Hochwasser 2004-2022 deutlich (NSE bei 24 h Vorlauf an Alsdorf-Oberecken 0,03 statt 0,30, Prümzurlay 0,08 statt 0,25,
+  bei 48 h -1,0 statt 0,0 bis 0,1), ohne den Scheitel besser zu treffen; ohne Regenvorhersage hilft sie (24 h: Echtershausen -1,55 statt -1,95),
+  weil dort der kommende Regen fehlt und die Vorhersage zu früh fällt. Tabelle: data/hold_test.csv.
   Scheitel-Regel (HOLD_RULE): Ein Pegel mit Oberliegern zeigt keinen Scheitel, solange nicht an allen seinen direkten Oberliegern ein Scheitel gemessen
   ist (peak_passed). Steigt seine Vorhersage über den jetzigen Wert, bleibt sie nach ihrem Höchstwert auf diesem stehen („mindestens“), statt zu fallen.
   Gilt die Kette hinunter, nicht für kette_ideal (dort ist der künftige Regen bekannt).
@@ -76,6 +80,7 @@ SWITCH = ("kette_regen", "kette_ideal", "kette_vorhersage")  # Varianten mit Ums
 FUTURE_RAIN = ("kette_ideal", "kette_vorhersage")            # Regen nach t0 aus frames (gemessen bzw. Vorhersage) statt 0
 P_STORM, STORM_MONTHS, STORM_WIN_H, W_PRIOR = 4.0, (5, 9), 48.0, 1.0
 HOLD_RULE = True                                            # kein Scheitel am Unterlieger ohne gemessenen Scheitel an den Oberliegern
+HOLD_TAU_H = float(__import__("os").environ.get("PRUEM_HOLD_TAU", "inf"))   # Abklingzeit der Scheitel-Regel in h (inf: Vorhersage bleibt auf dem Höchstwert stehen)
 LAT_TERMS = ("bfa",)                                        # Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, additiv)
 RAIN_EVENTS, RAIN_EVENT_MM = True, 25.0                     # Anpassung zusätzlich an Regenereignissen ohne Hochwasser (48-h-Gebietsregen ab 25 mm)
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
@@ -407,11 +412,16 @@ def peak_passed(obs: np.ndarray) -> np.ndarray:
 
 
 def hold_after_max(fc: np.ndarray, q0: np.ndarray) -> np.ndarray:
-    """Vorhersage [Fälle, H]: steigt sie über den jetzigen Wert q0, bleibt sie nach ihrem Höchstwert auf diesem stehen."""
+    """Vorhersage [Fälle, H]: steigt sie über den jetzigen Wert q0, fällt sie nach ihrem Höchstwert höchstens so schnell wie eine Abklingkurve
+    mit HOLD_TAU_H Stunden (Höchstwert * exp(-Zeit seit dem Höchstwert / HOLD_TAU_H)); unendlich = bleibt stehen (strenge Regel), 0 = Regel aus."""
+    if HOLD_TAU_H <= 0:
+        return fc
     jm = np.argmax(fc, axis=1)
     mx = fc[np.arange(len(fc)), jm]
-    mask = (mx > q0)[:, None] & (np.arange(fc.shape[1])[None, :] > jm[:, None])
-    return np.where(mask, mx[:, None], fc)
+    dtm = (np.arange(fc.shape[1])[None, :] - jm[:, None]) * DT
+    mask = (mx > q0)[:, None] & (dtm > 0)
+    floor = mx[:, None] * (np.exp(-np.maximum(dtm, 0) / HOLD_TAU_H) if np.isfinite(HOLD_TAU_H) else 1.0)
+    return np.where(mask, np.maximum(fc, floor), fc)
 
 
 def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray, variant: str, suffix: str) -> dict[str, np.ndarray]:
@@ -447,7 +457,7 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             sim = sim + shift[:, None]
             err0 = err0 - shift
         fc = np.maximum(sim[:, A + 1:] + err0[:, None] * m.beta[None, :], 0.0)
-        if HOLD_RULE and variant != "kette_ideal" and k in UPS:
+        if HOLD_RULE and variant not in FUTURE_RAIN and k in UPS:      # nur ohne Regenvorhersage (hold_test.py, 14.11.2026)
             passed = np.ones(len(t0), bool)
             for u in UPS[k]:
                 passed &= peak_passed(Qn[DN[u]][idx])

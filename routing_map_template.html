@@ -202,7 +202,7 @@ details.more[open]>summary{margin-bottom:6px}
     <li>Die Karte zeigt die Strecken mit der Wellengeschwindigkeit bei dem Abfluss, der gerade am Oberlieger gemessen wird. Das Strichmuster bewegt sich mit c. Kreise: Messung; gestrichelter Ring: Simulation (Modell ohne dieses Hochwasser angepasst).</li>
     <li>Stausee Bitburg (zwischen Echtershausen und Wiersdorf): Speicher mit gesteuerter Abgabe, im Modell nur empirisch als Strecke mit c bis 12 m/s. Bei vier Hochwassern ist Wiersdorf bei 250 cm abgeschnitten; dort fehlen Prüfwerte für Wiersdorf, Prümzurlay wird dann mit Wiersdorf aus Echtershausen (Modell) gerechnet.</li>
     <li>Vorhersage-Tab: Wasserstand in cm mit der heutigen W-Q-Beziehung (<code>rating.py</code>), Band aus den Fehlern eines stündlichen Vorhersagearchivs 2004–2022 je Zustand, Abflussstufe und Vorlauf (<code>uncert.py</code>, verschachtelt kreuzvalidiert), Schwellen und HQx der Hochwasservorhersagezentrale Rheinland-Pfalz. Die Rechnung im Browser stimmt mit Python überein (<code>test_uncert_js.py</code>).</li>
-    <li>Vorhersage: Ein Pegel zeigt keinen Scheitel, solange an seinen Oberliegern noch keiner gemessen ist (Höchstwert der letzten 48 h mindestens 30 min her, jetzt mindestens 1 % darunter und in den letzten 30 min nicht gestiegen). Die Kette über alle acht Pegel wird beim Verschieben der Ausgabezeit direkt im Browser gerechnet (<code>forecast_core.js</code>, gleiche Rechnung wie <code>chain_fc.py</code>, Übereinstimmung geprüft mit <code>test_forecast_js.py</code>). Die Gütekurven stammen aus der Kreuzvalidierung in <code>chain_fc.py</code>.</li>
+    <li>Vorhersage ohne Regenvorhersage („Regen bis jetzt“): Ein Pegel zeigt keinen Scheitel, solange an seinen Oberliegern noch keiner gemessen ist (Höchstwert der letzten 48 h mindestens 30 min her, jetzt mindestens 1 % darunter und in den letzten 30 min nicht gestiegen). Mit Regen als Vorhersage („perfekter Regen“, Live-Betrieb) gilt diese Regel seit 14.11.2026 nicht mehr: Sie verschlechterte dort die Vorhersage bei 24 und 48 h deutlich, ohne den Scheitel besser zu treffen. Die Kette über alle acht Pegel wird beim Verschieben der Ausgabezeit direkt im Browser gerechnet (<code>forecast_core.js</code>, gleiche Rechnung wie <code>chain_fc.py</code>, Übereinstimmung geprüft mit <code>test_forecast_js.py</code>). Die Gütekurven stammen aus der Kreuzvalidierung in <code>chain_fc.py</code>.</li>
     <li>Flussläufe sind Verbindungslinien durch die Pegelpositionen. Zeit in MEZ (angenommen, wie im Datenpaket).</li>
   </ul>
 </section>
@@ -695,7 +695,7 @@ function drawLage(key, f, fw, i) {
   } else if (an.state === 3) {
     let km = i; for (let k = i - 192; k <= i; k++) if (obs[k] != null && obs[k] > obs[km]) km = k;
     t2 = `<div class="tile"><div class="k">Scheitel durch</div><div class="v">${fmt(cv(obs[km]))}</div><div class="s">gemessen ${hm(t0 + km * 900000)}; fällt</div></div>`;
-  } else if (!hw && FC.upstreamOpen(fw, key, i) && an.fcmax > 1.02 * q0) {
+  } else if (!hw && FC.upstreamOpen(fw, key, i, variant) && an.fcmax > 1.02 * q0) {
     const open = ups.filter(u => !u.passed).map(u => u.dn).join(" und ");
     const nOpen = ups.filter(u => !u.passed).length, r = an.q[an.fcarg - 1];
     t2 = `<div class="tile"><div class="k">Scheitel noch nicht absehbar</div><div class="v">${fmt(cv(r[MED]))} <small>und mehr?</small></div><div class="s">Bis ${hmShort(tI + Math.round(an.fcarg) * 900000, tI)} erwartet (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}). ${esc(open || ups.map(u => u.dn).join(" und "))} ${nOpen > 1 ? "steigen" : "steigt"} noch: erst mit dem Scheitel dort gibt es eine Scheitelvorhersage.</div></div>`;
@@ -834,7 +834,7 @@ function drawChainFlood(r, key, f, fw, i) {
   fcLegend("#cf-leg", [["obs", "Messung", "--c-obs", false], ...avail], () => drawChainFlood(r, key, f, fw, i));
   const set = D.chain.sets[fw.models], A = FC.A, H = FC.H, ip = fw.i_peak, t0 = parse(fw.t_start);
   const obs = fw.q[r.dn], xh = k => (k - ip) * 0.25;
-  const open = FC.upstreamOpen(fw, key, i);
+  const open = FC.upstreamOpen(fw, key, i, "kette_regen");
   const res = {};
   avail.forEach(v => { const S = FC.forecast(set, fw, key, i, v[0]); res[v[0]] = S ? S[key] : null; });
   const lines = [{ name: "Messung", col: "var(--c-obs)", pts: obs.map((q, k) => [xh(k), q]).filter(p => p[0] >= -48 && p[1] != null) }];

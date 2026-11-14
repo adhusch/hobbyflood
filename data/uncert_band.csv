@@ -70,15 +70,15 @@ Prüm 2,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",8168,0.879,0.81
 Prüm 2,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",804,0.72,0.667,0.68,0.776,0.821,0.719,0.623,0.649,0.601,0.464,0.439,0.383
 Prüm 2,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),3225,0.77,0.671,0.617,0.564,0.491,0.424,0.642,0.483,0.406,0.327,0.231,0.168
 Prüm 2,kette_vorhersage,cv_2004_2022,alle,162441,0.796,0.791,0.792,0.791,0.79,0.788,0.499,0.495,0.499,0.496,0.498,0.492
-Prüm 2,kette_vorhersage,cv_2004_2022,Starkregenlage,847,0.731,0.721,0.723,0.747,0.809,0.813,0.537,0.524,0.523,0.528,0.511,0.423
+Prüm 2,kette_vorhersage,cv_2004_2022,Starkregenlage,847,0.727,0.72,0.721,0.745,0.806,0.806,0.538,0.528,0.527,0.535,0.547,0.475
 Prüm 2,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161594,0.797,0.791,0.792,0.791,0.79,0.788,0.499,0.494,0.499,0.496,0.498,0.492
-Prüm 2,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",101,0.545,0.545,0.485,0.396,0.455,0.634,0.535,0.525,0.505,0.356,0.307,0.277
+Prüm 2,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",101,0.535,0.535,0.485,0.386,0.446,0.634,0.535,0.525,0.505,0.356,0.307,0.485
 Prüm 2,kette_vorhersage,cv_2004_2022,Zustand ruhig,102861,0.796,0.789,0.792,0.791,0.787,0.787,0.497,0.49,0.497,0.493,0.496,0.49
-Prüm 2,kette_vorhersage,cv_2004_2022,Zustand Anstieg,18604,0.795,0.791,0.794,0.793,0.797,0.79,0.504,0.506,0.507,0.506,0.502,0.499
+Prüm 2,kette_vorhersage,cv_2004_2022,Zustand Anstieg,18604,0.795,0.791,0.794,0.793,0.797,0.791,0.504,0.506,0.507,0.506,0.504,0.5
 Prüm 2,kette_vorhersage,cv_2004_2022,Zustand fallend,40976,0.796,0.794,0.789,0.789,0.793,0.79,0.5,0.5,0.5,0.499,0.501,0.493
 Prüm 2,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,124860,0.796,0.79,0.791,0.79,0.788,0.787,0.499,0.491,0.499,0.495,0.497,0.49
-Prüm 2,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,35086,0.797,0.793,0.795,0.795,0.795,0.792,0.499,0.506,0.499,0.499,0.5,0.499
-Prüm 2,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2495,0.8,0.788,0.793,0.785,0.787,0.782,0.511,0.513,0.503,0.503,0.493,0.494
+Prüm 2,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,35086,0.797,0.793,0.795,0.794,0.795,0.792,0.499,0.506,0.499,0.499,0.5,0.499
+Prüm 2,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2495,0.799,0.787,0.792,0.784,0.786,0.783,0.511,0.513,0.503,0.504,0.5,0.507
 Prüm 2,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",69932,0.793,0.787,0.784,0.784,0.786,0.786,0.498,0.489,0.499,0.494,0.492,0.483
 Prüm 2,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",46668,0.794,0.786,0.786,0.786,0.785,0.785,0.496,0.483,0.496,0.489,0.488,0.479
 Prüm 2,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",40856,0.799,0.792,0.799,0.796,0.788,0.787,0.499,0.49,0.497,0.495,0.502,0.496
@@ -95,14 +95,14 @@ Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",10728
 Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",248,0.718,0.734,0.754,0.722,0.823,0.794,0.375,0.351,0.367,0.367,0.395,0.331
 Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",11917,0.8,0.797,0.796,0.794,0.792,0.791,0.499,0.505,0.5,0.5,0.502,0.502
 Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",985,0.797,0.798,0.803,0.794,0.784,0.743,0.499,0.508,0.502,0.501,0.508,0.504
-Prüm 2,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken, Starkregenlage",66,0.606,0.576,0.53,0.682,0.576,0.652,0.621,0.788,0.803,0.773,0.576,0.545
-Prüm 2,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",59,0.814,0.712,0.729,0.881,0.949,0.559,0.339,0.305,0.407,0.542,0.339,0.068
-Prüm 2,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",58,0.69,0.707,0.707,0.81,0.914,0.948,0.397,0.431,0.466,0.397,0.207,0.017
-Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken, Starkregenlage",89,0.888,0.876,0.831,0.865,0.663,0.944,0.315,0.472,0.64,0.562,0.348,0.348
+Prüm 2,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken, Starkregenlage",66,0.606,0.576,0.53,0.667,0.591,0.409,0.621,0.758,0.803,0.788,0.576,0.545
+Prüm 2,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",59,0.797,0.712,0.729,0.881,0.881,0.746,0.339,0.305,0.407,0.559,0.458,0.237
+Prüm 2,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",58,0.672,0.69,0.707,0.776,0.862,1.0,0.379,0.431,0.466,0.466,0.517,0.328
+Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken, Starkregenlage",89,0.888,0.876,0.831,0.876,0.674,0.978,0.348,0.528,0.674,0.562,0.36,0.348
 Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",140,0.757,0.743,0.743,0.75,0.786,0.579,0.486,0.536,0.529,0.536,0.864,0.807
-Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",200,0.7,0.76,0.78,0.75,0.85,0.93,0.605,0.405,0.375,0.415,0.48,0.31
-Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",100,0.88,0.83,0.86,0.88,0.97,1.0,0.5,0.49,0.42,0.45,0.36,0.26
-Prüm 2,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),3201,0.752,0.726,0.715,0.695,0.7,0.683,0.488,0.455,0.439,0.41,0.362,0.352
+Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",200,0.7,0.76,0.78,0.75,0.85,0.92,0.605,0.405,0.375,0.415,0.49,0.315
+Prüm 2,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",100,0.88,0.83,0.86,0.88,0.97,1.0,0.5,0.49,0.42,0.45,0.36,0.28
+Prüm 2,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),3201,0.752,0.726,0.715,0.694,0.7,0.686,0.488,0.454,0.439,0.412,0.368,0.366
 Sinspelt,kette_regen,cv_2004_2022,alle,162441,0.789,0.784,0.792,0.795,0.797,0.795,0.5,0.489,0.498,0.5,0.5,0.493
 Sinspelt,kette_regen,cv_2004_2022,Starkregenlage,317,0.726,0.703,0.688,0.65,0.603,0.716,0.508,0.625,0.634,0.672,0.688,0.644
 Sinspelt,kette_regen,cv_2004_2022,keine Starkregenlage,162124,0.789,0.784,0.792,0.795,0.798,0.796,0.5,0.489,0.498,0.5,0.499,0.493
@@ -173,16 +173,16 @@ Sinspelt,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",3733,0.884,0.7
 Sinspelt,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",971,0.928,0.868,0.825,0.799,0.726,0.601,0.561,0.591,0.595,0.657,0.697,0.606
 Sinspelt,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),2351,0.778,0.698,0.618,0.546,0.427,0.368,0.46,0.373,0.349,0.329,0.297,0.268
 Sinspelt,kette_vorhersage,cv_2004_2022,alle,162441,0.789,0.783,0.791,0.793,0.794,0.794,0.501,0.489,0.495,0.497,0.499,0.498
-Sinspelt,kette_vorhersage,cv_2004_2022,Starkregenlage,557,0.81,0.799,0.749,0.718,0.673,0.706,0.546,0.636,0.643,0.614,0.555,0.533
+Sinspelt,kette_vorhersage,cv_2004_2022,Starkregenlage,557,0.81,0.799,0.747,0.715,0.662,0.693,0.573,0.636,0.643,0.619,0.585,0.639
 Sinspelt,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161884,0.789,0.783,0.792,0.794,0.795,0.795,0.5,0.489,0.495,0.497,0.499,0.498
-Sinspelt,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",51,0.686,0.549,0.451,0.392,0.451,0.49,0.431,0.49,0.431,0.255,0.176,0.039
+Sinspelt,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",51,0.686,0.549,0.431,0.412,0.451,0.725,0.431,0.49,0.431,0.255,0.176,0.078
 Sinspelt,kette_vorhersage,cv_2004_2022,Zustand ruhig,101726,0.784,0.778,0.79,0.794,0.793,0.792,0.5,0.485,0.494,0.497,0.499,0.5
-Sinspelt,kette_vorhersage,cv_2004_2022,Zustand Anstieg,22187,0.8,0.798,0.799,0.79,0.795,0.798,0.504,0.5,0.498,0.498,0.497,0.493
-Sinspelt,kette_vorhersage,cv_2004_2022,Zustand fallend,38528,0.797,0.788,0.791,0.795,0.796,0.799,0.5,0.494,0.497,0.499,0.501,0.495
+Sinspelt,kette_vorhersage,cv_2004_2022,Zustand Anstieg,22187,0.8,0.798,0.799,0.79,0.795,0.798,0.504,0.5,0.498,0.498,0.498,0.494
+Sinspelt,kette_vorhersage,cv_2004_2022,Zustand fallend,38528,0.797,0.788,0.791,0.795,0.796,0.799,0.5,0.494,0.497,0.499,0.501,0.496
 Sinspelt,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,131886,0.787,0.78,0.79,0.793,0.794,0.794,0.501,0.487,0.494,0.498,0.499,0.498
-Sinspelt,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,29268,0.8,0.797,0.799,0.798,0.797,0.798,0.499,0.499,0.499,0.495,0.498,0.497
-Sinspelt,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1287,0.787,0.794,0.779,0.758,0.763,0.772,0.492,0.5,0.5,0.498,0.507,0.495
-Sinspelt,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70497,0.776,0.766,0.782,0.788,0.793,0.797,0.502,0.483,0.491,0.495,0.497,0.499
+Sinspelt,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,29268,0.8,0.797,0.799,0.798,0.797,0.797,0.499,0.499,0.499,0.495,0.498,0.498
+Sinspelt,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1287,0.787,0.794,0.778,0.758,0.763,0.781,0.492,0.5,0.5,0.498,0.507,0.497
+Sinspelt,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70497,0.776,0.766,0.782,0.788,0.793,0.797,0.502,0.483,0.491,0.495,0.497,0.5
 Sinspelt,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",45510,0.765,0.755,0.779,0.789,0.792,0.797,0.5,0.478,0.489,0.494,0.496,0.504
 Sinspelt,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",44859,0.799,0.795,0.799,0.799,0.794,0.785,0.5,0.487,0.498,0.5,0.501,0.495
 Sinspelt,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",324,0.793,0.793,0.775,0.79,0.765,0.778,0.525,0.497,0.481,0.448,0.481,0.491
@@ -196,10 +196,10 @@ Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",19418,0.79
 Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",10590,0.798,0.798,0.798,0.798,0.796,0.799,0.502,0.501,0.5,0.5,0.502,0.498
 Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",7614,0.798,0.793,0.795,0.799,0.798,0.799,0.498,0.498,0.498,0.492,0.493,0.5
 Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",530,0.789,0.811,0.804,0.8,0.8,0.792,0.502,0.511,0.508,0.519,0.525,0.453
-Sinspelt,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",51,0.882,0.784,0.745,0.784,0.902,0.863,0.529,0.608,0.706,0.725,0.392,0.137
-Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",87,0.851,0.77,0.736,0.678,0.598,0.862,0.563,0.793,0.736,0.851,0.736,0.839
-Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",133,0.789,0.797,0.782,0.744,0.782,0.647,0.511,0.609,0.639,0.571,0.662,0.632
-Sinspelt,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),1152,0.714,0.687,0.648,0.57,0.564,0.624,0.472,0.446,0.443,0.419,0.401,0.357
+Sinspelt,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",51,0.882,0.784,0.745,0.745,0.843,0.922,0.529,0.627,0.706,0.725,0.608,0.451
+Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",87,0.851,0.77,0.736,0.678,0.598,0.851,0.563,0.793,0.736,0.851,0.736,0.839
+Sinspelt,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",133,0.789,0.797,0.782,0.744,0.782,0.624,0.511,0.609,0.639,0.571,0.662,0.647
+Sinspelt,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),1152,0.714,0.687,0.647,0.571,0.564,0.635,0.472,0.445,0.443,0.419,0.401,0.36
 Giesdorf,kette_regen,cv_2004_2022,alle,162441,0.796,0.791,0.791,0.794,0.795,0.795,0.501,0.506,0.505,0.501,0.498,0.501
 Giesdorf,kette_regen,cv_2004_2022,Starkregenlage,388,0.544,0.513,0.536,0.601,0.642,0.871,0.479,0.436,0.415,0.33,0.255,0.245
 Giesdorf,kette_regen,cv_2004_2022,keine Starkregenlage,162053,0.796,0.792,0.792,0.795,0.795,0.794,0.501,0.506,0.505,0.502,0.498,0.502
@@ -270,15 +270,15 @@ Giesdorf,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",9969,0.841,0.8
 Giesdorf,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",869,0.873,0.814,0.793,0.779,0.787,0.688,0.521,0.544,0.549,0.564,0.558,0.432
 Giesdorf,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),3261,0.772,0.7,0.644,0.546,0.449,0.414,0.476,0.409,0.351,0.296,0.238,0.168
 Giesdorf,kette_vorhersage,cv_2004_2022,alle,162441,0.798,0.792,0.79,0.791,0.791,0.791,0.502,0.502,0.502,0.502,0.501,0.497
-Giesdorf,kette_vorhersage,cv_2004_2022,Starkregenlage,652,0.595,0.554,0.572,0.679,0.692,0.771,0.543,0.544,0.521,0.472,0.411,0.374
+Giesdorf,kette_vorhersage,cv_2004_2022,Starkregenlage,652,0.592,0.551,0.572,0.673,0.676,0.781,0.543,0.544,0.523,0.474,0.422,0.431
 Giesdorf,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161789,0.799,0.793,0.791,0.791,0.792,0.791,0.501,0.502,0.502,0.502,0.502,0.497
-Giesdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",59,0.542,0.492,0.441,0.542,0.492,0.847,0.576,0.627,0.661,0.627,0.61,0.644
-Giesdorf,kette_vorhersage,cv_2004_2022,Zustand ruhig,81339,0.798,0.793,0.79,0.792,0.793,0.79,0.501,0.499,0.501,0.503,0.503,0.494
-Giesdorf,kette_vorhersage,cv_2004_2022,Zustand Anstieg,18865,0.793,0.792,0.79,0.785,0.788,0.789,0.504,0.512,0.503,0.504,0.5,0.503
+Giesdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",59,0.542,0.492,0.424,0.559,0.458,0.847,0.576,0.627,0.661,0.627,0.61,0.644
+Giesdorf,kette_vorhersage,cv_2004_2022,Zustand ruhig,81339,0.798,0.793,0.79,0.792,0.793,0.79,0.501,0.499,0.501,0.503,0.503,0.495
+Giesdorf,kette_vorhersage,cv_2004_2022,Zustand Anstieg,18865,0.793,0.792,0.79,0.785,0.787,0.789,0.504,0.512,0.503,0.504,0.5,0.504
 Giesdorf,kette_vorhersage,cv_2004_2022,Zustand fallend,62237,0.799,0.791,0.79,0.791,0.79,0.794,0.501,0.502,0.503,0.499,0.499,0.498
 Giesdorf,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,121667,0.798,0.791,0.789,0.79,0.791,0.79,0.502,0.503,0.502,0.503,0.502,0.496
-Giesdorf,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,38315,0.797,0.796,0.795,0.795,0.794,0.796,0.5,0.498,0.501,0.499,0.5,0.5
-Giesdorf,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2459,0.781,0.77,0.773,0.771,0.768,0.783,0.503,0.507,0.501,0.499,0.497,0.491
+Giesdorf,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,38315,0.797,0.796,0.795,0.795,0.794,0.796,0.5,0.498,0.501,0.5,0.5,0.501
+Giesdorf,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2459,0.781,0.77,0.773,0.771,0.767,0.784,0.503,0.507,0.501,0.499,0.499,0.493
 Giesdorf,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",60587,0.797,0.785,0.784,0.788,0.789,0.787,0.505,0.507,0.506,0.506,0.507,0.497
 Giesdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",29136,0.796,0.787,0.788,0.797,0.797,0.787,0.504,0.498,0.503,0.508,0.51,0.49
 Giesdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",37999,0.799,0.795,0.789,0.787,0.789,0.79,0.499,0.501,0.5,0.5,0.498,0.494
@@ -295,11 +295,11 @@ Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",1979
 Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",915,0.797,0.798,0.8,0.797,0.756,0.784,0.499,0.493,0.511,0.49,0.532,0.504
 Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",16455,0.799,0.799,0.797,0.796,0.796,0.798,0.499,0.496,0.501,0.499,0.5,0.5
 Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",1043,0.8,0.786,0.798,0.802,0.794,0.785,0.495,0.489,0.496,0.497,0.495,0.479
-Giesdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken, Starkregenlage",62,0.871,0.387,0.435,0.758,0.968,1.0,0.935,0.935,0.855,0.806,0.742,0.5
-Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",128,0.75,0.68,0.711,0.766,0.844,0.617,0.719,0.703,0.695,0.523,0.32,0.328
-Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",191,0.518,0.534,0.518,0.602,0.482,0.728,0.309,0.293,0.241,0.178,0.199,0.288
+Giesdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken, Starkregenlage",62,0.839,0.387,0.435,0.742,0.968,0.984,0.935,0.935,0.871,0.823,0.758,0.71
+Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",128,0.75,0.68,0.711,0.758,0.844,0.609,0.719,0.703,0.695,0.523,0.32,0.328
+Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",191,0.518,0.534,0.518,0.602,0.482,0.723,0.309,0.293,0.241,0.178,0.199,0.288
 Giesdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",97,0.505,0.505,0.536,0.608,0.639,0.887,0.464,0.443,0.433,0.464,0.464,0.392
-Giesdorf,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2420,0.718,0.68,0.666,0.655,0.631,0.637,0.475,0.478,0.455,0.428,0.389,0.309
+Giesdorf,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2420,0.718,0.68,0.666,0.655,0.63,0.64,0.475,0.478,0.455,0.428,0.392,0.313
 Echtershausen,kette_regen,cv_2004_2022,alle,162441,0.798,0.797,0.793,0.786,0.782,0.783,0.504,0.5,0.499,0.497,0.494,0.492
 Echtershausen,kette_regen,cv_2004_2022,Starkregenlage,364,0.753,0.747,0.725,0.728,0.687,0.64,0.464,0.423,0.448,0.569,0.574,0.613
 Echtershausen,kette_regen,cv_2004_2022,keine Starkregenlage,162077,0.798,0.797,0.794,0.787,0.783,0.783,0.504,0.5,0.499,0.497,0.494,0.492
@@ -385,44 +385,44 @@ Echtershausen,kette,alt_1989_2003,"fallend, unter 2 MQ, nicht trocken",6503,0.84
 Echtershausen,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",5151,0.859,0.816,0.794,0.794,0.783,0.77,0.585,0.524,0.518,0.506,0.493,0.48
 Echtershausen,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",662,0.92,0.837,0.802,0.798,0.813,0.68,0.598,0.613,0.663,0.698,0.612,0.424
 Echtershausen,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),4225,0.826,0.739,0.665,0.594,0.526,0.493,0.488,0.423,0.409,0.378,0.324,0.279
-Echtershausen,kette_vorhersage,cv_2004_2022,alle,162441,0.798,0.799,0.794,0.793,0.79,0.79,0.503,0.498,0.498,0.499,0.501,0.501
-Echtershausen,kette_vorhersage,cv_2004_2022,Starkregenlage,628,0.831,0.815,0.801,0.803,0.766,0.75,0.473,0.462,0.481,0.568,0.583,0.637
-Echtershausen,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161813,0.798,0.799,0.794,0.793,0.791,0.79,0.503,0.498,0.498,0.499,0.5,0.501
-Echtershausen,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.75,0.663,0.577,0.452,0.452,0.769,0.481,0.606,0.635,0.75,0.692,0.721
-Echtershausen,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",73,0.726,0.671,0.603,0.575,0.644,0.795,0.548,0.616,0.603,0.644,0.562,0.932
-Echtershausen,kette_vorhersage,cv_2004_2022,Zustand ruhig,100563,0.798,0.801,0.793,0.792,0.79,0.79,0.503,0.496,0.498,0.498,0.5,0.502
-Echtershausen,kette_vorhersage,cv_2004_2022,Zustand Anstieg,20902,0.797,0.792,0.792,0.792,0.79,0.793,0.503,0.507,0.501,0.5,0.501,0.5
-Echtershausen,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,16623,0.798,0.797,0.796,0.796,0.79,0.785,0.502,0.497,0.495,0.5,0.503,0.502
-Echtershausen,kette_vorhersage,cv_2004_2022,Zustand fallend,24353,0.8,0.799,0.798,0.796,0.793,0.793,0.502,0.499,0.499,0.5,0.5,0.498
-Echtershausen,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,128125,0.798,0.799,0.793,0.792,0.79,0.79,0.504,0.498,0.498,0.499,0.501,0.501
-Echtershausen,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,32293,0.798,0.801,0.798,0.798,0.797,0.795,0.499,0.499,0.498,0.498,0.498,0.501
-Echtershausen,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2023,0.792,0.785,0.773,0.744,0.732,0.73,0.496,0.497,0.5,0.518,0.522,0.52
-Echtershausen,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70096,0.796,0.796,0.789,0.786,0.784,0.786,0.507,0.493,0.495,0.497,0.497,0.498
-Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",44895,0.795,0.797,0.787,0.782,0.783,0.786,0.509,0.489,0.493,0.496,0.496,0.498
-Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",42692,0.8,0.803,0.799,0.8,0.796,0.793,0.5,0.504,0.502,0.5,0.505,0.505
-Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",486,0.796,0.784,0.798,0.767,0.77,0.761,0.473,0.481,0.479,0.475,0.488,0.506
-Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",12219,0.8,0.805,0.799,0.801,0.798,0.792,0.499,0.493,0.497,0.499,0.498,0.503
-Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",159,0.849,0.849,0.748,0.579,0.509,0.893,0.453,0.503,0.597,0.616,0.667,0.597
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",7864,0.798,0.792,0.788,0.79,0.784,0.787,0.504,0.507,0.5,0.498,0.5,0.497
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",4479,0.8,0.793,0.795,0.794,0.795,0.793,0.499,0.504,0.501,0.505,0.503,0.504
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",139,0.583,0.619,0.691,0.748,0.755,0.784,0.799,0.755,0.727,0.547,0.338,0.432
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",7654,0.799,0.797,0.799,0.796,0.795,0.802,0.499,0.505,0.502,0.498,0.501,0.499
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",612,0.794,0.786,0.796,0.773,0.789,0.766,0.503,0.503,0.497,0.505,0.503,0.498
+Echtershausen,kette_vorhersage,cv_2004_2022,alle,162441,0.798,0.799,0.794,0.793,0.791,0.79,0.503,0.498,0.498,0.499,0.5,0.501
+Echtershausen,kette_vorhersage,cv_2004_2022,Starkregenlage,628,0.828,0.814,0.799,0.78,0.737,0.75,0.476,0.462,0.481,0.568,0.565,0.538
+Echtershausen,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161813,0.798,0.799,0.794,0.793,0.791,0.79,0.503,0.498,0.498,0.499,0.5,0.5
+Echtershausen,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.75,0.654,0.577,0.337,0.24,0.606,0.481,0.606,0.635,0.75,0.587,0.327
+Echtershausen,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",73,0.726,0.658,0.603,0.411,0.342,0.849,0.548,0.616,0.603,0.644,0.411,0.425
+Echtershausen,kette_vorhersage,cv_2004_2022,Zustand ruhig,100563,0.798,0.801,0.793,0.791,0.79,0.789,0.503,0.496,0.498,0.498,0.5,0.501
+Echtershausen,kette_vorhersage,cv_2004_2022,Zustand Anstieg,20902,0.797,0.792,0.793,0.792,0.79,0.79,0.503,0.507,0.502,0.5,0.499,0.497
+Echtershausen,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,16623,0.798,0.797,0.796,0.796,0.79,0.785,0.502,0.497,0.496,0.5,0.503,0.503
+Echtershausen,kette_vorhersage,cv_2004_2022,Zustand fallend,24353,0.8,0.799,0.798,0.796,0.793,0.794,0.502,0.499,0.499,0.5,0.5,0.499
+Echtershausen,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,128125,0.798,0.799,0.794,0.792,0.79,0.79,0.504,0.498,0.498,0.499,0.5,0.5
+Echtershausen,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,32293,0.798,0.801,0.798,0.799,0.797,0.794,0.499,0.499,0.498,0.499,0.499,0.502
+Echtershausen,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,2023,0.792,0.784,0.773,0.739,0.716,0.721,0.496,0.498,0.5,0.515,0.519,0.499
+Echtershausen,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70096,0.796,0.796,0.789,0.786,0.783,0.786,0.507,0.493,0.495,0.497,0.497,0.496
+Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",44895,0.795,0.797,0.787,0.782,0.783,0.787,0.509,0.489,0.493,0.496,0.496,0.496
+Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",42692,0.8,0.803,0.799,0.8,0.797,0.791,0.5,0.505,0.502,0.5,0.503,0.506
+Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",486,0.796,0.784,0.798,0.767,0.77,0.706,0.473,0.481,0.479,0.475,0.488,0.51
+Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",12219,0.8,0.805,0.799,0.802,0.797,0.794,0.499,0.493,0.498,0.501,0.5,0.504
+Echtershausen,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",159,0.849,0.843,0.755,0.579,0.491,0.767,0.459,0.509,0.597,0.635,0.692,0.604
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",7864,0.798,0.792,0.788,0.79,0.782,0.792,0.504,0.507,0.5,0.498,0.499,0.497
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",4479,0.8,0.793,0.797,0.794,0.795,0.78,0.499,0.504,0.502,0.501,0.502,0.505
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",139,0.583,0.619,0.691,0.748,0.755,0.691,0.799,0.755,0.727,0.547,0.331,0.353
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",7654,0.799,0.798,0.799,0.798,0.8,0.798,0.499,0.506,0.501,0.501,0.5,0.5
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",612,0.794,0.788,0.794,0.775,0.776,0.775,0.503,0.503,0.498,0.49,0.498,0.492
 Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",7848,0.803,0.8,0.8,0.799,0.787,0.777,0.506,0.494,0.498,0.499,0.504,0.503
 Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",3941,0.803,0.8,0.799,0.798,0.799,0.797,0.498,0.501,0.497,0.502,0.502,0.502
-Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, trocken",60,0.517,0.517,0.417,0.567,0.783,0.9,0.517,0.433,0.317,0.283,0.283,0.283
+Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, trocken",60,0.517,0.517,0.417,0.567,0.783,0.9,0.517,0.433,0.317,0.283,0.283,0.333
 Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",4175,0.796,0.8,0.795,0.796,0.792,0.797,0.502,0.506,0.494,0.498,0.497,0.502
 Echtershausen,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",503,0.769,0.744,0.75,0.744,0.755,0.684,0.487,0.481,0.475,0.491,0.505,0.499
 Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",8526,0.798,0.798,0.795,0.792,0.784,0.794,0.506,0.5,0.498,0.498,0.5,0.496
 Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",7706,0.8,0.795,0.797,0.796,0.801,0.8,0.502,0.502,0.502,0.502,0.501,0.497
-Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",105,0.829,0.829,0.81,0.876,0.857,0.705,0.352,0.371,0.381,0.438,0.295,0.314
+Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",105,0.829,0.829,0.81,0.876,0.857,0.876,0.352,0.371,0.381,0.438,0.295,0.429
 Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",7161,0.798,0.801,0.799,0.799,0.798,0.797,0.5,0.5,0.5,0.5,0.5,0.499
 Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",567,0.792,0.801,0.795,0.801,0.765,0.728,0.51,0.496,0.492,0.497,0.503,0.519
-Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",55,0.782,0.782,0.782,0.818,0.745,0.964,0.491,0.382,0.273,0.418,0.455,0.455
+Echtershausen,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",55,0.782,0.782,0.782,0.818,0.818,0.8,0.491,0.364,0.236,0.418,0.509,0.382
 Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",63,0.889,0.921,0.905,0.825,0.667,1.0,0.429,0.397,0.524,0.556,0.397,0.603
-Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",134,0.933,0.918,0.896,0.903,0.866,0.664,0.485,0.485,0.507,0.56,0.59,0.604
-Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",74,0.797,0.838,0.743,0.622,0.568,0.405,0.595,0.541,0.5,0.568,0.486,0.459
-Echtershausen,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),4392,0.77,0.745,0.729,0.719,0.719,0.732,0.499,0.482,0.477,0.469,0.429,0.409
+Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",134,0.933,0.918,0.903,0.903,0.866,0.664,0.485,0.478,0.507,0.56,0.59,0.604
+Echtershausen,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",74,0.797,0.838,0.743,0.622,0.568,0.392,0.595,0.541,0.5,0.568,0.486,0.459
+Echtershausen,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),4392,0.77,0.744,0.73,0.72,0.72,0.746,0.5,0.483,0.478,0.47,0.43,0.384
 Wiersdorf,kette_regen,cv_2004_2022,alle,162441,0.727,0.713,0.715,0.717,0.704,0.774,0.488,0.491,0.489,0.486,0.494,0.492
 Wiersdorf,kette_regen,cv_2004_2022,Starkregenlage,364,0.67,0.648,0.637,0.643,0.657,0.456,0.464,0.497,0.497,0.53,0.61,0.662
 Wiersdorf,kette_regen,cv_2004_2022,keine Starkregenlage,162077,0.727,0.713,0.715,0.717,0.704,0.775,0.488,0.491,0.489,0.486,0.493,0.491
@@ -506,43 +506,43 @@ Wiersdorf,kette,alt_1989_2003,"fallend, unter 2 MQ, nicht trocken",5102,0.819,0.
 Wiersdorf,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",3868,0.825,0.801,0.793,0.799,0.774,0.767,0.516,0.492,0.492,0.485,0.519,0.502
 Wiersdorf,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",738,0.879,0.889,0.894,0.908,0.885,0.692,0.232,0.253,0.318,0.274,0.247,0.302
 Wiersdorf,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),3581,0.813,0.777,0.741,0.664,0.573,0.491,0.286,0.278,0.281,0.244,0.226,0.217
-Wiersdorf,kette_vorhersage,cv_2004_2022,alle,162441,0.727,0.713,0.715,0.723,0.717,0.772,0.488,0.49,0.489,0.487,0.492,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,Starkregenlage,628,0.753,0.76,0.752,0.747,0.742,0.694,0.395,0.409,0.425,0.452,0.508,0.562
-Wiersdorf,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161813,0.727,0.713,0.715,0.722,0.717,0.773,0.488,0.49,0.489,0.487,0.492,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",103,0.641,0.553,0.573,0.505,0.447,0.612,0.272,0.223,0.33,0.456,0.699,0.738
-Wiersdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",75,0.667,0.653,0.693,0.613,0.587,0.627,0.28,0.267,0.4,0.507,0.587,0.96
-Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand ruhig,94303,0.71,0.692,0.695,0.708,0.692,0.768,0.484,0.488,0.486,0.486,0.49,0.499
-Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand Anstieg,30105,0.739,0.73,0.728,0.734,0.747,0.781,0.485,0.485,0.489,0.486,0.491,0.499
-Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,14932,0.748,0.742,0.746,0.744,0.748,0.771,0.511,0.51,0.501,0.489,0.494,0.493
-Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand fallend,23101,0.763,0.756,0.762,0.755,0.759,0.778,0.493,0.493,0.491,0.491,0.498,0.491
-Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,132097,0.711,0.696,0.698,0.705,0.699,0.768,0.486,0.488,0.486,0.484,0.49,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,28845,0.795,0.789,0.793,0.799,0.799,0.796,0.499,0.499,0.5,0.5,0.5,0.499
-Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1499,0.775,0.763,0.768,0.761,0.759,0.716,0.488,0.5,0.511,0.51,0.516,0.496
-Wiersdorf,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70531,0.651,0.642,0.642,0.657,0.635,0.747,0.488,0.49,0.491,0.487,0.486,0.493
-Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",42771,0.626,0.617,0.619,0.642,0.597,0.739,0.485,0.487,0.49,0.491,0.485,0.496
-Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",40994,0.778,0.748,0.751,0.754,0.765,0.791,0.48,0.486,0.478,0.477,0.494,0.502
-Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",234,0.504,0.526,0.556,0.739,0.697,0.701,0.513,0.483,0.466,0.479,0.509,0.47
-Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",10174,0.796,0.787,0.791,0.796,0.799,0.797,0.501,0.501,0.504,0.502,0.499,0.501
-Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",54,0.741,0.722,0.685,0.778,0.778,0.981,0.296,0.37,0.37,0.537,0.759,0.463
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",10566,0.652,0.637,0.622,0.629,0.664,0.758,0.475,0.481,0.484,0.476,0.478,0.495
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",8969,0.78,0.774,0.777,0.776,0.782,0.794,0.484,0.481,0.486,0.487,0.495,0.503
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",133,0.586,0.556,0.624,0.805,0.947,0.85,0.474,0.474,0.504,0.429,0.429,0.353
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",9485,0.8,0.794,0.798,0.803,0.799,0.799,0.497,0.496,0.498,0.496,0.499,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",746,0.761,0.747,0.76,0.787,0.782,0.744,0.496,0.489,0.501,0.499,0.491,0.519
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",8184,0.71,0.71,0.71,0.709,0.715,0.759,0.527,0.522,0.509,0.487,0.494,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",3918,0.792,0.77,0.782,0.78,0.785,0.786,0.488,0.492,0.485,0.485,0.501,0.496
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",2505,0.797,0.794,0.799,0.802,0.802,0.793,0.503,0.504,0.501,0.502,0.502,0.497
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",173,0.815,0.879,0.85,0.751,0.803,0.728,0.514,0.566,0.543,0.497,0.434,0.301
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",8333,0.716,0.718,0.72,0.711,0.709,0.76,0.492,0.498,0.492,0.487,0.497,0.48
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",8161,0.787,0.768,0.78,0.771,0.782,0.793,0.49,0.484,0.485,0.488,0.493,0.495
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",87,0.747,0.621,0.678,0.736,0.69,0.805,0.287,0.207,0.276,0.345,0.529,0.575
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",5905,0.797,0.794,0.798,0.797,0.798,0.795,0.502,0.501,0.499,0.501,0.503,0.499
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",355,0.775,0.769,0.777,0.749,0.772,0.704,0.493,0.513,0.51,0.49,0.504,0.482
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",75,0.853,0.893,0.853,0.853,0.773,0.933,0.453,0.52,0.44,0.48,0.587,0.56
-Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",55,0.673,0.691,0.745,0.764,0.745,0.527,0.455,0.436,0.509,0.473,0.836,0.836
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",117,0.846,0.838,0.803,0.846,0.932,0.658,0.479,0.547,0.641,0.675,0.658,0.615
-Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",56,0.893,0.786,0.732,0.696,0.661,0.393,0.732,0.839,0.857,0.857,0.661,0.571
-Wiersdorf,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2443,0.754,0.743,0.743,0.729,0.703,0.687,0.492,0.491,0.479,0.455,0.418,0.43
+Wiersdorf,kette_vorhersage,cv_2004_2022,alle,162441,0.727,0.713,0.716,0.723,0.719,0.772,0.488,0.49,0.489,0.487,0.492,0.497
+Wiersdorf,kette_vorhersage,cv_2004_2022,Starkregenlage,628,0.753,0.755,0.744,0.736,0.723,0.705,0.392,0.406,0.427,0.451,0.487,0.529
+Wiersdorf,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161813,0.726,0.713,0.716,0.723,0.719,0.773,0.488,0.491,0.489,0.487,0.492,0.497
+Wiersdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",103,0.641,0.534,0.544,0.437,0.311,0.641,0.262,0.214,0.32,0.466,0.602,0.544
+Wiersdorf,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",75,0.667,0.627,0.653,0.52,0.4,0.84,0.267,0.253,0.387,0.52,0.453,0.72
+Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand ruhig,94303,0.71,0.692,0.696,0.709,0.693,0.769,0.484,0.488,0.486,0.486,0.491,0.5
+Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand Anstieg,30105,0.739,0.73,0.728,0.732,0.753,0.783,0.485,0.486,0.489,0.486,0.491,0.496
+Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,14932,0.748,0.742,0.745,0.744,0.747,0.772,0.511,0.511,0.501,0.489,0.496,0.494
+Wiersdorf,kette_vorhersage,cv_2004_2022,Zustand fallend,23101,0.763,0.756,0.762,0.755,0.759,0.774,0.493,0.493,0.492,0.492,0.498,0.491
+Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,132515,0.712,0.696,0.699,0.707,0.701,0.768,0.486,0.488,0.486,0.484,0.491,0.497
+Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,28493,0.794,0.789,0.793,0.798,0.799,0.796,0.5,0.5,0.502,0.5,0.5,0.501
+Wiersdorf,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1433,0.768,0.752,0.76,0.75,0.736,0.7,0.485,0.5,0.512,0.516,0.519,0.484
+Wiersdorf,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",70531,0.65,0.642,0.642,0.657,0.638,0.747,0.488,0.49,0.491,0.487,0.486,0.492
+Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",42780,0.626,0.617,0.619,0.641,0.597,0.74,0.485,0.487,0.49,0.491,0.485,0.495
+Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",41222,0.778,0.748,0.753,0.758,0.767,0.792,0.48,0.486,0.478,0.478,0.495,0.505
+Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",225,0.502,0.507,0.56,0.738,0.707,0.724,0.507,0.48,0.516,0.48,0.511,0.524
+Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",9946,0.796,0.788,0.791,0.797,0.799,0.795,0.502,0.502,0.505,0.5,0.497,0.502
+Wiersdorf,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",54,0.741,0.722,0.685,0.778,0.667,0.852,0.296,0.352,0.37,0.556,0.833,0.611
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",10578,0.652,0.636,0.622,0.629,0.683,0.763,0.476,0.481,0.484,0.477,0.479,0.493
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",9102,0.78,0.775,0.778,0.777,0.782,0.791,0.483,0.482,0.486,0.487,0.497,0.495
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",121,0.587,0.545,0.579,0.793,0.959,0.901,0.504,0.488,0.521,0.463,0.43,0.289
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",9413,0.799,0.795,0.799,0.8,0.8,0.801,0.497,0.496,0.499,0.498,0.498,0.501
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",685,0.747,0.731,0.749,0.777,0.777,0.731,0.492,0.491,0.502,0.501,0.489,0.485
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",8185,0.71,0.71,0.71,0.709,0.717,0.761,0.527,0.522,0.509,0.487,0.494,0.497
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",3926,0.792,0.769,0.78,0.778,0.783,0.788,0.488,0.492,0.485,0.485,0.505,0.496
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",2498,0.796,0.795,0.799,0.802,0.799,0.799,0.502,0.504,0.5,0.503,0.5,0.499
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",172,0.82,0.866,0.855,0.75,0.767,0.64,0.512,0.564,0.547,0.506,0.477,0.395
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",8335,0.716,0.718,0.72,0.711,0.709,0.751,0.493,0.498,0.492,0.487,0.497,0.479
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",8176,0.787,0.768,0.78,0.771,0.783,0.789,0.49,0.485,0.485,0.488,0.494,0.495
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, trocken",85,0.741,0.635,0.682,0.741,0.718,0.835,0.282,0.2,0.306,0.341,0.518,0.6
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",5894,0.797,0.793,0.798,0.797,0.796,0.794,0.502,0.501,0.499,0.503,0.504,0.499
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",351,0.769,0.766,0.772,0.752,0.766,0.701,0.496,0.513,0.507,0.49,0.504,0.487
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",73,0.849,0.89,0.849,0.836,0.836,0.808,0.452,0.521,0.466,0.493,0.603,0.671
+Wiersdorf,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",55,0.673,0.673,0.691,0.636,0.582,0.873,0.418,0.418,0.527,0.527,0.709,0.709
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",116,0.853,0.836,0.802,0.845,0.931,0.681,0.483,0.543,0.647,0.681,0.664,0.629
+Wiersdorf,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",56,0.893,0.786,0.732,0.696,0.661,0.357,0.732,0.839,0.857,0.857,0.661,0.571
+Wiersdorf,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2443,0.75,0.738,0.74,0.721,0.704,0.71,0.491,0.489,0.479,0.465,0.433,0.424
 Prümzurlay,kette_regen,cv_2004_2022,alle,162441,0.8,0.791,0.757,0.716,0.729,0.788,0.505,0.508,0.503,0.495,0.494,0.5
 Prümzurlay,kette_regen,cv_2004_2022,Starkregenlage,284,0.81,0.82,0.827,0.732,0.556,0.43,0.475,0.602,0.697,0.683,0.687,0.658
 Prümzurlay,kette_regen,cv_2004_2022,keine Starkregenlage,162157,0.8,0.791,0.757,0.716,0.729,0.789,0.505,0.507,0.503,0.494,0.494,0.5
@@ -626,40 +626,40 @@ Prümzurlay,kette,alt_1989_2003,"fallend, unter 2 MQ, nicht trocken",3467,0.849,
 Prümzurlay,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",2740,0.782,0.701,0.721,0.754,0.753,0.773,0.441,0.427,0.416,0.415,0.41,0.439
 Prümzurlay,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",524,0.746,0.754,0.744,0.775,0.775,0.662,0.523,0.679,0.607,0.5,0.435,0.429
 Prümzurlay,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),3664,0.743,0.666,0.63,0.586,0.53,0.508,0.496,0.485,0.42,0.349,0.305,0.283
-Prümzurlay,kette_vorhersage,cv_2004_2022,alle,162441,0.799,0.789,0.758,0.72,0.735,0.786,0.504,0.506,0.504,0.495,0.496,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,Starkregenlage,476,0.87,0.863,0.853,0.811,0.817,0.71,0.468,0.548,0.605,0.527,0.553,0.66
-Prümzurlay,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161965,0.799,0.789,0.758,0.719,0.735,0.786,0.504,0.506,0.503,0.495,0.495,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.74,0.673,0.712,0.577,0.635,0.577,0.413,0.452,0.365,0.394,0.5,0.663
-Prümzurlay,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",82,0.805,0.793,0.756,0.634,0.671,0.659,0.427,0.427,0.366,0.402,0.415,0.829
-Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand ruhig,108126,0.799,0.789,0.748,0.704,0.726,0.788,0.505,0.504,0.504,0.495,0.497,0.501
-Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand Anstieg,34251,0.799,0.79,0.778,0.74,0.743,0.78,0.503,0.509,0.503,0.492,0.491,0.502
-Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,6659,0.802,0.796,0.758,0.756,0.766,0.792,0.496,0.497,0.498,0.501,0.501,0.496
-Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand fallend,13405,0.799,0.789,0.789,0.773,0.774,0.788,0.506,0.511,0.509,0.501,0.496,0.494
-Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,134638,0.799,0.788,0.75,0.704,0.723,0.785,0.505,0.506,0.504,0.493,0.494,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,26440,0.797,0.795,0.794,0.795,0.796,0.792,0.5,0.505,0.504,0.503,0.504,0.503
-Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1363,0.829,0.834,0.817,0.799,0.798,0.764,0.498,0.495,0.509,0.526,0.488,0.436
-Prümzurlay,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",59186,0.799,0.789,0.71,0.615,0.659,0.77,0.507,0.505,0.503,0.489,0.486,0.502
-Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",40502,0.801,0.794,0.694,0.592,0.65,0.776,0.507,0.501,0.503,0.492,0.489,0.501
-Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",56516,0.799,0.785,0.778,0.768,0.768,0.796,0.505,0.507,0.505,0.495,0.501,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",117,0.513,0.325,0.41,0.325,0.316,0.171,0.308,0.308,0.342,0.564,0.803,0.932
-Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",10854,0.799,0.799,0.796,0.797,0.798,0.795,0.501,0.506,0.504,0.503,0.499,0.498
-Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",58,0.569,0.724,0.741,0.69,0.914,0.759,0.414,0.517,0.552,0.5,0.569,0.103
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",11919,0.799,0.782,0.749,0.642,0.655,0.752,0.507,0.519,0.503,0.471,0.467,0.501
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",10686,0.799,0.792,0.791,0.785,0.782,0.795,0.5,0.501,0.501,0.503,0.503,0.501
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",10584,0.799,0.799,0.797,0.801,0.799,0.799,0.501,0.505,0.502,0.5,0.501,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",791,0.795,0.795,0.796,0.804,0.789,0.789,0.506,0.496,0.498,0.508,0.499,0.516
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",2732,0.807,0.792,0.701,0.711,0.735,0.791,0.502,0.501,0.497,0.503,0.501,0.492
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",2726,0.796,0.796,0.798,0.785,0.788,0.795,0.497,0.5,0.5,0.496,0.498,0.501
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",1029,0.792,0.789,0.786,0.794,0.794,0.79,0.498,0.5,0.497,0.496,0.5,0.502
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",112,0.938,0.955,0.902,0.804,0.768,0.857,0.339,0.277,0.393,0.536,0.491,0.304
-Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",3765,0.791,0.781,0.773,0.713,0.72,0.775,0.519,0.514,0.51,0.5,0.49,0.498
-Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",5672,0.797,0.784,0.791,0.794,0.788,0.797,0.497,0.505,0.503,0.496,0.499,0.496
-Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",3567,0.799,0.79,0.796,0.796,0.799,0.796,0.503,0.508,0.505,0.502,0.504,0.499
-Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",252,0.944,0.952,0.889,0.865,0.889,0.798,0.603,0.599,0.591,0.56,0.385,0.214
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",90,0.956,0.956,0.922,0.889,0.889,0.956,0.533,0.578,0.589,0.411,0.511,0.489
-Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",72,0.889,0.875,0.792,0.736,0.75,0.542,0.5,0.569,0.569,0.5,0.569,0.681
-Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",68,0.897,0.926,1.0,0.956,0.941,0.721,0.456,0.662,0.897,0.794,0.588,0.691
-Prümzurlay,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),3037,0.793,0.777,0.755,0.734,0.713,0.712,0.492,0.485,0.469,0.464,0.418,0.393
+Prümzurlay,kette_vorhersage,cv_2004_2022,alle,162441,0.799,0.789,0.756,0.713,0.731,0.786,0.504,0.506,0.504,0.493,0.493,0.501
+Prümzurlay,kette_vorhersage,cv_2004_2022,Starkregenlage,476,0.863,0.859,0.855,0.817,0.811,0.746,0.475,0.555,0.603,0.532,0.506,0.622
+Prümzurlay,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161965,0.799,0.789,0.756,0.713,0.731,0.787,0.504,0.506,0.503,0.493,0.493,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.712,0.654,0.673,0.596,0.481,0.5,0.433,0.452,0.365,0.385,0.442,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",82,0.768,0.768,0.72,0.659,0.512,0.585,0.451,0.427,0.366,0.39,0.329,0.598
+Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand ruhig,108126,0.799,0.788,0.745,0.697,0.722,0.789,0.505,0.505,0.503,0.492,0.493,0.501
+Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand Anstieg,34251,0.799,0.791,0.776,0.734,0.737,0.779,0.503,0.509,0.504,0.491,0.489,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,6659,0.802,0.796,0.758,0.756,0.766,0.786,0.496,0.497,0.498,0.501,0.502,0.499
+Prümzurlay,kette_vorhersage,cv_2004_2022,Zustand fallend,13405,0.799,0.789,0.789,0.772,0.774,0.788,0.506,0.511,0.509,0.502,0.499,0.499
+Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,134845,0.799,0.788,0.748,0.697,0.718,0.786,0.505,0.506,0.503,0.49,0.491,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,26286,0.798,0.795,0.795,0.794,0.795,0.79,0.5,0.505,0.505,0.504,0.503,0.503
+Prümzurlay,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1310,0.827,0.834,0.815,0.782,0.776,0.721,0.501,0.502,0.515,0.543,0.518,0.483
+Prümzurlay,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",59186,0.799,0.789,0.708,0.611,0.654,0.77,0.507,0.505,0.503,0.489,0.487,0.501
+Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",40507,0.801,0.793,0.693,0.59,0.648,0.776,0.507,0.502,0.503,0.493,0.49,0.501
+Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",56610,0.799,0.784,0.773,0.755,0.761,0.797,0.504,0.508,0.504,0.488,0.493,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",114,0.509,0.325,0.404,0.281,0.307,0.114,0.281,0.289,0.325,0.553,0.833,0.93
+Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",10761,0.799,0.798,0.797,0.797,0.798,0.797,0.501,0.506,0.505,0.504,0.5,0.499
+Prümzurlay,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",57,0.561,0.737,0.754,0.632,0.825,0.86,0.404,0.526,0.561,0.561,0.702,0.456
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",11925,0.799,0.783,0.746,0.632,0.644,0.753,0.507,0.519,0.503,0.471,0.466,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",10778,0.799,0.792,0.788,0.781,0.777,0.796,0.498,0.502,0.502,0.499,0.498,0.5
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",10516,0.799,0.799,0.798,0.798,0.799,0.796,0.502,0.504,0.504,0.504,0.501,0.499
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",767,0.791,0.793,0.786,0.786,0.769,0.738,0.506,0.498,0.485,0.499,0.514,0.481
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",2732,0.807,0.792,0.701,0.711,0.734,0.784,0.502,0.501,0.497,0.503,0.501,0.491
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",2729,0.796,0.796,0.798,0.786,0.791,0.798,0.498,0.499,0.5,0.496,0.498,0.499
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",1026,0.793,0.79,0.787,0.794,0.792,0.783,0.498,0.499,0.496,0.497,0.497,0.503
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",112,0.938,0.946,0.911,0.786,0.732,0.723,0.339,0.286,0.411,0.545,0.536,0.518
+Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",3765,0.791,0.781,0.773,0.712,0.719,0.782,0.519,0.514,0.51,0.5,0.49,0.497
+Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",5677,0.797,0.784,0.791,0.793,0.79,0.795,0.497,0.505,0.503,0.496,0.501,0.501
+Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",3562,0.799,0.79,0.796,0.798,0.798,0.794,0.502,0.508,0.505,0.502,0.506,0.497
+Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",252,0.944,0.948,0.885,0.833,0.889,0.73,0.591,0.595,0.615,0.615,0.44,0.417
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",98,0.959,0.959,0.908,0.888,0.847,0.888,0.531,0.561,0.592,0.469,0.418,0.51
+Prümzurlay,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",64,0.875,0.844,0.828,0.734,0.688,0.766,0.547,0.594,0.562,0.547,0.516,0.75
+Prümzurlay,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",68,0.897,0.926,1.0,0.956,0.971,0.75,0.456,0.662,0.897,0.794,0.559,0.647
+Prümzurlay,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),3037,0.791,0.773,0.752,0.73,0.717,0.745,0.491,0.483,0.469,0.478,0.44,0.419
 Seffern,kette_regen,cv_2004_2022,alle,162441,0.796,0.791,0.791,0.79,0.795,0.794,0.499,0.482,0.492,0.499,0.499,0.5
 Seffern,kette_regen,cv_2004_2022,Starkregenlage,408,0.74,0.792,0.784,0.784,0.811,0.716,0.475,0.395,0.385,0.422,0.461,0.596
 Seffern,kette_regen,cv_2004_2022,keine Starkregenlage,162033,0.796,0.791,0.791,0.79,0.795,0.794,0.499,0.482,0.492,0.5,0.499,0.5
@@ -745,41 +745,41 @@ Seffern,kette,alt_1989_2003,"fallend, unter 2 MQ, nicht trocken",12677,0.842,0.8
 Seffern,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",5784,0.833,0.822,0.835,0.812,0.784,0.776,0.523,0.489,0.5,0.491,0.459,0.436
 Seffern,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",524,0.92,0.903,0.882,0.824,0.763,0.71,0.504,0.5,0.5,0.529,0.576,0.471
 Seffern,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),2710,0.799,0.761,0.704,0.601,0.478,0.428,0.522,0.459,0.421,0.351,0.295,0.22
-Seffern,kette_vorhersage,cv_2004_2022,alle,162441,0.796,0.788,0.792,0.793,0.796,0.795,0.499,0.479,0.494,0.5,0.501,0.501
-Seffern,kette_vorhersage,cv_2004_2022,Starkregenlage,696,0.807,0.829,0.826,0.796,0.727,0.733,0.415,0.404,0.414,0.443,0.476,0.648
+Seffern,kette_vorhersage,cv_2004_2022,alle,162441,0.796,0.788,0.792,0.793,0.796,0.794,0.499,0.479,0.494,0.5,0.502,0.502
+Seffern,kette_vorhersage,cv_2004_2022,Starkregenlage,696,0.809,0.826,0.823,0.802,0.776,0.734,0.415,0.404,0.411,0.448,0.463,0.568
 Seffern,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161745,0.796,0.788,0.792,0.793,0.796,0.795,0.499,0.48,0.495,0.5,0.502,0.501
-Seffern,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.644,0.673,0.683,0.683,0.692,0.481,0.452,0.413,0.394,0.385,0.529,0.587
-Seffern,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",64,0.609,0.656,0.625,0.625,0.531,0.375,0.484,0.438,0.406,0.328,0.516,0.734
-Seffern,kette_vorhersage,cv_2004_2022,Zustand ruhig,86975,0.795,0.784,0.79,0.792,0.796,0.795,0.5,0.476,0.496,0.501,0.503,0.5
-Seffern,kette_vorhersage,cv_2004_2022,Zustand Anstieg,13229,0.797,0.787,0.79,0.792,0.793,0.788,0.498,0.493,0.492,0.5,0.502,0.505
-Seffern,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,30099,0.799,0.794,0.797,0.795,0.797,0.796,0.497,0.47,0.491,0.496,0.499,0.502
-Seffern,kette_vorhersage,cv_2004_2022,Zustand fallend,32138,0.796,0.794,0.796,0.795,0.798,0.796,0.498,0.492,0.494,0.498,0.499,0.501
-Seffern,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,136539,0.795,0.787,0.793,0.794,0.797,0.796,0.5,0.475,0.494,0.5,0.502,0.5
-Seffern,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,24665,0.799,0.795,0.79,0.793,0.793,0.792,0.497,0.504,0.497,0.498,0.497,0.503
-Seffern,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1237,0.787,0.791,0.786,0.781,0.768,0.753,0.451,0.442,0.464,0.488,0.526,0.539
-Seffern,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",40951,0.785,0.791,0.799,0.79,0.794,0.794,0.491,0.441,0.485,0.5,0.503,0.504
-Seffern,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",22290,0.779,0.793,0.797,0.786,0.792,0.793,0.489,0.434,0.489,0.504,0.506,0.503
-Seffern,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",56577,0.8,0.779,0.787,0.795,0.797,0.797,0.505,0.487,0.498,0.5,0.502,0.498
-Seffern,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",175,0.834,0.851,0.811,0.806,0.76,0.709,0.549,0.48,0.503,0.583,0.554,0.52
-Seffern,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",7723,0.8,0.793,0.789,0.794,0.797,0.789,0.499,0.514,0.499,0.499,0.499,0.505
-Seffern,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",120,0.9,0.925,0.917,0.917,0.833,0.817,0.442,0.6,0.55,0.592,0.633,0.4
-Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",1819,0.787,0.775,0.79,0.806,0.792,0.786,0.502,0.484,0.505,0.5,0.495,0.505
-Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",6643,0.802,0.787,0.794,0.795,0.799,0.794,0.5,0.502,0.495,0.504,0.507,0.499
-Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",4359,0.799,0.797,0.791,0.788,0.789,0.791,0.492,0.488,0.491,0.493,0.489,0.492
-Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",300,0.767,0.753,0.747,0.753,0.777,0.76,0.467,0.377,0.33,0.463,0.557,0.68
+Seffern,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",104,0.644,0.663,0.673,0.692,0.885,0.788,0.452,0.413,0.365,0.308,0.471,0.26
+Seffern,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser, Starkregenlage",64,0.609,0.641,0.609,0.656,0.844,0.812,0.484,0.438,0.359,0.203,0.406,0.359
+Seffern,kette_vorhersage,cv_2004_2022,Zustand ruhig,86975,0.795,0.784,0.79,0.792,0.796,0.794,0.5,0.476,0.496,0.501,0.504,0.501
+Seffern,kette_vorhersage,cv_2004_2022,Zustand Anstieg,13229,0.797,0.787,0.789,0.792,0.794,0.794,0.498,0.494,0.492,0.499,0.497,0.499
+Seffern,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,30099,0.799,0.794,0.797,0.796,0.797,0.795,0.497,0.47,0.491,0.497,0.499,0.503
+Seffern,kette_vorhersage,cv_2004_2022,Zustand fallend,32138,0.796,0.794,0.796,0.795,0.798,0.796,0.498,0.492,0.494,0.498,0.499,0.502
+Seffern,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,136539,0.795,0.787,0.793,0.794,0.797,0.795,0.5,0.475,0.494,0.5,0.503,0.501
+Seffern,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,24665,0.799,0.795,0.79,0.792,0.794,0.792,0.497,0.504,0.497,0.498,0.496,0.502
+Seffern,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1237,0.787,0.789,0.785,0.791,0.786,0.778,0.451,0.442,0.46,0.479,0.513,0.484
+Seffern,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",40951,0.785,0.791,0.799,0.79,0.794,0.792,0.491,0.441,0.485,0.501,0.503,0.502
+Seffern,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",22290,0.779,0.793,0.797,0.786,0.792,0.79,0.489,0.434,0.488,0.504,0.506,0.501
+Seffern,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",56577,0.8,0.779,0.787,0.794,0.797,0.797,0.505,0.487,0.498,0.5,0.503,0.501
+Seffern,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",175,0.834,0.851,0.811,0.806,0.754,0.771,0.549,0.48,0.503,0.583,0.554,0.463
+Seffern,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",7723,0.8,0.793,0.789,0.793,0.796,0.787,0.498,0.514,0.499,0.5,0.499,0.503
+Seffern,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",120,0.9,0.925,0.917,0.908,0.833,0.808,0.442,0.6,0.55,0.6,0.692,0.325
+Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",1819,0.787,0.776,0.79,0.804,0.784,0.791,0.502,0.484,0.505,0.506,0.502,0.502
+Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",6643,0.802,0.787,0.793,0.796,0.8,0.796,0.5,0.502,0.496,0.505,0.502,0.497
+Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",4359,0.799,0.798,0.79,0.785,0.791,0.797,0.492,0.489,0.492,0.49,0.489,0.5
+Seffern,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",300,0.767,0.75,0.747,0.777,0.787,0.777,0.467,0.377,0.323,0.42,0.48,0.51
 Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",10669,0.798,0.795,0.803,0.794,0.798,0.797,0.495,0.438,0.479,0.495,0.499,0.506
 Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",15198,0.8,0.795,0.797,0.798,0.799,0.795,0.502,0.488,0.495,0.496,0.5,0.502
-Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, trocken",78,0.808,0.782,0.821,0.808,0.859,0.846,0.423,0.295,0.359,0.269,0.256,0.308
+Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, trocken",78,0.808,0.782,0.821,0.808,0.859,0.833,0.423,0.295,0.359,0.269,0.256,0.474
 Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",3773,0.797,0.787,0.777,0.795,0.797,0.799,0.5,0.504,0.504,0.501,0.498,0.502
-Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",246,0.789,0.776,0.789,0.793,0.797,0.756,0.407,0.415,0.573,0.537,0.5,0.435
+Seffern,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",246,0.789,0.776,0.789,0.813,0.78,0.768,0.407,0.415,0.573,0.561,0.52,0.496
 Seffern,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",5808,0.782,0.774,0.799,0.793,0.8,0.794,0.493,0.466,0.483,0.496,0.502,0.503
 Seffern,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",17369,0.798,0.797,0.795,0.794,0.799,0.797,0.5,0.495,0.498,0.5,0.501,0.5
 Seffern,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",8186,0.798,0.797,0.795,0.795,0.795,0.796,0.5,0.507,0.5,0.502,0.5,0.502
 Seffern,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",367,0.774,0.787,0.787,0.777,0.766,0.771,0.488,0.477,0.488,0.485,0.501,0.49
-Seffern,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",122,0.811,0.943,0.967,0.959,0.852,0.795,0.402,0.246,0.262,0.385,0.393,0.607
-Seffern,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",170,0.859,0.847,0.847,0.853,0.806,0.812,0.547,0.524,0.429,0.388,0.329,0.524
-Seffern,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",97,0.835,0.845,0.784,0.794,0.918,0.856,0.392,0.412,0.423,0.32,0.402,0.608
-Seffern,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2192,0.745,0.708,0.681,0.649,0.617,0.616,0.44,0.401,0.401,0.413,0.386,0.384
+Seffern,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",122,0.828,0.943,0.967,0.959,0.852,0.787,0.402,0.246,0.262,0.385,0.393,0.623
+Seffern,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",170,0.859,0.847,0.847,0.853,0.806,0.788,0.547,0.524,0.429,0.382,0.329,0.529
+Seffern,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",97,0.835,0.845,0.784,0.794,0.918,0.856,0.392,0.412,0.423,0.32,0.402,0.619
+Seffern,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2192,0.745,0.708,0.681,0.653,0.63,0.641,0.44,0.402,0.401,0.411,0.382,0.327
 Alsdorf-Oberecken,kette_regen,cv_2004_2022,alle,162441,0.8,0.796,0.786,0.785,0.792,0.795,0.505,0.51,0.503,0.505,0.497,0.499
 Alsdorf-Oberecken,kette_regen,cv_2004_2022,Starkregenlage,451,0.805,0.78,0.845,0.865,0.789,0.763,0.457,0.519,0.601,0.623,0.596,0.585
 Alsdorf-Oberecken,kette_regen,cv_2004_2022,keine Starkregenlage,161990,0.8,0.796,0.786,0.785,0.792,0.795,0.505,0.51,0.503,0.505,0.497,0.499
@@ -865,39 +865,39 @@ Alsdorf-Oberecken,kette,alt_1989_2003,"fallend, unter 2 MQ, nicht trocken",11276
 Alsdorf-Oberecken,kette,alt_1989_2003,"fallend, 2 bis 8 MQ, nicht trocken",5631,0.846,0.864,0.873,0.837,0.819,0.804,0.435,0.385,0.362,0.357,0.365,0.387
 Alsdorf-Oberecken,kette,alt_1989_2003,"fallend, ab 8 MQ, nicht trocken",522,0.799,0.797,0.807,0.822,0.799,0.743,0.508,0.538,0.58,0.626,0.582,0.433
 Alsdorf-Oberecken,kette,alt_1989_2003,gemessen ab HQ2/2 (nachträglich ausgewählt),2664,0.814,0.762,0.705,0.632,0.518,0.503,0.389,0.361,0.354,0.334,0.282,0.224
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,alle,162441,0.8,0.795,0.782,0.78,0.795,0.796,0.505,0.507,0.503,0.507,0.501,0.501
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Starkregenlage,787,0.82,0.808,0.817,0.806,0.778,0.766,0.475,0.484,0.497,0.498,0.548,0.612
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161654,0.8,0.795,0.782,0.78,0.795,0.796,0.505,0.507,0.503,0.507,0.501,0.501
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",55,0.564,0.618,0.655,0.527,0.618,0.491,0.473,0.527,0.6,0.655,0.764,0.818
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand ruhig,92705,0.802,0.796,0.778,0.774,0.795,0.794,0.507,0.509,0.504,0.511,0.504,0.504
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand Anstieg,26445,0.798,0.793,0.783,0.785,0.794,0.795,0.503,0.504,0.502,0.501,0.5,0.499
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,12840,0.79,0.793,0.789,0.787,0.791,0.798,0.504,0.504,0.502,0.51,0.497,0.496
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand fallend,30451,0.8,0.795,0.792,0.791,0.797,0.8,0.501,0.504,0.502,0.503,0.497,0.498
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,136587,0.8,0.795,0.78,0.777,0.795,0.796,0.507,0.508,0.504,0.509,0.502,0.501
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,23979,0.799,0.798,0.794,0.794,0.796,0.796,0.499,0.502,0.499,0.498,0.497,0.503
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1875,0.795,0.798,0.796,0.782,0.749,0.8,0.451,0.454,0.46,0.495,0.507,0.487
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",49368,0.8,0.794,0.778,0.775,0.792,0.79,0.516,0.512,0.508,0.515,0.504,0.504
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",30101,0.804,0.795,0.776,0.767,0.791,0.786,0.519,0.517,0.511,0.52,0.509,0.508
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",53868,0.801,0.795,0.775,0.774,0.797,0.799,0.502,0.506,0.502,0.507,0.502,0.501
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",231,0.792,0.805,0.805,0.81,0.797,0.758,0.416,0.446,0.468,0.463,0.468,0.468
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",8229,0.8,0.804,0.8,0.796,0.795,0.795,0.499,0.503,0.498,0.499,0.496,0.505
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",191,0.911,0.921,0.859,0.78,0.827,0.927,0.471,0.455,0.518,0.634,0.681,0.508
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",7878,0.8,0.793,0.769,0.778,0.793,0.794,0.512,0.505,0.505,0.506,0.492,0.496
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",11914,0.799,0.796,0.786,0.783,0.798,0.8,0.499,0.504,0.503,0.503,0.504,0.499
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",67,0.612,0.552,0.612,0.716,0.642,0.597,0.791,0.746,0.687,0.642,0.522,0.582
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",5648,0.799,0.795,0.798,0.799,0.801,0.796,0.5,0.501,0.5,0.493,0.498,0.492
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",723,0.799,0.777,0.78,0.787,0.752,0.781,0.479,0.481,0.473,0.474,0.484,0.498
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",3667,0.782,0.791,0.779,0.776,0.776,0.797,0.53,0.517,0.515,0.526,0.488,0.494
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",6758,0.798,0.796,0.793,0.792,0.799,0.799,0.5,0.507,0.5,0.503,0.499,0.497
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",2067,0.798,0.798,0.796,0.787,0.791,0.798,0.503,0.494,0.498,0.5,0.497,0.499
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",228,0.68,0.715,0.781,0.842,0.776,0.794,0.325,0.346,0.373,0.513,0.5,0.417
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",7252,0.794,0.79,0.798,0.801,0.802,0.801,0.506,0.503,0.499,0.504,0.499,0.499
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",14977,0.801,0.793,0.791,0.785,0.796,0.799,0.499,0.505,0.502,0.502,0.498,0.499
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",7275,0.798,0.797,0.785,0.793,0.799,0.8,0.5,0.504,0.502,0.5,0.496,0.501
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",498,0.811,0.815,0.765,0.723,0.693,0.769,0.478,0.466,0.456,0.466,0.434,0.428
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",99,0.778,0.677,0.687,0.697,0.525,0.697,0.586,0.545,0.434,0.303,0.444,0.737
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",74,0.635,0.77,0.865,0.851,0.622,0.541,0.527,0.5,0.473,0.568,0.77,0.838
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",125,0.872,0.832,0.856,0.864,0.856,0.664,0.584,0.592,0.64,0.6,0.504,0.32
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",168,0.893,0.875,0.839,0.804,0.863,0.893,0.536,0.565,0.625,0.673,0.512,0.571
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",98,0.878,0.878,0.918,0.888,0.857,0.969,0.408,0.459,0.469,0.398,0.459,0.561
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2504,0.765,0.752,0.732,0.697,0.677,0.706,0.46,0.448,0.434,0.415,0.377,0.365
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,alle,162441,0.8,0.795,0.782,0.78,0.796,0.797,0.505,0.507,0.503,0.507,0.501,0.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Starkregenlage,787,0.821,0.809,0.817,0.82,0.821,0.799,0.475,0.483,0.501,0.489,0.524,0.534
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,keine Starkregenlage,161654,0.8,0.795,0.782,0.78,0.795,0.797,0.505,0.507,0.503,0.507,0.501,0.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)",55,0.564,0.618,0.618,0.636,0.8,0.782,0.491,0.527,0.6,0.545,0.636,0.636
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand ruhig,92705,0.802,0.796,0.778,0.774,0.795,0.796,0.507,0.509,0.504,0.51,0.504,0.502
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand Anstieg,26445,0.798,0.793,0.782,0.787,0.797,0.798,0.503,0.504,0.501,0.5,0.497,0.498
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand Welle unterwegs,12840,0.791,0.793,0.789,0.787,0.791,0.798,0.505,0.504,0.502,0.511,0.498,0.498
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Zustand fallend,30451,0.8,0.795,0.792,0.79,0.797,0.799,0.5,0.504,0.502,0.502,0.497,0.497
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe unter 2 MQ,136788,0.8,0.794,0.78,0.778,0.796,0.796,0.507,0.508,0.504,0.509,0.502,0.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe 2 bis 8 MQ,23818,0.799,0.799,0.794,0.793,0.798,0.801,0.499,0.502,0.499,0.498,0.496,0.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,Stufe ab 8 MQ,1835,0.791,0.796,0.792,0.784,0.75,0.807,0.451,0.456,0.465,0.495,0.508,0.491
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"trocken (jetzt unter 0,3 MQ)",49368,0.8,0.794,0.779,0.775,0.792,0.792,0.516,0.512,0.507,0.515,0.503,0.502
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, trocken",30114,0.804,0.795,0.776,0.768,0.791,0.787,0.519,0.517,0.51,0.52,0.509,0.507
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, unter 2 MQ, nicht trocken",53983,0.8,0.795,0.775,0.774,0.798,0.799,0.502,0.506,0.502,0.507,0.502,0.499
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, trocken",218,0.83,0.826,0.817,0.803,0.798,0.83,0.381,0.417,0.44,0.459,0.472,0.45
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, 2 bis 8 MQ, nicht trocken",8131,0.8,0.804,0.8,0.795,0.798,0.8,0.5,0.503,0.498,0.499,0.497,0.501
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"ruhig, ab 8 MQ, nicht trocken",174,0.902,0.902,0.845,0.718,0.649,0.851,0.489,0.471,0.529,0.667,0.753,0.546
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, trocken",7879,0.8,0.793,0.769,0.779,0.794,0.796,0.512,0.506,0.505,0.505,0.492,0.492
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, unter 2 MQ, nicht trocken",11954,0.799,0.796,0.786,0.787,0.799,0.798,0.499,0.504,0.502,0.501,0.502,0.502
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, trocken",66,0.636,0.576,0.606,0.712,0.652,0.773,0.788,0.742,0.682,0.636,0.5,0.394
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken",5626,0.799,0.795,0.797,0.797,0.802,0.802,0.5,0.502,0.498,0.496,0.496,0.497
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken",705,0.793,0.782,0.779,0.801,0.789,0.806,0.478,0.481,0.479,0.465,0.477,0.501
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, trocken",3668,0.782,0.791,0.78,0.777,0.778,0.799,0.531,0.517,0.515,0.527,0.488,0.495
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, unter 2 MQ, nicht trocken",6767,0.798,0.796,0.792,0.793,0.799,0.798,0.5,0.506,0.5,0.503,0.498,0.495
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, 2 bis 8 MQ, nicht trocken",2058,0.798,0.799,0.795,0.785,0.791,0.801,0.504,0.493,0.497,0.503,0.503,0.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Welle unterwegs, ab 8 MQ, nicht trocken",228,0.68,0.711,0.781,0.811,0.737,0.776,0.325,0.346,0.382,0.544,0.526,0.531
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, trocken",7252,0.794,0.79,0.798,0.802,0.801,0.802,0.506,0.503,0.5,0.504,0.5,0.497
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken",14992,0.801,0.793,0.791,0.784,0.796,0.798,0.499,0.505,0.501,0.502,0.498,0.499
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken",7262,0.797,0.797,0.785,0.792,0.8,0.8,0.5,0.504,0.503,0.499,0.494,0.499
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken",496,0.812,0.815,0.764,0.722,0.692,0.772,0.474,0.466,0.456,0.462,0.435,0.403
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, 2 bis 8 MQ, nicht trocken, Starkregenlage",102,0.784,0.686,0.716,0.706,0.637,0.706,0.578,0.529,0.441,0.294,0.343,0.441
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"Anstieg, ab 8 MQ, nicht trocken, Starkregenlage",71,0.648,0.761,0.845,0.958,0.845,0.704,0.535,0.507,0.493,0.465,0.606,0.577
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, unter 2 MQ, nicht trocken, Starkregenlage",125,0.872,0.832,0.856,0.864,0.856,0.656,0.584,0.592,0.64,0.592,0.504,0.312
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, 2 bis 8 MQ, nicht trocken, Starkregenlage",168,0.893,0.875,0.839,0.804,0.863,0.911,0.536,0.565,0.625,0.673,0.512,0.548
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,"fallend, ab 8 MQ, nicht trocken, Starkregenlage",98,0.878,0.878,0.918,0.888,0.888,0.99,0.408,0.459,0.469,0.398,0.459,0.551
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,gemessen ab HQ2/2 (nachträglich ausgewählt),2504,0.762,0.751,0.732,0.702,0.679,0.759,0.462,0.452,0.442,0.414,0.38,0.351
