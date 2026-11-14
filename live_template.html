@@ -115,6 +115,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <button class="btn" id="theme" type="button">Darstellung: automatisch</button>
 </header>
 <div class="notice"><b>Eigene Modellrechnung, keine amtliche Warnung.</b> Amtliche Hochwasserinformationen: <a href="https://www.hochwasser.rlp.de" target="_blank" rel="noopener">hochwasser.rlp.de</a>. Die Seite zeigt den Stand der letzten Rechnung (<code>python live.py</code>), sie lädt nichts nach.</div>
+<div class="notice" id="alt" style="display:none"></div>
 <div class="cards" id="cards" role="group" aria-label="Pegel"></div>
 <section class="panel" aria-label="Pegel im Detail">
   <h2 id="dn"></h2>
@@ -130,6 +131,10 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <div class="legs" id="leg-r"></div>
   <div class="chart" id="ch-r"></div>
   <p class="note" id="note-r"></p>
+  <div id="sec-a"><h2 style="margin-top:12px">Ausblick 7 Tage</h2>
+  <div class="legs" id="leg-a"></div>
+  <div class="chart" id="ch-a"></div>
+  <p class="note" id="note-a"></p></div>
   <h2 style="margin-top:12px">Wird die Warnschwelle erreicht?</h2>
   <div class="tw" id="warn"></div>
   <p class="note" id="note-w"></p>
@@ -339,6 +344,43 @@ function detail() {
 }
 /* Zelle der Rückrechnung: Vorwarnung (10 %) und Warnung (50 %), je ununterbrochen bis zum Überschreiten (v) oder angekündigt und vorher wieder zurückgenommen (e bis l) */
 const hrs = v => v >= 48 ? "≥ 48 h" : v < 1 ? Math.round(v * 60) + " min" : nf(Math.floor(v * 2) / 2, Math.floor(v * 2) % 2 ? 1 : 0) + " h";   // auf halbe Stunden abgerundet
+function ausblick() {                                      // 7 Tage: eine Linie ohne Band, Regen aus ICON-D2 -> ICON-EU -> ICON global
+  const A = D.ausblick, sec = $("#sec-a");
+  if (!A || !A.pegel[state.k]) { sec.style.display = "none"; return; }
+  sec.style.display = "";
+  const k = state.k, r = D.res[k], a = A.pegel[k], cm = state.unit === "cm", dn = r.dn;
+  const fmt = v => v == null ? "–" : cm ? nf(Math.round(v), 0) + " cm" : qf(v) + " m³/s";
+  const y0 = cm ? r.w0 : r.q0, v = cm ? a.w : a.q, xa = -72, xb = A.stunden;
+  const obs = (cm ? r.obs_w : r.obs_q).map((x, j) => [(j - (r.obs_q.length - 1)) / 4, x]).filter(p => p[1] != null);
+  const line = [[0, y0], ...v.map((x, l) => [l + 1, x])];
+  const ths = r.thresholds.map(t => ({ ...t, y: cm ? t.w : t.q }));
+  let ymax = Math.max(...obs.map(p => p[1]), ...v), ymin = Math.min(...obs.map(p => p[1]), ...v);
+  const nx = ths.find(t => t.y > ymax); if (nx && nx.y < ymax * 1.35) ymax = nx.y;
+  const yt = niceTicks(cm ? Math.max(0, ymin - 0.1 * (ymax - ymin + 10)) : 0, ymax * 1.05, 4), Y0 = yt[0], Y1 = yt[yt.length - 1];
+  const cl = p => [p[0], Math.max(Y0, Math.min(Y1, p[1]))];
+  const ticks = []; for (let h = Math.ceil((T0 + xa * 3600000) / 86400000) * 86400000; h <= T0 + xb * 3600000; h += 86400000) { const d = new Date(h); ticks.push({ v: (h - T0) / 3600000, l: WD[d.getUTCDay()], l2: `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.` }); }
+  const E = A.ende, vl = [{ x: 0, col: "var(--ink)", dash: false, label: "jetzt" }];
+  if (E["ICON-D2"] != null) vl.push({ x: E["ICON-D2"], label: "ab hier ICON-EU" });
+  if (E["ICON-EU"] != null && E["ICON global"] != null) vl.push({ x: E["ICON-EU"], label: "ICON global" });
+  plot($("#ch-a"), { x: { min: xa, max: xb, ticks }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
+    hlines: ths.map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: t.info, label: `${t.name} ${cm ? nf(t.w, 0) + " cm" : qf(t.q) + " m³/s"}` })),
+    lines: [{ pts: line.map(cl), col: "var(--c-run)", dash: true }, { pts: obs.map(cl), col: "var(--c-obs)" }], vlines: vl,
+    tip: x => { const l = Math.round(x), rows = [];
+      if (l <= 0) { const j = r.obs_q.length - 1 + l * 4; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cm ? r.obs_w[j] : r.obs_q[j]) }); }
+      else if (l <= v.length) rows.push({ col: "var(--c-run)", name: "Ausblick", val: fmt(v[l - 1]) });
+      return { t: fdt(T0 + l * 3600000) + (l > 0 ? ` · in ${nf(l / 24, 1)} Tagen` : ""), x: l, rows }; } }, 240);
+  $("#leg-a").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-run)"></i>Ausblick (eine Rechnung, ohne Unsicherheitsband)</span>`;
+  const tage = a.regen_tag.filter(([d]) => d >= D.meta.t0.slice(0, 10)).map(([d, mm]) => `${WD[new Date(parse(d + " 12:00")).getUTCDay()]} ${nf(mm, 0)} mm`).join(" · ");
+  const mx = Math.max(...v), im = v.indexOf(mx);
+  $("#note-a").innerHTML = `Höchstwert im Ausblick: <b>${fmt(mx)}</b> am ${WD[new Date(T0 + (im + 1) * 3600000).getUTCDay()]} ${fdt(T0 + (im + 1) * 3600000)}. Regen im Einzugsgebiet je Tag: ${tage}. ` +
+    `Regen bis ${nf(E["ICON-D2"] || 48, 0)} h aus ICON-D2, danach aus ICON-EU${E["ICON global"] != null ? `, ab ${nf(E["ICON-EU"], 0)} h aus ICON global` : ""}. ` +
+    `<b>Nur zur Orientierung:</b> Für mehr als 48 h gibt es keine Rückrechnung und kein Band, die Regenvorhersage wird mit jedem Tag unsicherer, und nach 48 h läuft die Rechnung ohne neue Messwerte weiter. Die Warnung oben gilt nur für 48 h.`;
+}
+function alter() {                                        // Hinweis, wenn die Rechnung alt ist (Abruf oder Lauf gescheitert): die Seite zeigt dann den letzten Stand
+  const h = (Date.now() - (T0 - 3600000)) / 3600000, el = $("#alt");
+  if (h > 3) { el.style.display = ""; el.innerHTML = `<b>Stand veraltet:</b> Die letzte Rechnung ist ${h < 48 ? nf(h, 0) + " Stunden" : nf(h / 24, 0) + " Tage"} alt (Ausgabe ${fdt(T0)} MEZ). Die Werte unten zeigen nicht die aktuelle Lage.`; }
+  else el.style.display = "none";
+}
 function wcell(v10, e10, l10, v50, e50, l50, pmax) {
   if (!(e10 > 0)) return `<b>nicht gewarnt</b><small class="sub">höchstens ${pctTxt(pmax)}</small>`;
   const one = (nm, v, e, l) => v > 0 ? `${nm} <b>${hrs(v)}</b> vorher${e > v + 1 ? ` (zuerst schon ${hrs(e)} vorher)` : ""}` : e > 0 ? `${nm} ${hrs(e).replace(" h", "")}–${hrs(l)} vorher, dann zurückgenommen` : `keine ${nm}`;
@@ -379,7 +421,9 @@ function theme() {
 const m = D.meta;
 $("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> · Pegel bis ${fdt(parse(m.t0)).slice(7)} · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ, Ensemble ${m.members - 1} Läufe ICON-D2-EPS · Vorhersage 48 h`;
 if (!D.res[state.k]) state.k = "PZ";
-theme(); cards(); detail(); how();
+const detail0 = detail; detail = () => { detail0(); ausblick(); };
+theme(); cards(); detail(); how(); alter(); setInterval(alter, 300000);
+if (location.protocol.startsWith("http")) setTimeout(() => location.reload(), 900000);   // im Container: alle 15 min den neuen Stand holen
 let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(detail, 120); });
 </script>
 </body>
