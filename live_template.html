@@ -8,21 +8,21 @@
 :root{
   color-scheme:light;
   --page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--wash:rgba(11,11,11,.05);
-  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
+  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-scn:#b4530a;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
   --th0:#52514e;--th1:#a68a00;--th2:#d26a0c;--th3:#c81e28;--th4:#8a2d87;--th5:#5b1a59;
 }
 @media (prefers-color-scheme: dark){
   :root:where(:not([data-theme="light"])){
     color-scheme:dark;
     --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
-    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
     --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
-  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
   --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
 }
 *{box-sizing:border-box}
@@ -127,6 +127,17 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
     <label class="chk" id="opt-hvz-l"><input type="checkbox" id="opt-hvz" checked> Vorhersage der HVZ</label></div>
   <div class="legs" id="leg"></div>
   <div class="chart" id="ch"></div>
+  <details class="more" id="dt-scn"><summary>Szenario: Was passiert bei einer bestimmten Regenmenge?</summary>
+    <div class="tools" style="margin-top:8px">
+      <label class="chk">Regen im Einzugsgebiet <input type="number" id="scn-mm" min="0" max="300" step="5" value="50" style="width:5em;font:inherit;padding:3px 6px"> mm</label>
+      <label class="chk">Beginn <select id="scn-t0" style="font:inherit;padding:3px 6px"></select></label>
+      <label class="chk">Dauer <select id="scn-d" style="font:inherit;padding:3px 6px"></select></label>
+      <span class="seg" id="seg-scn" role="radiogroup" aria-label="Verhältnis zur Regenvorhersage"></span>
+      <button class="btn" id="scn-go" type="button">Rechnen</button>
+      <button class="btn" id="scn-off" type="button">Zurücksetzen</button>
+    </div>
+    <p class="note" id="scn-out"></p>
+  </details>
   <h2 style="margin-top:10px">Regen im Einzugsgebiet</h2>
   <div class="legs" id="leg-r"></div>
   <div class="chart" id="ch-r"></div>
@@ -142,6 +153,9 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <details class="more" id="dt-how"><summary>Wie wird gerechnet, und wie verlässlich ist das?</summary><div id="how"></div></details>
 </section>
 </div>
+<script>
+/*__FC_CORE__*/
+</script>
 <script>
 "use strict";
 const D = /*__DATA__*/null;
@@ -212,7 +226,7 @@ const LO = 1, Q20 = 2, MED = 5, Q80 = 8, HI = 9;
 const T0 = parse(D.meta.t0), H = 192;
 const state = { k: "PZ", unit: "cm", runs: false, none: false, hvz: true };
 try { const s = JSON.parse(localStorage.getItem("pruem-live") || "{}"); Object.assign(state, s); } catch (e) {}
-const save = () => { try { localStorage.setItem("pruem-live", JSON.stringify(state)); } catch (e) {} };
+const save = () => { try { localStorage.setItem("pruem-live", JSON.stringify({ ...state, scn: undefined })); } catch (e) {} };
 const STATE = ["ruhig", "Anstieg", "Welle von oben unterwegs", "fallend"];
 function wOfQ(dn, q) {
   const c = D.rating[dn], n = c.q.length, x = Math.log(Math.max(q, 1e-4)), lq = c.q.map(Math.log), w = c.w;
@@ -297,9 +311,11 @@ function detail() {
   const d2 = cm ? r.runs_w["ICON-D2"] : r.runs_q["ICON-D2"];
   lines.push({ pts: [[0, y0], ...d2.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", dash: true });
   lines.push({ pts: ser(MED), col: "var(--c-full)" });
+  const scn = state.scn && state.scn.k === k ? state.scn : null;
+  if (scn) lines.push({ pts: [[0, y0], ...(cm ? scn.w : scn.q).map((x, l) => [(l + 1) / 4, x])], col: "var(--c-scn)" });
   lines.push({ pts: obs, col: "var(--c-obs)" });
   const ths = r.thresholds.map(t => ({ ...t, y: cm ? t.w : t.q }));
-  const vals = [...obs.map(p => p[1]), ...ser(MED).map(p => p[1]), ...ser(HI).map(p => p[1])];
+  const vals = [...obs.map(p => p[1]), ...ser(MED).map(p => p[1]), ...ser(HI).map(p => p[1]), ...(scn ? (cm ? scn.w : scn.q) : [])];
   let ymax = Math.max(...vals), ymin = Math.min(...obs.map(p => p[1]), ...ser(LO).map(p => p[1]));
   const nx = ths.find(t => t.y > ymax); if (nx && nx.y < ymax * 1.35) ymax = nx.y;
   const yt = niceTicks(cm ? Math.max(0, ymin - 0.1 * (ymax - ymin + 10)) : 0, ymax * 1.05, 4), Y0 = yt[0], Y1 = yt[yt.length - 1];
@@ -313,9 +329,11 @@ function detail() {
     tip: x => { const l = Math.round(x * 4), rows = [];
       if (l <= 0) { const j = r.obs_q.length - 1 + l; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cv(r.obs_q[j])) }); }
       else if (l <= H) { rows.push({ col: "var(--c-full)", name: "Median", val: fmt(cv(r.band_q[MED][l - 1])) }, { col: "var(--c-full)", name: "80 % der Fälle", val: `${cm ? nf(Math.round(cv(r.band_q[LO][l - 1])), 0) : qf(r.band_q[LO][l - 1])} bis ${fmt(cv(r.band_q[HI][l - 1]))}` }, { col: "var(--c-run)", name: "ICON-D2-Hauptlauf", val: fmt(cv(r.runs_q["ICON-D2"][l - 1])) });
-        if (state.none) rows.push({ col: "var(--c-none)", name: "ohne Regenvorhersage", val: fmt(cv(r.band0_q[MED][l - 1])) }); }
+        if (state.none) rows.push({ col: "var(--c-none)", name: "ohne Regenvorhersage", val: fmt(cv(r.band0_q[MED][l - 1])) });
+        if (scn) rows.push({ col: "var(--c-scn)", name: "Szenario", val: fmt(cv(scn.q[l - 1])) }); }
       return { t: fdt(T0 + l * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 290);
   $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="dash" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
+    (scn ? `<span><i style="--col:var(--c-scn)"></i>Szenario (${nf(scn.mm, 0)} mm)</span>` : "") +
     (state.runs ? `<span><i class="thin" style="--col:var(--c-run)"></i>Ensemble-Läufe</span>` : "") + (state.none ? `<span><i class="dash" style="--col:var(--c-none)"></i>ohne Regenvorhersage (wie bisher)</span>` : "") +
     (hvzOn && cm ? `<span><i class="dash" style="--col:var(--c-hvz)"></i>Vorhersage der HVZ (Median, 10–90 %), Stand ${fdt(parse(r.hvz.time))}</span>` : "");
   // Regen
@@ -344,6 +362,50 @@ function detail() {
 }
 /* Zelle der Rückrechnung: Vorwarnung (10 %) und Warnung (50 %), je ununterbrochen bis zum Überschreiten (v) oder angekündigt und vorher wieder zurückgenommen (e bis l) */
 const hrs = v => v >= 48 ? "≥ 48 h" : v < 1 ? Math.round(v * 60) + " min" : nf(Math.floor(v * 2) / 2, Math.floor(v * 2) % 2 ? 1 : 0) + " h";   // auf halbe Stunden abgerundet
+/* Szenario: vorgegebene Regenmenge (Gebietsmittel, gleichmäßig über das ganze Einzugsgebiet und den Zeitraum) statt oder zusätzlich zur
+   Regenvorhersage; dieselbe Kette wie in Python (forecast_core.js), abgeglichen wie der ICON-D2-Hauptlauf (Faktor aus der Fehlerstatistik). */
+function simRun(k, edit) {
+  const S = D.sim, fl = { rain: true, q: S.fl.q, api0: S.fl.api0, storm: S.fl.storm, p: {} };
+  Object.keys(S.fl.p).forEach(x => { fl.p[x] = S.fl.p[x].slice(); });
+  if (edit) edit(fl.p);
+  const out = FC.forecast(S.set, fl, k, FC.A, "kette_vorhersage");
+  return out ? Array.from(out[k].slice(FC.A + 1)) : null;
+}
+function szenario() {
+  const k = state.k, r = D.res[k], S = D.sim, out = $("#scn-out");
+  const mm = Math.max(0, +$("#scn-mm").value || 0), t0 = +$("#scn-t0").value, dur = +$("#scn-d").value, mode = state.scnMode || "statt";
+  const base = simRun(k), j0 = FC.A + Math.round(S.consts.LEAD_H * 4);
+  const raw = simRun(k, p => FC.chain(k).filter(x => p[x]).forEach(x => {
+    if (mode === "statt") for (let m = 1; m <= FC.H; m++) p[x][j0 + m] = 0;
+    for (let m = t0 * 4 + 1; m <= Math.min((t0 + dur) * 4, FC.H); m++) p[x][j0 + m] += mm / dur;
+  }));
+  if (!base || !raw) { out.textContent = "Für diesen Pegel lässt sich gerade kein Szenario rechnen (Messwerte fehlen)."; return; }
+  const d = S.offset[k], cor = r.runs_q["ICON-D2"], q = raw.map((v, l) => Math.max((Math.max(v, 0) + d) * (cor[l] + d) / (Math.max(base[l], 0) + d) - d, 0));
+  const used = Math.min(dur, FC.H / 4 - t0) / dur;
+  state.scn = { k, mm, t0, dur, mode, q, w: q.map(v => wOfQ(r.dn, v)), used };
+  detail();
+}
+function szenarioText() {
+  const out = $("#scn-out"), k = state.k, r = D.res[k], s = state.scn && state.scn.k === k ? state.scn : null;
+  if (!D.sim) { $("#dt-scn").style.display = "none"; return; }
+  if (!s) { out.innerHTML = "Regenmenge, Beginn und Dauer wählen und „Rechnen“ drücken. Der Regen fällt gleichmäßig über das ganze Einzugsgebiet des gewählten Pegels und über den Zeitraum."; return; }
+  const mx = Math.max(...s.q), im = s.q.indexOf(mx), wmx = wOfQ(r.dn, mx);
+  const hit = r.thresholds.filter(t => !t.now && mx >= t.q).map(t => t.name), top = r.thresholds.filter(t => t.q > mx)[0];
+  out.innerHTML = `<b>Szenario ${nf(s.mm, 0)} mm in ${s.dur} h, Beginn ${s.t0 ? "in " + s.t0 + " h" : "jetzt"}, ${s.mode === "statt" ? "statt der" : "zusätzlich zur"} Regenvorhersage:</b> ` +
+    `Höchststand in 48 h <b>${nf(Math.round(wmx), 0)} cm</b> (${qf(mx)} m³/s) am ${hmShort(T0 + (im + 1) * 900000, T0)}${im >= s.q.length - 2 ? ", am Ende des Zeitraums noch steigend" : ""}. ` +
+    (hit.length ? `Erreicht: <b>${hit.join(", ")}</b>. ` : `Bleibt unter ${top ? top.name + " (" + nf(top.w, 0) + " cm)" : "allen Schwellen"}. `) +
+    (s.used < 1 ? `Nur ${nf(s.used * 100, 0)} % des Regens fallen in die 48 h. ` : "") +
+    `Eine Rechnung ohne Unsicherheitsband: gleichmäßiger Regen über Gebiet und Zeitraum, in Wirklichkeit fällt er ungleichmäßig, und ein Schauerkern über einem Teilgebiet gibt höhere Scheitel. Keine Warnung.`;
+}
+function szenarioInit() {
+  if (!D.sim) return;
+  FC.setConsts(D.sim.consts);
+  $("#scn-t0").innerHTML = [0, 3, 6, 12, 18, 24, 36].map(h => `<option value="${h}">${h ? "in " + h + " h" : "jetzt"}</option>`).join("");
+  $("#scn-d").innerHTML = [1, 3, 6, 12, 24, 48].map(h => `<option value="${h}" ${h === 12 ? "selected" : ""}>${h} h</option>`).join("");
+  segRadio("#seg-scn", "scn", [["statt", "statt der Vorhersage"], ["plus", "zusätzlich"]], state.scnMode || "statt", v => { state.scnMode = v; });
+  $("#scn-go").onclick = szenario;
+  $("#scn-off").onclick = () => { state.scn = null; detail(); };
+}
 function ausblick() {                                      // 7 Tage: eine Linie ohne Band, Regen aus ICON-D2 -> ICON-EU -> ICON global
   const A = D.ausblick, sec = $("#sec-a");
   if (!A || !A.pegel[state.k]) { sec.style.display = "none"; return; }
@@ -421,8 +483,8 @@ function theme() {
 const m = D.meta;
 $("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> · Pegel bis ${fdt(parse(m.t0)).slice(7)} · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ, Ensemble ${m.members - 1} Läufe ICON-D2-EPS · Vorhersage 48 h`;
 if (!D.res[state.k]) state.k = "PZ";
-const detail0 = detail; detail = () => { detail0(); ausblick(); };
-theme(); cards(); detail(); how(); alter(); setInterval(alter, 300000);
+const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); };
+szenarioInit(); theme(); cards(); detail(); how(); alter(); setInterval(alter, 300000);
 if (location.protocol.startsWith("http")) setTimeout(() => location.reload(), 900000);   // im Container: alle 15 min den neuen Stand holen
 let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(detail, 120); });
 </script>

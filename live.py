@@ -288,6 +288,21 @@ def wquant(x: np.ndarray, w: np.ndarray, q) -> np.ndarray:
     return np.interp(q, c, x[o])
 
 
+def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
+    """Alles, was die Seite für die Szenario-Rechnung im Browser braucht (forecast_core.js): Modellsatz, Konstanten und das jetzige Fenster im
+    Format der Hochwasserfenster (chain_floods.json): Abfluss ab t0 - 48 h, Regen ab t0 - 48 h - 72 h bis t0 + 48 h (nach t0 der ICON-D2-Hauptlauf)."""
+    doc = json.loads((HERE / "data" / "chain_models.json").read_text(encoding="utf-8"))
+    a, b = i0 - C.A, i0 + C.H
+    r0 = a - C.LEAD
+    fr = build_frames(p_d2, Qn)
+    fl = dict(rain=True,
+              q={C.DN[k]: [None if not np.isfinite(v) else round(float(v), 4) for v in Qn[C.DN[k]][a:b + 1]] for k in C.ORDER},
+              p={k: [round(float(v), 4) for v in p_d2[k][r0:b + 1]] for k in C.RAINK},
+              api0={k: [float(fr[k]["api"][r0 - 1]), float(fr[k]["api_s"][r0 - 1])] for k in C.RAINK},
+              storm={k: "0" * C.A + ("1" if C.is_storm(k, np.array([i0]))[0] else "0") for k in C.ORDER})
+    return dict(consts=doc["consts"], set=doc["sets"]["alle"], fl=fl, offset={k: float(offs[k]) for k in C.ORDER})
+
+
 OUTLOOK_H = 168                                                  # Ausblick in Stunden
 
 
@@ -502,9 +517,10 @@ def build(raw: Path, out_html: Path) -> dict:
     meta = dict(t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
-    data = dict(meta=meta, res=res, ausblick=aus, lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
+    data = dict(meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
                 verif=_verif_summary(), check=_check_summary(), warncheck=_warn_check())
     tpl = (HERE / "live_template.html").read_text(encoding="utf-8")
+    tpl = tpl.replace("/*__FC_CORE__*/", (HERE / "forecast_core.js").read_text(encoding="utf-8"))
     html = tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False))
     out_html.parent.mkdir(parents=True, exist_ok=True)
     out_html.write_text(html, encoding="utf-8")
