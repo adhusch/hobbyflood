@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routing-Modell Prüm</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--wash:rgba(11,11,11,.05);--map:#eef0ea;--water:#b7d3f6;
+  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-tied:#eb6834;--c-lag:#1baf7a;--c-pers:#898781;--c-lake:#6250d6;--c-rain:#c2358a;
+  --s0:#cde2fb;--s1:#9ec5f4;--s2:#6da7ec;--s3:#3987e5;--s4:#256abf;--s5:#184f95;--s6:#0d366b;
+  --th0:#52514e;--th1:#a68a00;--th2:#d26a0c;--th3:#c81e28;--th4:#8a2d87;--th5:#5b1a59;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);--map:#222421;--water:#1c5cab;
+    --c-obs:#f0efec;--c-full:#3987e5;--c-tied:#d95926;--c-lag:#199e70;--c-pers:#898781;--c-lake:#9085e9;--c-rain:#e0679f;
+    --s0:#0d366b;--s1:#184f95;--s2:#1c5cab;--s3:#3987e5;--s4:#6da7ec;--s5:#9ec5f4;--s6:#cde2fb;
+    --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);--map:#222421;--water:#1c5cab;
+  --c-obs:#f0efec;--c-full:#3987e5;--c-tied:#d95926;--c-lag:#199e70;--c-pers:#898781;--c-lake:#9085e9;--c-rain:#e0679f;
+  --s0:#0d366b;--s1:#184f95;--s2:#1c5cab;--s3:#3987e5;--s4:#6da7ec;--s5:#9ec5f4;--s6:#cde2fb;
+  --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1380px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+header .btn{align-self:flex-start}
+h1{font-size:21px;margin:0 0 4px;font-weight:650;line-height:1.2}
+h2{font-size:15px;margin:0 0 6px;font-weight:650}
+.sub{color:var(--ink2);margin:0;font-size:14px;max-width:80ch}
+.btn{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;min-height:34px}
+.btn:hover{background:var(--wash)}
+.btn:focus-visible,.chip input:focus-visible+span,.seg input:focus-visible+span,.tabs button:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--c-full);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:0 0 12px}
+.chip{position:relative}
+.chip input,.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:block;border:1px solid var(--border);border-radius:9px;padding:4px 10px;background:var(--surface);font-size:13px;line-height:1.3}
+.chip b{font-weight:650}
+.chip small{display:block;color:var(--ink2);font-size:12px}
+.chip input:checked+span{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.mapcard{padding:0;overflow:hidden}
+.maptools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg label{position:relative}
+.seg span{display:block;padding:4px 10px;font-size:13px;cursor:pointer;min-height:30px;line-height:22px}
+.seg input:checked+span{background:var(--ink);color:var(--surface)}
+.mapbox{position:relative;height:620px;background:var(--map);touch-action:none;overflow:hidden;cursor:grab}
+.mapbox.drag{cursor:grabbing}
+#tiles,#svg{position:absolute;inset:0;width:100%;height:100%}
+#tiles img{position:absolute;max-width:none;pointer-events:none}
+:root[data-theme="dark"] #tiles{filter:brightness(.7) saturate(.8)}
+@media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])) #tiles{filter:brightness(.7) saturate(.8)}}
+.timebar{display:flex;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.timebar input[type=range]{flex:1;min-width:160px;accent-color:var(--c-full)}
+.timebar .t{font-variant-numeric:tabular-nums;min-width:11ch;font-weight:600}
+.legend{position:absolute;left:10px;bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;max-width:260px}
+.legend .bar{display:flex;height:9px;margin:4px 0 2px;border-radius:2px;overflow:hidden}
+.legend .bar i{flex:1}
+.legend .row{display:flex;justify-content:space-between;color:var(--ink2)}
+.legend .k{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--ink2)}
+.warn{position:absolute;right:10px;top:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12px;color:var(--ink2);display:none;max-width:240px}
+.zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+.zoom .btn{width:34px;padding:0;font-size:18px;line-height:1}
+.attr{position:absolute;right:54px;bottom:4px;font-size:10.5px;color:var(--ink2);background:color-mix(in srgb,var(--surface) 75%,transparent);padding:0 4px;border-radius:3px}
+.tabs{display:flex;gap:4px;margin:-2px 0 10px;flex-wrap:wrap}
+.tabs button{font:inherit;font-size:13.5px;color:var(--ink2);background:transparent;border:1px solid transparent;border-radius:8px;padding:5px 10px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--border);background:var(--wash);font-weight:600}
+.kv{display:flex;flex-wrap:wrap;gap:6px 22px;margin:2px 0 8px}
+.issue-row{display:flex;gap:10px;align-items:center;margin:4px 0;flex-wrap:wrap}
+.issue-row label{font-size:13px;color:var(--ink2)}
+.issue-row input{flex:1;min-width:160px;accent-color:var(--c-rain)}
+.issue-row span{min-width:15ch;font-variant-numeric:tabular-nums;font-size:13.5px}
+.issue-row small{color:var(--ink2)}
+.issue-btns{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}
+.regime{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--grid);color:var(--ink2);margin-left:4px;white-space:nowrap}
+.regime.storm{border-color:var(--c-rain);color:var(--c-rain);font-weight:600}
+.issue-btns .btn{min-height:30px;padding:3px 10px;font-size:13px}
+.segs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.kv div{min-width:96px}
+.kv .k{color:var(--ink2);font-size:12px}
+.kv .v{font-size:18px;font-weight:650;font-variant-numeric:tabular-nums}
+.kv .v small{font-size:12px;font-weight:500;color:var(--ink2)}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin:4px 0 4px;font-size:12.5px;color:var(--ink2)}
+.leg button{font:inherit;font-size:12.5px;color:var(--ink);background:none;border:0;padding:2px 0;display:flex;align-items:center;gap:6px;cursor:pointer}
+.leg button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}
+.leg i{width:16px;height:0;border-top:2px solid var(--col);display:inline-block}
+.leg i.dash{border-top-style:dashed}
+.chart{position:relative;width:100%;touch-action:pan-y}
+.chart svg{display:block;max-width:100%}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.14);border-radius:8px;padding:7px 9px;font-size:12px;line-height:1.35;z-index:3;display:none;min-width:130px}
+.tip .t{color:var(--ink2);margin-bottom:2px}
+.tip .r{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.tip .r i{width:14px;border-top:2px solid var(--col);display:inline-block;margin-right:5px;vertical-align:middle}
+.tip b{font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:150px}
+th{font-weight:600;color:var(--ink2);font-size:12px;vertical-align:bottom}
+.note{color:var(--ink2);font-size:12.5px;margin:6px 0 0}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:6px;padding:0 6px;font-size:12px;background:var(--wash);white-space:nowrap}
+.badge::before{content:"!";display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:10px;font-weight:700}
+.info{margin-top:14px}
+.info ul{margin:4px 0 0;padding-left:20px;color:var(--ink2);font-size:13.5px}
+.info li{margin:3px 0}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.reach{cursor:pointer}
+.node{cursor:pointer}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.flow{animation:flow 2s linear infinite}
+@media (prefers-reduced-motion: reduce){.flow{animation:none}}
+.lage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
+.tile{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface);min-width:0}
+.tile .k{color:var(--ink2);font-size:12px}
+.tile .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .v small{font-size:12.5px;font-weight:500;color:var(--ink2)}
+.tile .s{color:var(--ink2);font-size:12.5px;line-height:1.35;margin-top:2px}
+.tile .s b{color:var(--ink);font-weight:600}
+.tile.main{border-color:var(--c-full);box-shadow:inset 0 0 0 1px var(--c-full)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--col);margin-right:6px;vertical-align:1px}
+.thr{display:inline-block;width:16px;border-top:2px dashed var(--col);vertical-align:middle;margin-right:6px}
+td.p{text-align:center;min-width:58px}
+td.p.lo{color:var(--muted)}
+td.now{text-align:center;color:var(--ink);font-weight:600}
+tr.wrn td:first-child{font-weight:650}
+tr.wrn td:first-child small{display:block;font-weight:500;color:var(--ink2);font-size:11px}
+tr.grp td{color:var(--ink2);font-size:12px;font-weight:600;text-align:left;padding-top:10px}
+tr.info td{color:var(--muted)}
+th.txt,td.txt{text-align:left;white-space:normal;min-width:96px}
+table.nomin th:first-child,table.nomin td:first-child{min-width:0}
+td.txt{font-size:12.5px;line-height:1.35}
+details.more{border-top:1px solid var(--border);margin-top:12px;padding-top:8px}
+details.more>summary{cursor:pointer;font-weight:600;font-size:14px;list-style-position:inside;padding:2px 0}
+details.more>summary small{font-weight:400;color:var(--ink2)}
+details.more[open]>summary{margin-bottom:6px}
+.legs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 4px;font-size:12.5px;color:var(--ink2)}
+.legs span{display:inline-flex;align-items:center;gap:6px}
+.legs i{width:16px;height:0;border-top:2px solid var(--col);display:inline-block}
+.legs i.dash{border-top-style:dashed}
+.legs i.area{height:10px;border:0;background:var(--col);opacity:.25;border-radius:2px}
+.state{font-size:12px;color:var(--ink2);margin:0 0 4px}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}.mapbox{height:520px}}
+@media (max-width:520px){.lage{grid-template-columns:1fr}.tile .v{font-size:20px}}
+@media (max-width:600px){.zoom{top:8px;bottom:auto;flex-direction:row}.legend{bottom:auto;top:8px;left:8px;max-width:150px;font-size:11px;padding:6px 8px}.legend .k{display:none}.mapbox{height:480px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Routing-Modell Prüm, Enz und Nims</h1>
+    <p class="sub">Welle durchs Netz mit abflussabhängiger Wellengeschwindigkeit c(Q): Kaskade nichtlinearer Speicher je Strecke, angepasst an die LfU-15-Minuten-Daten 1989–2022 und mit Leave-one-flood-out an den neun großen Hochwassern geprüft.</p>
+  </div>
+  <button class="btn" id="theme" type="button" aria-label="Darstellung wechseln">Darstellung: automatisch</button>
+</header>
+<fieldset class="chips" id="chips"><legend style="position:absolute;left:-9999px">Hochwasser</legend></fieldset>
+
+<div class="layout">
+  <section class="card mapcard" aria-label="Karte">
+    <div class="maptools">
+      <span class="seg" id="seg-measure" role="radiogroup" aria-label="Streckenfarbe"></span>
+      <label style="font-size:13px"><input type="checkbox" id="tilesOn"> Hintergrundkarte (OpenStreetMap)</label>
+      <label style="font-size:13px"><input type="checkbox" id="munOn" checked> kommunale Pegel</label>
+    </div>
+    <div class="mapbox" id="mapbox">
+      <div id="tiles"></div>
+      <svg id="svg" role="img" aria-label="Karte des Pegelnetzes mit Strecken und Abflüssen"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="warn" id="warn">Kacheln nicht erreichbar (offline?). Die Karte funktioniert ohne Hintergrund.</div>
+      <div class="zoom"><button class="btn" id="zin" type="button" aria-label="Vergrößern">+</button><button class="btn" id="zout" type="button" aria-label="Verkleinern">−</button><button class="btn" id="zfit" type="button" aria-label="Ausschnitt zurücksetzen" style="font-size:13px">⌂</button></div>
+      <div class="attr" id="attr" style="display:none">© OpenStreetMap-Mitwirkende</div>
+    </div>
+    <div class="timebar">
+      <button class="btn" id="play" type="button" aria-label="Abspielen">▶</button>
+      <input type="range" id="time" min="0" max="288" value="0" step="1" aria-label="Zeit im Hochwasser">
+      <span class="t" id="tlabel"></span>
+      <span class="seg" id="seg-speed" role="radiogroup" aria-label="Geschwindigkeit"></span>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Details">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="panel"></div>
+  </section>
+</div>
+
+<section class="card info">
+  <h2>Hinweise</h2>
+  <ul>
+    <li>Jede Strecke ist eine Kaskade aus n Speichern mit K = Δx / c(Q); Verzögerung L / c(Q), Abflachung über n. Unterlieger = Sockel + Verstärkung · Kaskade(Oberlieger), bei Prümzurlay Summe aus Wiersdorf und Enz (Sinspelt). Details in <code>routing.py</code>.</li>
+    <li>Die Karte zeigt die Strecken mit der Wellengeschwindigkeit bei dem Abfluss, der gerade am Oberlieger gemessen wird. Das Strichmuster bewegt sich mit c. Kreise: Messung; gestrichelter Ring: Simulation (Modell ohne dieses Hochwasser angepasst).</li>
+    <li>Stausee Bitburg (zwischen Echtershausen und Wiersdorf): Speicher mit gesteuerter Abgabe, im Modell nur empirisch als Strecke mit c bis 12 m/s. Bei vier Hochwassern ist Wiersdorf bei 250 cm abgeschnitten; dort fehlen Prüfwerte für Wiersdorf, Prümzurlay wird dann mit Wiersdorf aus Echtershausen (Modell) gerechnet.</li>
+    <li>Vorhersage-Tab: Wasserstand in cm mit der heutigen W-Q-Beziehung (<code>rating.py</code>), Band aus den Fehlern eines stündlichen Vorhersagearchivs 2004–2022 je Zustand, Abflussstufe und Vorlauf (<code>uncert.py</code>, verschachtelt kreuzvalidiert), Schwellen und HQx der Hochwasservorhersagezentrale Rheinland-Pfalz. Die Rechnung im Browser stimmt mit Python überein (<code>test_uncert_js.py</code>).</li>
+    <li>Vorhersage: Ein Pegel zeigt keinen Scheitel, solange an seinen Oberliegern noch keiner gemessen ist (Höchstwert der letzten 48 h mindestens 30 min her, jetzt mindestens 1 % darunter und in den letzten 30 min nicht gestiegen). Die Kette über alle acht Pegel wird beim Verschieben der Ausgabezeit direkt im Browser gerechnet (<code>forecast_core.js</code>, gleiche Rechnung wie <code>chain_fc.py</code>, Übereinstimmung geprüft mit <code>test_forecast_js.py</code>). Die Gütekurven stammen aus der Kreuzvalidierung in <code>chain_fc.py</code>.</li>
+    <li>Flussläufe sind Verbindungslinien durch die Pegelpositionen. Zeit in MEZ (angenommen, wie im Datenpaket).</li>
+  </ul>
+</section>
+</div>
+
+<script>
+/*__FC_CORE__*/
+</script>
+<script>
+"use strict";
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nf = (v, d = 1) => v == null || !isFinite(v) ? "–" : v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+const sg = (v, d = 1) => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + nf(Math.abs(v), d);
+const qf = v => v == null ? "–" : nf(v, v < 10 ? 1 : 0);
+const pad2 = n => String(n).padStart(2, "0");
+const parse = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10), +s.slice(11, 13), +s.slice(14, 16));
+const fdt = ms => { const d = new Date(ms); return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}. ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`; };
+const fdate = ms => { const d = new Date(ms); return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
+const NODE = Object.fromEntries(D.nodes.map(n => [n.name, n]));
+D.reaches.forEach((r, k) => { r.sid = "r" + k; });
+const REACH = Object.fromEntries(D.reaches.map(r => [r.id, r]));
+const GROUP_OF_DN = Object.fromEntries(Object.entries(D.groups).map(([k, g]) => [g.dn, k]));
+const VARS = [["obs", "Messung", "--c-obs", false], ["full", "Modell c(Q)", "--c-full", false], ["tied", "Modell konstantes c", "--c-tied", true], ["lag", "fester Lag", "--c-lag", true]];
+const state = { fi: D.floods.length - 1, i: 0, play: false, speed: 2, measure: "c", sel: "PZ:Wiersdorf", gauge: "Prümzurlay", tab: "reach", tiles: false, mun: true, fcOff: -28, fcSet: "cv", fcMetric2: "skill", fcUnit: "cm", fcRain: "bis", dt: { "dt-rel": false, "dt-var": false, "dt-skill": false }, vis: { obs: true, full: true, tied: true, lag: true, cf_kette_ideal: true, cf_kette_regen_1: true, cf_einzeln: false, cf_pers: false } };
+const cur = () => D.floods[state.fi];
+const tAt = (f, i) => parse(f.t0) + i * 900000;
+
+/* ---------- Modell ---------- */
+function cOf(link, q) {   // Wellengeschwindigkeit aus den Stützstellen (log c linear in log Q)
+  const lq = link.nodes_q.map(Math.log), lc = link.c.map(Math.log), x = Math.log(Math.max(q, 1e-3));
+  if (x <= lq[0]) return Math.exp(lc[0]);
+  for (let k = 0; k < lq.length - 1; k++) if (x <= lq[k + 1]) return Math.exp(lc[k] + (x - lq[k]) / (lq[k + 1] - lq[k]) * (lc[k + 1] - lc[k]));
+  return Math.exp(lc[lc.length - 1]);
+}
+const linkOf = r => D.groups[r.group].links[r.link];
+function reachNow(r, i) {
+  const f = cur(), q = f.obs[r.up][i], lk = linkOf(r), c = cOf(lk, q);
+  return { q, c, T: r.length_km / (3.6 * c) };
+}
+function skillOf(group, variant, flood) {
+  const row = D.skill.find(s => s.group === group && s.variant === variant && s.flood === flood);
+  return row || null;
+}
+function medianSkill(group, variant) {
+  const v = D.skill.filter(s => s.group === group && s.variant === variant).map(s => s.nse).sort((a, b) => a - b);
+  const m = v.length >> 1;
+  return v.length ? (v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2) : null;
+}
+
+/* ---------- Karte ---------- */
+const mx = lon => (lon + 180) / 360;
+const my = lat => { const p = lat * Math.PI / 180; return (1 - Math.log(Math.tan(p) + 1 / Math.cos(p)) / Math.PI) / 2; };
+const W_ = D.nodes.map(n => [mx(n.lon), my(n.lat)]);
+const bounds = { x0: Math.min(...W_.map(p => p[0])), x1: Math.max(...W_.map(p => p[0])), y0: Math.min(...W_.map(p => p[1])), y1: Math.max(...W_.map(p => p[1])) };
+const view = { x: 0, y: 0, k: 1 };
+let mapW = 800, mapH = 600;
+function fitView() {
+  const box = $("#mapbox"); mapW = box.clientWidth; mapH = box.clientHeight;
+  const pw = (bounds.x1 - bounds.x0), ph = (bounds.y1 - bounds.y0), hp = mapW < 600 ? 85 : 140, vp = 40;
+  view.k = Math.min((mapW - 2 * hp) / pw, (mapH - 2 * vp) / ph);
+  view.x = (bounds.x0 + bounds.x1) / 2 - mapW / 2 / view.k; view.y = (bounds.y0 + bounds.y1) / 2 - mapH / 2 / view.k;
+}
+const P = (lon, lat) => [(mx(lon) - view.x) * view.k, (my(lat) - view.y) * view.k];
+const pt = name => P(NODE[name].lon, NODE[name].lat);
+const pathD = names => names.map((n, i) => (i ? "L" : "M") + pt(n).map(v => v.toFixed(1)).join(" ")).join("");
+
+const tiles = new Map(); let tileOk = 0, tileFail = 0;
+function drawTiles() {
+  const layer = $("#tiles"); layer.style.display = state.tiles ? "" : "none"; $("#attr").style.display = state.tiles ? "" : "none";
+  if (!state.tiles) return;
+  const z = Math.max(0, Math.min(17, Math.round(Math.log2(view.k / 256)))), n = 2 ** z, ts = view.k / n, need = new Set();
+  const x0 = Math.floor(view.x * n), x1 = Math.floor((view.x + mapW / view.k) * n), y0 = Math.floor(view.y * n), y1 = Math.floor((view.y + mapH / view.k) * n);
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+    if (y < 0 || y >= n) continue;
+    const key = `${z}/${x}/${y}`; need.add(key);
+    let im = tiles.get(key);
+    if (!im) {
+      im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer";
+      im.onload = () => { tileOk++; $("#warn").style.display = "none"; };
+      im.onerror = () => { im.style.display = "none"; if (++tileFail >= 6 && tileOk === 0) $("#warn").style.display = "block"; };
+      im.src = `https://tile.openstreetmap.org/${z}/${((x % n) + n) % n}/${y}.png`; layer.appendChild(im); tiles.set(key, im);
+    }
+    im.style.left = ((x / n - view.x) * view.k).toFixed(1) + "px"; im.style.top = ((y / n - view.y) * view.k).toFixed(1) + "px"; im.style.width = im.style.height = (ts + 0.6).toFixed(1) + "px";
+  }
+  for (const [k, im] of tiles) if (!need.has(k)) { im.remove(); tiles.delete(k); }
+}
+
+const LBL = { "Echtershausen": ["l", -6], "Wiersdorf": ["r", 10], "Prümzurlay": ["r", 18], "Alsdorf-Oberecken": ["r", -4], "Sinspelt": ["l", 0] };
+const MEAS = [["c", "Wellengeschwindigkeit"], ["T", "Laufzeit"], ["nse", "Güte (NSE)"]];
+function binOf(v, lo, hi) { return Math.max(0, Math.min(6, Math.floor((v - lo) / (hi - lo) * 7))); }
+function scaleOf(m) {
+  if (m === "c") return { lo: 0.5, hi: 3.0, fmt: v => nf(v, 1) + " m/s" };
+  if (m === "T") return { lo: 0, hi: 8, fmt: v => nf(v, 0) + " h" };
+  return { lo: 0.6, hi: 1.0, fmt: v => nf(v, 2) };
+}
+function reachValue(r, i) {
+  if (state.measure === "nse") { const s = skillOf(r.group, "full", cur().id); return s ? s.nse : null; }
+  const x = reachNow(r, i); return state.measure === "c" ? x.c : x.T;
+}
+function drawMap() {
+  fitViewIfNeeded();
+  drawTiles();
+  const svg = $("#svg"); svg.setAttribute("viewBox", `0 0 ${mapW} ${mapH}`);
+  let s = "";
+  // Flussläufe (dünn)
+  for (const [name, ids] of Object.entries(D.rivers)) s += `<path d="${pathD(ids)}" fill="none" stroke="var(--water)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>`;
+  // modellierte Strecken
+  for (const r of D.reaches) {
+    const d = pathD(r.path);
+    s += `<g class="reach" data-id="${r.id}"><path d="${d}" fill="none" stroke="var(--surface)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<path id="rp-${r.sid}" d="${d}" fill="none" stroke="var(--s3)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" ${r.lake ? 'stroke-dasharray="1 0"' : ""}/>` +
+      `<path id="rf-${r.sid}" class="flow" d="${d}" fill="none" stroke="var(--surface)" stroke-opacity=".75" stroke-width="2" stroke-dasharray="4 10" stroke-linecap="butt"/>` +
+      `<path d="${d}" fill="none" stroke="transparent" stroke-width="22"/></g>`;
+  }
+  // Auswahl
+  // Strecken-Tab: gewählte Strecke; Ganglinie: Zuläufe des Pegels; Vorhersage: die ganze Kette oberhalb des Pegels
+  const gk = KEY_OF_DN[state.gauge];
+  const hl = state.tab === "fc" ? D.reaches.filter(r => FC.chain(gk).includes(r.group)) : state.tab === "hydro" ? D.reaches.filter(r => r.dn === state.gauge) : [REACH[state.sel]].filter(Boolean);
+  hl.forEach(sel => { s += `<path d="${pathD(sel.path)}" fill="none" stroke="var(--ink)" stroke-width="13" stroke-opacity=".28" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`; });
+  // Regenstationen (Dreiecke, Größe ~ Stundenregen)
+  (D.rain ? D.rain.stations : []).forEach((st, k) => { const [x, y] = P(st.lon, st.lat); s += `<path id="rs-${k}" d="M${x.toFixed(1)} ${(y - 5).toFixed(1)}L${(x + 4.5).toFixed(1)} ${(y + 3.5).toFixed(1)}L${(x - 4.5).toFixed(1)} ${(y + 3.5).toFixed(1)}Z" data-x="${x.toFixed(1)}" data-y="${y.toFixed(1)}" fill="none" stroke="var(--c-rain)" stroke-width="1.4"><title>${esc(st.name)}</title></path>`; });
+  // Knoten
+  const f = cur();
+  D.nodes.forEach((n, k) => {
+    const [x, y] = P(n.lon, n.lat), isQ = n.q, lake = n.art === "Speicher";
+    if (!isQ && !lake) {
+      if (!state.mun) return;
+      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"><title>${esc(n.name)} (nur W)</title></circle>`;
+      return;
+    }
+    if (lake) {
+      s += `<g class="lake"><path d="M${x} ${y - 8}L${x + 8} ${y}L${x} ${y + 8}L${x - 8} ${y}Z" fill="var(--c-lake)" stroke="var(--surface)" stroke-width="2"/><text x="${x - 12}" y="${y + 18}" text-anchor="end" font-size="11.5" fill="var(--ink)" paint-order="stroke" stroke="var(--surface)" stroke-width="3.5">Stausee Bitburg (Speicher)</text></g>`;
+      return;
+    }
+    if ((state.tab === "fc" || state.tab === "hydro") && n.name === state.gauge) s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="17" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-opacity=".55" pointer-events="none"/>`;
+    s += `<g class="node" data-name="${esc(n.name)}"><circle id="ns-${k}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="0" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/>` +
+      `<circle id="no-${k}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="var(--c-obs)" fill-opacity=".85" stroke="var(--surface)" stroke-width="2"/>` +
+      `<text id="nt-${k}" data-x="${x.toFixed(1)}" data-y="${y.toFixed(1)}" x="${(x + 14).toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${mapW < 600 ? 11 : 12}" font-weight="600" fill="var(--ink)" paint-order="stroke" stroke="var(--surface)" stroke-width="3.5"></text>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16" fill="transparent"/></g>`;
+  });
+  svg.innerHTML = s;
+  svg.querySelectorAll(".reach").forEach(g => g.addEventListener("click", () => { state.sel = g.dataset.id; state.gauge = REACH[g.dataset.id].dn; if (state.tab !== "reach" && state.tab !== "hydro" && state.tab !== "fc") state.tab = "reach"; drawMap(); updateMap(); renderPanel(); }));
+  svg.querySelectorAll(".node").forEach(g => g.addEventListener("click", () => {
+    if (!FC_GAUGES.includes(g.dataset.name)) return;
+    setGauge(g.dataset.name); drawMap(); updateMap(); renderPanel();
+  }));
+  updateMap();
+}
+let lastSize = "";
+function fitViewIfNeeded() {
+  const box = $("#mapbox"), sz = box.clientWidth + "x" + box.clientHeight;
+  mapW = box.clientWidth; mapH = box.clientHeight;
+  if (sz !== lastSize) { if (lastSize === "") fitView(); lastSize = sz; }
+}
+function updateMap() {
+  const f = cur(), i = state.i, sc = scaleOf(state.measure);
+  D.reaches.forEach(r => {
+    const v = reachValue(r, i), id = r.sid, p = $("#rp-" + id), fl = $("#rf-" + id);
+    if (!p) return;
+    p.setAttribute("stroke", v == null ? "var(--muted)" : `var(--s${binOf(v, sc.lo, sc.hi)})`);
+    const x = reachNow(r, i);
+    fl.style.animationDuration = Math.max(0.35, 3.2 / Math.max(0.3, x.c) * 1.2).toFixed(2) + "s";
+    fl.setAttribute("stroke-opacity", x.q < 0.3 ? 0.2 : 0.8);
+  });
+  D.nodes.forEach((n, k) => {
+    if (!n.q) return;
+    const qo = f.obs[n.name][i], grp = GROUP_OF_DN[n.name], sim = grp && f.sim[grp] ? f.sim[grp].full[i] : null;
+    const rad = q => 4 + 1.6 * Math.sqrt(Math.max(q, 0));
+    const o = $("#no-" + k), sring = $("#ns-" + k), t = $("#nt-" + k);
+    o.setAttribute("r", Math.min(rad(qo), 46).toFixed(1));
+    if (sim != null && !(grp === "WI" && f.clipped)) { sring.setAttribute("r", Math.min(rad(sim) + 3, 49).toFixed(1)); sring.style.display = ""; } else sring.style.display = "none";
+    const lb = LBL[n.name] || ["r", 4], rr = Math.max(Math.min(rad(qo), 46), sring.style.display === "none" ? 0 : Math.min(rad(sim) + 3, 49)) + 6;
+    t.textContent = `${n.name} ${qf(qo)} m³/s` + (sim != null && mapW >= 600 && !(grp === "WI" && f.clipped) ? ` (Modell ${qf(sim)})` : "");
+    let side = lb[0];                                   // Beschriftung bleibt im Kartenrahmen: bei Platzmangel auf die andere Seite
+    const w = t.getComputedTextLength ? t.getComputedTextLength() : 0, px = +t.dataset.x, rm = 6;
+    if (w && side === "r" && px + rr + w > mapW - rm && px - rr - w > 6) side = "l";
+    else if (w && side === "l" && px - rr - w < 6 && px + rr + w < mapW - rm) side = "r";
+    t.setAttribute("text-anchor", side === "l" ? "end" : "start"); t.setAttribute("x", (px + (side === "l" ? -rr : rr)).toFixed(1)); t.setAttribute("y", (+t.dataset.y + lb[1]).toFixed(1));
+  });
+  (D.rain ? D.rain.stations : []).forEach((st, k) => {
+    const e = $("#rs-" + k); if (!e) return;
+    const ser = f.rain_st && f.rain_st[st.id], v = ser ? ser[Math.min(ser.length - 1, Math.round(i / 4))] : null, x = +e.dataset.x, y = +e.dataset.y;
+    const sc = v == null ? 1 : 1 + 0.9 * Math.sqrt(Math.max(v, 0));
+    e.setAttribute("d", `M${x} ${(y - 5 * sc).toFixed(1)}L${(x + 4.5 * sc).toFixed(1)} ${(y + 3.5 * sc).toFixed(1)}L${(x - 4.5 * sc).toFixed(1)} ${(y + 3.5 * sc).toFixed(1)}Z`);
+    e.setAttribute("fill", v != null && v > 0.05 ? "var(--c-rain)" : "none"); e.setAttribute("fill-opacity", ".75");
+    e.querySelector("title").textContent = `${st.name} (${st.hoehe_m} m): ` + (v == null ? "keine Regendaten für dieses Hochwasser" : nf(v, 1) + " mm in der Stunde bis jetzt");
+  });
+  $("#tlabel").textContent = fdt(tAt(f, i)) + " MEZ";
+  $("#time").value = i;
+  const dst = D.floods[state.fi];
+  drawLegend();
+  panelCursor();
+}
+function drawLegend() {
+  const sc = scaleOf(state.measure), m = MEAS.find(x => x[0] === state.measure)[1];
+  $("#legend").innerHTML = `<b>${m}</b>${state.measure === "nse" ? " im gewählten Hochwasser" : " bei Abfluss jetzt"}<div class="bar">${[0, 1, 2, 3, 4, 5, 6].map(k => `<i style="background:var(--s${k})"></i>`).join("")}</div><div class="row"><span>${sc.fmt(sc.lo)}</span><span>${sc.fmt(sc.hi)}</span></div>` +
+    `<div class="k"><svg width="30" height="12"><circle cx="9" cy="6" r="5" fill="var(--c-obs)" fill-opacity=".85"/><circle cx="22" cy="6" r="5" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>Messung, Modell (Fläche ~ Q)</div>` +
+    (D.rain ? `<div class="k"><svg width="30" height="12"><path d="M9 1L14 10L4 10Z" fill="var(--c-rain)" fill-opacity=".75" stroke="var(--c-rain)"/></svg>Regenstation (Größe ~ mm/h)</div>` : "");
+}
+
+/* ---------- Diagramme ---------- */
+function niceTicks(lo, hi, n) {
+  const span = Math.max(hi - lo, 1e-9), raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p, a = Math.floor(lo / step + 1e-9) * step, out = [];
+  for (let v = a; v <= hi + step * 0.999; v += step) { out.push(+v.toFixed(6)); if (v >= hi - 1e-9) break; }
+  return out;
+}
+/* spec: {x:{min,max,log,ticks,fmt,label}, y:{min,max,ticks,fmt,label}, lines:[{key,name,pts:[[x,y]],col,dash}], bands:[{hi:[[x,y]],lo:[[x,y]],col}], vlines:[{x,col,label}], points:[{x,y,col}], tip:fn(x)->{t,rows:[{col,name,val}]} } */
+function plot(el, spec, H = 220) {
+  const W = Math.max(260, el.clientWidth || 360), pad = { l: 44, r: 12, t: 10, b: 36 };
+  const X = spec.x, Y = spec.y;
+  const fx = X.log ? Math.log : (v => v), x0 = fx(X.min), x1 = fx(X.max);
+  const xs = v => pad.l + (fx(v) - x0) / (x1 - x0) * (W - pad.l - pad.r), ys = v => pad.t + (1 - (v - Y.min) / (Y.max - Y.min)) * (H - pad.t - pad.b);
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  (Y.ticks || niceTicks(Y.min, Y.max, 4)).forEach(v => { s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="${v === 0 ? "var(--axis)" : "var(--grid)"}"/><text x="${pad.l - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)">${(Y.fmt || (v => nf(v, Number.isInteger(v) ? 0 : 1)))(v)}</text>`; });
+  (X.ticks).forEach(t => { const v = t.v !== undefined ? t.v : t; s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 14}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l !== undefined ? t.l : (X.fmt ? X.fmt(v) : v)}</text>`; if (t.l2) s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 26}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l2}</text>`; });
+  if (X.label) s += `<text x="${(pad.l + W - pad.r) / 2}" y="${H - 3}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${X.label}</text>`;
+  if (Y.label) s += `<text transform="translate(11 ${(pad.t + H - pad.b) / 2}) rotate(-90)" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${Y.label}</text>`;
+  (spec.bands || []).forEach(b => { s += `<path d="${b.hi.map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}${b.lo.slice().reverse().map(p => "L" + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}Z" fill="${b.col}" fill-opacity="${b.op || .13}"/>`; });
+  let lastL = -1e9, lastR = -1e9, hlab = "";             // Beschriftung links; liegt sie zu nah an der vorigen, rechts (sonst weggelassen); Text über allen Linien
+  (spec.hlines || []).slice().sort((a, b) => a.y - b.y).forEach(h => { if (h.y < Y.min || h.y > Y.max) return; const y = ys(h.y); s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${h.col}" stroke-width="${h.bold ? 2.5 : 1.5}" stroke-dasharray="6 4" opacity="${h.faint ? .45 : .9}"/>`;
+    if (!h.label) return;
+    const side = Math.abs(lastL - y) >= 15 ? "l" : Math.abs(lastR - y) >= 15 ? "r" : null;
+    if (!side) return;
+    if (side === "l") lastL = y; else lastR = y;
+    hlab += `<text x="${side === "l" ? pad.l + 4 : W - pad.r - 4}" y="${(y - 4).toFixed(1)}" text-anchor="${side === "l" ? "start" : "end"}" font-size="11" fill="${h.col}" paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" font-weight="600">${esc(h.label)}</text>`; });
+  s += hlab;
+  (spec.bars || []).forEach(b => { const y0 = ys(0), y1 = ys(Math.min(Y.max, b.y)); if (b.y > 0) s += `<rect x="${xs(b.x).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(1, xs(b.x + b.w) - xs(b.x) - 1).toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${b.col}" fill-opacity=".8"/>`; });
+  (spec.vlines || []).forEach(v => { s += `<line x1="${xs(v.x).toFixed(1)}" x2="${xs(v.x).toFixed(1)}" y1="${pad.t}" y2="${H - pad.b}" stroke="${v.col || "var(--muted)"}" stroke-width="1" ${v.dash === false ? "" : 'stroke-dasharray="1 3"'}/>` + (v.label ? `<text x="${(xs(v.x) + 4).toFixed(1)}" y="${pad.t + 10}" font-size="11" fill="var(--ink2)">${v.label}</text>` : ""); });
+  (spec.lines || []).forEach(l => { if (l.hidden) return; s += `<path d="${l.pts.filter(p => p[1] != null).map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(Math.max(Y.min, Math.min(Y.max, p[1]))).toFixed(1)).join("")}" fill="none" stroke="${l.col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${l.dash ? 'stroke-dasharray="6 4"' : ""}/>`; });
+  (spec.errs || []).forEach(e => { const cx = xs(e.x), cy = ys(e.y), c = e.col; s += `<g stroke="${c}" stroke-width="2" stroke-linecap="round"><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${cy.toFixed(1)}" y2="${cy.toFixed(1)}"/><line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x0).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${xs(e.x1).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y0).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y1).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/></g><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="${c}"/>`; });
+  (spec.points || []).forEach(p => { s += `<circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="4" fill="${p.hollow ? "var(--surface)" : p.col}" stroke="${p.col}" stroke-width="${p.hollow ? 2 : 0}"/>`; });
+  s += `<line class="xh" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--ink2)" visibility="hidden"/><g class="cur"></g><rect class="hit" x="${pad.l}" y="${pad.t}" width="${W - pad.l - pad.r}" height="${H - pad.t - pad.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  el.innerHTML = s;
+  const svg = $("svg", el), xh = $(".xh", svg), tip = $(".tip", el);
+  const inv = px => { const f = (px - pad.l) / (W - pad.l - pad.r) * (x1 - x0) + x0; return X.log ? Math.exp(f) : f; };
+  const move = e => {
+    if (!spec.tip) return;
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width), x = Math.max(X.min, Math.min(X.max, inv(px))), info = spec.tip(x);
+    if (!info) return;
+    const xx = xs(info.x !== undefined ? info.x : x); xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="t">${info.t}</div>` + info.rows.map(r => `<div class="r"><span><i style="--col:${r.col}"></i>${esc(r.name)}</span><b>${r.val}</b></div>`).join("");
+    tip.style.display = "block"; const w = tip.offsetWidth; tip.style.left = (xx > W * 0.55 ? xx - w - 10 : xx + 10) + "px"; tip.style.top = pad.t + "px";
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+  svg.addEventListener("pointerleave", () => { xh.setAttribute("visibility", "hidden"); tip.style.display = "none"; });
+  el._plot = { xs, ys, pad, H, W, svg };
+  return el._plot;
+}
+function legendHtml(items, onToggle) {
+  return `<div class="leg" role="group">${items.map(it => `<button type="button" data-k="${it.k}" aria-pressed="${state.vis[it.k] !== false}" style="--col:${it.col}"><i class="${it.dash ? "dash" : ""}"></i>${esc(it.name)}</button>`).join("")}</div>`;
+}
+function timeTicks(f, nHours = 72, stepH = 12) {
+  const t0 = parse(f.t0), out = [], first = Math.ceil(t0 / (stepH * 3600000)) * stepH * 3600000;
+  for (let t = first; t <= t0 + nHours * 3600000; t += stepH * 3600000) out.push({ v: (t - t0) / 3600000, l: fdt(t).slice(0, 6), l2: fdt(t).slice(7) });
+  return out;
+}
+
+/* ---------- Seitenleiste ---------- */
+const TABS = [["reach", "Strecke"], ["hydro", "Ganglinie"], ["fc", "Vorhersage"], ["all", "Überblick"]];
+function buildTabs() {
+  const box = $("#tabs"); box.innerHTML = "";
+  TABS.forEach(([k, l]) => { const b = document.createElement("button"); b.type = "button"; b.role = "tab"; b.textContent = l; b.setAttribute("aria-selected", state.tab === k); b.addEventListener("click", () => { state.tab = k; buildTabs(); drawMap(); renderPanel(); }); box.appendChild(b); });
+}
+function reachHead(r) {
+  const g = D.groups[r.group];
+  const sel = `<select id="reachsel" class="btn" aria-label="Strecke wählen">${D.reaches.map(x => `<option value="${x.id}" ${x.id === r.id ? "selected" : ""}>${esc(x.up)} → ${esc(x.dn)} (${nf(x.length_km, 1)} km)</option>`).join("")}</select>`;
+  return `<div style="margin-bottom:8px">${sel}</div>`;
+}
+function bindReachSel() { const s = $("#reachsel"); if (s) s.onchange = () => { state.sel = s.value; state.gauge = REACH[s.value].dn; drawMap(); renderPanel(); }; }
+/* Pegelauswahl (Ganglinie: Pegel mit Routing-Modell; Vorhersage: alle acht Abflusspegel, oben nach unten) */
+const GAUGE_LABEL = { "Prüm 2": "Prüm 2 (Oberlauf Prüm)", "Sinspelt": "Sinspelt (Oberlauf Enz)", "Giesdorf": "Giesdorf (Oberlauf Nims)", "Echtershausen": "Echtershausen ← Prüm 2",
+  "Wiersdorf": "Wiersdorf ← Echtershausen (Stausee)", "Prümzurlay": "Prümzurlay ← Wiersdorf + Sinspelt", "Seffern": "Seffern ← Giesdorf", "Alsdorf-Oberecken": "Alsdorf-Oberecken ← Seffern" };
+const FC_GAUGES = ["Prüm 2", "Sinspelt", "Giesdorf", "Echtershausen", "Wiersdorf", "Prümzurlay", "Seffern", "Alsdorf-Oberecken"];
+const HY_GAUGES = FC_GAUGES.filter(n => GROUP_OF_DN[n]);
+function setGauge(name) {   // Pegel wählen; die Strecke für Karte und Strecken-Tab folgt (Zulauf des Pegels, bei Oberläufen die abgehende Strecke)
+  state.gauge = name;
+  const r = D.reaches.find(x => x.dn === name) || D.reaches.find(x => x.up === name);
+  if (r) state.sel = r.id;
+}
+function gaugeHead(list, label) {
+  const g = list.includes(state.gauge) ? state.gauge : list[list.length - 1];
+  return `<div style="margin-bottom:8px"><select id="gaugesel" class="btn" aria-label="${label}">${list.map(n => `<option value="${esc(n)}" ${n === g ? "selected" : ""}>${esc(GAUGE_LABEL[n] || n)}</option>`).join("")}</select></div>`;
+}
+function bindGaugeSel() { const s = $("#gaugesel"); if (s) s.onchange = () => { setGauge(s.value); drawMap(); renderPanel(); }; }
+
+function renderPanel() {
+  const r = REACH[state.sel], g = D.groups[r.group], lk = g.links[r.link], f = cur(), el = $("#panel");
+  if (state.tab === "reach") {
+    const x = reachNow(r, state.i);
+    el.innerHTML = reachHead(r) +
+      `<div class="kv" id="kv"></div>` +
+      `<h2>Wellengeschwindigkeit c(Q)</h2><div class="chart" id="ch-c"></div>` +
+      `<h2 style="margin-top:12px">Laufzeit über den Abfluss</h2><div class="chart" id="ch-t"></div>` +
+      `${lk.c_at_bound && lk.c_at_bound.some(Boolean) ? `<p class="note"><span class="badge">c an der Obergrenze</span> Die Anpassung will schneller als 4 m/s: ${esc(r.up)} wirkt hier eher als Indikator für den Zufluss aus dem Zwischengebiet denn als reine Welle.</p>` : ""}<p class="note">${esc(g.note)}. ${r.lake ? "Beim Stausee beschreibt c die Speicherwirkung, nicht die Welle im Gerinne. " : ""}Band: 5 bis 95 % aus ${D.groups[r.group].links[0].c_lo ? "Bootstrap über Ereignisse" : "(Bootstrap nicht gerechnet)"}. Punkte: Stützstellen; gestrichelt: Modell mit konstantem c.</p>`;
+    bindReachSel(); drawReachCharts(r, g, lk); panelCursor();
+  } else if (state.tab === "hydro") {
+    if (!HY_GAUGES.includes(state.gauge)) setGauge(r.dn);
+    const rh = D.reaches.find(x => x.dn === state.gauge);
+    el.innerHTML = gaugeHead(HY_GAUGES, "Pegel wählen") + `<div id="hy-leg"></div><div class="chart" id="ch-r"></div><div class="chart" id="ch-h"></div><div class="tw" id="hy-tab"></div>`;
+    bindGaugeSel(); drawHydro(rh, D.groups[rh.group]);
+  } else if (state.tab === "fc") {
+    const dt = (id, title, sub, body) => `<details class="more" id="${id}" ${state.dt[id] ? "open" : ""}><summary>${title} <small>${sub}</small></summary>${body}</details>`;
+    el.innerHTML = gaugeHead(FC_GAUGES, "Vorherzusagenden Pegel wählen") +
+      `<div class="issue-row"><label for="issue">Ausgabezeit</label><input type="range" id="issue" step="1" aria-label="Ausgabezeit der Vorhersage, Schritte zu 15 Minuten"><span id="issue-l"></span></div>` +
+      `<div class="issue-btns" role="group" aria-label="Ausgabezeit verschieben">${[[-4, "− 1 h"], [-1, "− 15 min"], [1, "+ 15 min"], [4, "+ 1 h"]].map(([d, l]) => `<button type="button" class="btn" data-d="${d}">${l}</button>`).join("")}<span class="seg" id="seg-rain" role="radiogroup" aria-label="Regen nach der Ausgabezeit" style="margin-left:auto" title="Regen nach der Ausgabezeit: keiner (wie ohne Regenvorhersage) oder der später gemessene (perfekte Regenvorhersage)"></span><span class="seg" id="seg-unit" role="radiogroup" aria-label="Einheit"></span></div>` +
+      `<p class="state" id="lg-state"></p><div class="lage" id="lage"></div>` +
+      `<div class="legs" id="lg-leg"></div><div class="chart" id="ch-lg"></div><p class="note" id="lg-note"></p>` +
+      `<h2 style="margin-top:12px">Wird die Warnschwelle erreicht?</h2><div class="tw" id="lg-warn"></div><p class="note" id="lg-warn-note"></p>` +
+      dt("dt-rel", "Wie verlässlich ist das?", "Prüfung 2004–2022 und 1989–2003", `<div id="lg-rel"></div>`) +
+      dt("dt-var", "Modellvarianten vergleichen", "Abfluss, alle Varianten der Kette", `<div id="cf-leg"></div><div class="kv" id="cf-kv"></div><div class="chart" id="ch-cf"></div><p class="note" id="cf-note"></p>`) +
+      dt("dt-skill", "Güte über die Vorlaufzeit", "NSE und Scheiteltreffer je Variante",
+        `<div class="segs"><div class="seg" id="seg-cfm" role="radiogroup" aria-label="Maß"></div><div class="seg" id="seg-cfs" role="radiogroup" aria-label="Ereignisse"></div></div><div id="cs-leg"></div><div class="chart" id="ch-cs"></div><p class="note" id="cs-note"></p>` +
+        `<h2 style="margin-top:14px">Wie früh wird der Scheitel getroffen?</h2><div id="cp-leg"></div><div class="chart" id="ch-cp"></div><p class="note" id="cp-note"></p>`);
+    bindGaugeSel(); drawChainFc(state.gauge);
+  } else {
+    drawOverview(el);
+  }
+}
+function drawReachCharts(r, g, lk) {
+  const qmin = lk.curve.q[0], qmax = lk.curve.q[lk.curve.q.length - 1], pts = lk.curve.q.map((q, k) => [q, lk.curve.c[k]]);
+  const cmax = Math.max(1, ...lk.curve.c, ...(lk.curve.hi || []), lk.c_tied) * 1.1;
+  const qt = [1, 3, 10, 30, 100, 300];
+  const ctied = [[qmin, lk.c_tied], [qmax, lk.c_tied]];
+  const bands = lk.curve.lo ? [{ hi: lk.curve.q.map((q, k) => [q, lk.curve.hi[k]]), lo: lk.curve.q.map((q, k) => [q, lk.curve.lo[k]]), col: "var(--c-full)" }] : [];
+  const cur_ = reachNow(r, state.i);
+  plot($("#ch-c"), { x: { min: qmin, max: qmax, log: true, ticks: qt, label: "Abfluss am Oberlieger (m³/s, logarithmisch)" }, y: { min: 0, max: Math.ceil(cmax), label: "c (m/s)" }, bands,
+    lines: [{ pts, col: "var(--c-full)" }, { pts: ctied, col: "var(--c-tied)", dash: true }],
+    points: lk.nodes_q.map((q, k) => ({ x: q, y: lk.c[k], col: "var(--c-full)" })),
+    vlines: [{ x: Math.min(qmax, Math.max(qmin, cur_.q)), col: "var(--ink2)", label: "jetzt" }],
+    tip: q => ({ t: `Q = ${qf(q)} m³/s`, rows: [{ col: "var(--c-full)", name: "c(Q)", val: nf(cOf(lk, q), 2) + " m/s" }, { col: "var(--c-tied)", name: "konstantes c", val: nf(lk.c_tied, 2) + " m/s" }] }) }, 200);
+  const tp = lk.curve.q.map((q, k) => [q, r.length_km / (3.6 * lk.curve.c[k])]);
+  const tmax = Math.max(...tp.map(p => p[1]), r.length_km / (3.6 * lk.c_tied)) * 1.15;
+  const tb = lk.curve.lo ? [{ hi: lk.curve.q.map((q, k) => [q, r.length_km / (3.6 * lk.curve.lo[k])]), lo: lk.curve.q.map((q, k) => [q, r.length_km / (3.6 * lk.curve.hi[k])]), col: "var(--c-full)" }] : [];
+  plot($("#ch-t"), { x: { min: qmin, max: qmax, log: true, ticks: qt, label: "Abfluss am Oberlieger (m³/s, logarithmisch)" }, y: { min: 0, max: Math.max(2, Math.ceil(tmax)), label: "Laufzeit (h)" }, bands: tb,
+    lines: [{ pts: tp, col: "var(--c-full)" }, { pts: [[qmin, r.length_km / (3.6 * lk.c_tied)], [qmax, r.length_km / (3.6 * lk.c_tied)]], col: "var(--c-tied)", dash: true }],
+    points: lk.nodes_q.map((q, k) => ({ x: q, y: lk.T_h[k], col: "var(--c-full)" })),
+    vlines: [{ x: Math.min(qmax, Math.max(qmin, cur_.q)), col: "var(--ink2)" }],
+    tip: q => ({ t: `Q = ${qf(q)} m³/s`, rows: [{ col: "var(--c-full)", name: "Laufzeit", val: nf(r.length_km / (3.6 * cOf(lk, q)), 1) + " h" }, { col: "var(--c-tied)", name: "konstantes c", val: nf(r.length_km / (3.6 * lk.c_tied), 1) + " h" }] }) }, 200);
+}
+function panelCursor() {
+  const r = REACH[state.sel], kv = $("#kv");
+  if (state.tab === "reach" && kv) {
+    const g = D.groups[r.group], lk = g.links[r.link], x = reachNow(r, state.i);
+    kv.innerHTML = `<div><div class="k">Q Oberlieger jetzt</div><div class="v">${qf(x.q)} <small>m³/s</small></div></div><div><div class="k">c jetzt</div><div class="v">${nf(x.c, 2)} <small>m/s</small></div></div><div><div class="k">Laufzeit jetzt</div><div class="v">${nf(x.T, 1)} <small>h</small></div></div>` +
+      `<div><div class="k">Teilstrecken n</div><div class="v">${lk.n}</div></div><div><div class="k">Verstärkung a</div><div class="v">${nf(lk.a, 2)}</div></div><div><div class="k">NSE angepasst</div><div class="v">${nf(g.nse_in.full, 3)}</div></div>`;
+    const qmin = lk.curve.q[0], qmax = lk.curve.q[lk.curve.q.length - 1], q = Math.min(qmax, Math.max(qmin, x.q));
+    ["ch-c", "ch-t"].forEach(id => { const el = $("#" + id); if (!el || !el._plot) return; const p = el._plot, xx = p.xs(q); const g_ = $(".cur", p.svg); g_.innerHTML = `<line x1="${xx}" x2="${xx}" y1="${p.pad.t}" y2="${p.H - p.pad.b}" stroke="var(--ink)" stroke-width="1.5"/>`; });
+  }
+  if ((state.tab === "hydro") && $("#ch-h") && $("#ch-h")._plot) {
+    const p = $("#ch-h")._plot, xx = p.xs(state.i * 0.25); $(".cur", p.svg).innerHTML = `<line x1="${xx}" x2="${xx}" y1="${p.pad.t}" y2="${p.H - p.pad.b}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  }
+}
+function nseOf(o, s) { let m = 0; o.forEach(v => m += v); m /= o.length; let a = 0, b = 0; o.forEach((v, k) => { a += (v - s[k]) ** 2; b += (v - m) ** 2; }); return 1 - a / b; }
+function drawHydro(r, g) {
+  const f = cur(), sim = f.sim[r.group], obs = f.obs[r.dn], fid = f.id;
+  const rs = f.rsim && f.rsim[r.group] ? f.rsim[r.group] : null, RV = { k: "rain", name: "Routing + Regen", col: "var(--c-rain)", dash: false };
+  const items = VARS.map(v => ({ k: v[0], name: v[1], col: `var(${v[2]})`, dash: v[3] })).concat(rs ? [RV] : []);
+  $("#hy-leg").innerHTML = legendHtml(items);
+  $("#hy-leg").querySelectorAll("button").forEach(b => b.onclick = () => { state.vis[b.dataset.k] = !(state.vis[b.dataset.k] !== false); drawHydro(r, g); });
+  const series = { obs, ...sim };
+  const hidden = r.group === "WI" && f.clipped;
+  const lines = VARS.filter(v => state.vis[v[0]] !== false && !(hidden && v[0] === "obs")).map(v => ({ key: v[0], name: v[1], col: `var(${v[2]})`, dash: v[3], pts: series[v[0]].map((q, k) => [k * 0.25, q]) }));
+  if (rs && state.vis.rain !== false) lines.push({ key: "rain", name: RV.name, col: RV.col, dash: false, pts: rs.rain_full.map((q, k) => [k * 0.25, q]) });
+  const ymax = Math.max(...VARS.map(v => Math.max(...series[v[0]])), ...(rs ? rs.rain_full : [0]));
+  const yt = niceTicks(0, ymax * 1.05, 4);
+  const rbox = $("#ch-r");
+  if (rs) {
+    const rm = Math.max(1, ...rs.rain_mm_h), rt = niceTicks(0, rm * 1.1, 3);
+    plot(rbox, { x: { min: 0, max: 72, ticks: timeTicks(f) }, y: { min: 0, max: rt[rt.length - 1], ticks: rt, label: "Regen (mm/h)" },
+      bars: rs.rain_mm_h.map((v, k) => ({ x: Math.max(0, k - 1), w: k === 0 ? 0 : 1, y: v, col: "var(--c-rain)" })),
+      vlines: [{ x: (parse(f.t_peak) - parse(f.t0)) / 3600000 + 0, dash: true }],
+      tip: x => { const k = Math.max(0, Math.min(72, Math.round(x))); return { t: fdt(tAt(f, k * 4)) + " MEZ", x: k, rows: [{ col: "var(--c-rain)", name: "Gebietsregen, Stunde bis jetzt", val: nf(rs.rain_mm_h[k], 1) + " mm/h" }] }; } }, 96);
+  } else rbox.innerHTML = "";
+  plot($("#ch-h"), { x: { min: 0, max: 72, ticks: timeTicks(f) }, y: { min: 0, max: yt[yt.length - 1], ticks: yt, label: "Abfluss (m³/s)" }, lines,
+    vlines: [{ x: (parse(f.t_peak) - parse(f.t0)) / 3600000, label: "Scheitel Prümzurlay" }],
+    tip: x => { const i = Math.round(x * 4); return { t: fdt(tAt(f, i)) + " MEZ", x: i * 0.25, rows: lines.map(l => ({ col: l.col, name: l.name, val: qf(l.pts[i][1]) + " m³/s" })) }; } }, 240);
+  const rows = ["full", "tied", "lag"].map(v => skillOf(r.group, v, fid));
+  const rmet = rs ? (() => { const pk = Math.max(...obs), ps = Math.max(...rs.rain_full); return { nse: nseOf(obs, rs.rain_full), peak_sim: ps, peak_err_pct: 100 * (ps - pk) / pk, peak_dt_h: (rs.rain_full.indexOf(ps) - obs.indexOf(pk)) * 0.25 }; })() : null;
+  $("#hy-tab").innerHTML = hidden ? `<p class="note"><span class="badge">Wiersdorf bei 250 cm abgeschnitten</span> Messwerte nicht belastbar, keine Prüfzahlen.</p>` :
+    `<table><thead><tr><th>Modell</th><th>NSE</th><th>Scheitel</th><th>Δ Scheitel</th><th>Δ Zeit</th></tr></thead><tbody>` +
+    ["full", "tied", "lag"].map((v, k) => { const s = rows[k]; return `<tr><td><span style="display:inline-block;width:14px;border-top:2px ${VARS[k + 1][3] ? "dashed" : "solid"} var(${VARS[k + 1][2]});vertical-align:middle;margin-right:6px"></span>${VARS[k + 1][1]}</td>${s ? `<td>${nf(s.nse, 3)}</td><td>${qf(s.peak_sim)} m³/s</td><td>${sg(s.peak_err_pct, 0)} %</td><td>${sg(s.peak_dt_h, 2)} h</td>` : "<td colspan=4>–</td>"}</tr>`; }).join("") +
+    (rmet ? `<tr><td><span style="display:inline-block;width:14px;border-top:2px solid var(--c-rain);vertical-align:middle;margin-right:6px"></span>Routing + Regen</td><td>${nf(rmet.nse, 3)}</td><td>${qf(rmet.peak_sim)} m³/s</td><td>${sg(rmet.peak_err_pct, 0)} %</td><td>${sg(rmet.peak_dt_h, 2)} h</td></tr>` : "") +
+    `</tbody></table>${rmet ? `<p class="note">Routing + Regen: Anpassung mit Regen ohne die vier Jahre, in denen dieses Hochwasser liegt (DWD-Stundenwerte, 9 Stationen). Die Zeile ist mit den anderen nur eingeschränkt vergleichbar: andere Trainingsereignisse (2004–2022).</p>` : (f.rsim ? "" : `<p class="note">Für dieses Hochwasser gibt es keinen Regen (DWD-Stundenreihen beginnen 2002 bis 2005, Januar 2003 mit Lücken).</p>`)}<p class="note">Modelle ohne dieses Hochwasser angepasst. Messung: Scheitel ${qf(rows[0] ? rows[0].peak_obs : null)} m³/s. Δ Scheitel: Fehler des simulierten Scheitels; Δ Zeit: später (+) oder früher (−) als gemessen. ${rows[0] && rows[0].chain ? "Eingang Wiersdorf aus Echtershausen simuliert (Messwert abgeschnitten)." : ""}</p>`;
+  panelCursor();
+}
+/* ---------- Kettenvorhersage (forecast_core.js) ---------- */
+const CFV = [["kette", "Kette ohne Regen", "--c-full", false], ["kette_regen", "Kette mit Regen (Winter/Starkregen)", "--c-rain", false], ["kette_regen_1", "Kette mit Regen, ein Modell", "--c-tied", true], ["kette_ideal", "mit perfekter Regenvorhersage", "--c-rain", true], ["einzeln", "Oberlieger gehalten", "--c-lag", true], ["pers", "Persistenz", "--c-pers", true]];
+const KEY_OF_DN = Object.fromEntries(Object.entries(FC.DN).map(([k, v]) => [v, k]));
+const DS = { P2: "EC", EC: "WI", WI: "PZ", SI: "PZ", GI: "SE", SE: "AL" };
+const UPS_OF = { EC: ["P2"], WI: ["EC"], PZ: ["WI", "SI"], SE: ["GI"], AL: ["SE"] };
+function chainPaths(key) {   // Wege von jedem Oberlauf der Kette bis zum Zielpegel, z. B. "Prüm 2 → Echtershausen → Wiersdorf → Prümzurlay; Sinspelt → Prümzurlay"
+  const c = FC.chain(key), heads = c.filter(k => !c.some(x => DS[x] === k)), out = [];
+  heads.forEach(h => { const p = [h]; let x = h; while (x !== key && DS[x]) { x = DS[x]; if (out.some(q => q.includes(FC.DN[x])) && x !== key) { p.push(x); break; } p.push(x); } out.push(p.map(k => FC.DN[k]).join(" → ")); });
+  return out.join("; ");
+}
+if (D.chain) FC.setConsts(D.chain.consts);
+function fcLegend(id, items, redraw) {
+  $(id).innerHTML = legendHtml(items.map(v => ({ k: "cf_" + v[0], name: v[1], col: `var(${v[2]})`, dash: v[3] })));
+  $(id).querySelectorAll("button").forEach(b => b.onclick = () => { state.vis[b.dataset.k] = !(state.vis[b.dataset.k] !== false); redraw(); });
+}
+function segRadio(id, name, opts, val, on) {
+  const seg = $(id); seg.innerHTML = "";
+  opts.forEach(([v, l]) => { const lab = document.createElement("label"); lab.innerHTML = `<input type="radio" name="${name}" value="${v}" ${val === v ? "checked" : ""}><span>${l}</span>`; lab.querySelector("input").onchange = () => on(v); seg.appendChild(lab); });
+}
+const relTicks = (a, b, st) => { const out = []; for (let v = Math.ceil(a / st) * st; v <= b + 1e-9; v += st) out.push({ v, l: v === 0 ? "0" : (v > 0 ? "+" : "−") + Math.abs(v) }); return out; };
+/* ---------- Vorhersage-Tab: Lagebild, Scheitel, Warnung, Ganglinie mit Band (forecast_core.js: FC, UQ) ---------- */
+if (D.unc) UQ.setTables(D.unc);
+const LO = 1, MED = 5, HI = 9;                          // Stufenindizes in D.unc.lev: 10 %, 50 %, 90 %
+const TH_COL = { MH: "var(--th0)", HW2: "var(--th1)", HW10: "var(--th2)", HW20: "var(--th3)", HW50: "var(--th4)", HW100: "var(--th5)" };
+function thresholdsOf(dn) {                             // aufsteigend: Meldehöhe (falls vergeben), HW 2 … HW 100; w in cm, q in m³/s
+  const k = D.unc.kennwerte[dn], rc = D.unc.rating[dn], out = [], wid = "HW" + ((D.unc.warn || {})[KEY_OF_DN[dn]] || { name: "HQ10" }).name.slice(2);
+  if (k.meldehoehe) out.push({ id: "MH", name: "Meldehöhe", w: k.meldehoehe, q: rc.q_meldehoehe });
+  ["2", "10", "20", "50", "100"].forEach(x => out.push({ id: "HW" + x, name: "HW " + x, w: k.W["HW" + x], q: k.Q["HQ" + x] }));
+  out.forEach(t => { t.warn = t.id === wid; t.info = t.w < k.W[wid]; });   // Warnung erst ab der Warnschwelle (HW 10, erste Schäden); darunter nur Einordnung
+  return out.sort((a, b) => a.w - b.w);
+}
+const WST = { keine: { col: "var(--c-ok)", t: "keine Warnung" }, "möglich": { col: "var(--th1)", t: "Vorwarnung" }, Warnung: { col: "var(--th3)", t: "Warnung" } };
+function warnStatus(p48) { const p = Math.round(p48 * 20) / 20; return p >= 0.5 ? "Warnung" : p >= 0.1 ? "möglich" : "keine"; }
+const pctTxt = p => p < 0.05 ? "< 5 %" : p > 0.95 ? "> 95 %" : nf(Math.round(p * 20) * 5, 0) + " %";
+const cmTxt = w => nf(Math.round(w), 0) + " cm";
+const WD = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const hm = ms => fdt(ms);
+const hmShort = (ms, ref) => { const d = new Date(ms), r = new Date(ref), same = d.getUTCDate() === r.getUTCDate() && d.getUTCMonth() === r.getUTCMonth(); return (same ? "" : WD[d.getUTCDay()] + " ") + fdt(ms).slice(7); };
+function relClock(tI, a, b, step) {                     // Achse in Stunden ab Ausgabe, beschriftet mit Uhrzeit
+  const out = [], s = step * 3600000, first = Math.ceil((tI + a * 3600000) / s) * s;
+  for (let t = first; t <= tI + b * 3600000 + 1; t += s) { const d = fdt(t); out.push({ v: (t - tI) / 3600000, l: d.slice(7), l2: d.slice(0, 6) }); }
+  return out;
+}
+function upstreamPeaks(fw, key, i) {                    // gemessene Scheitel der direkten Oberlieger in den letzten 48 h: [{dn, k, q}]
+  return (UPS_OF[key] || []).map(u => { const q = fw.q[FC.DN[u]]; let km = i; for (let k = i - 192; k <= i; k++) if (q[k] != null && q[k] > q[km]) km = k; return { dn: FC.DN[u], k: km, q: q[km], passed: !FC.upstreamOpen(fw, key, i) }; });
+}
+
+function drawChainFc(dn) {
+  const key = KEY_OF_DN[dn], f = cur(), fw = f.fcw, il = $("#issue");
+  segRadio("#seg-unit", "unit", [["cm", "cm"], ["q", "m³/s"]], state.fcUnit, v => { state.fcUnit = v; upd(); });
+  if (fw && fw.rain) segRadio("#seg-rain", "rain", [["bis", "Regen bis jetzt"], ["perfekt", "perfekter Regen"]], state.fcRain, v => { state.fcRain = v; upd(); if ($("#dt-rel").open) drawDetails("dt-rel"); });
+  else $("#seg-rain").innerHTML = "";
+  if (!fw || !D.chain || !D.unc) { $("#lage").innerHTML = `<p class="note">Für dieses Hochwasser liegt kein Vorhersagefenster vor.</p>`; return; }
+  const ip = fw.i_peak;
+  il.min = ip - 48 * 4; il.max = ip + 12 * 4; il.value = Math.max(+il.min, Math.min(+il.max, ip + state.fcOff));
+  const drawDetails = id => { const i = +il.value; if (id === "dt-rel") drawRel(key, fw); else if (id === "dt-var") drawChainFlood({ dn }, key, f, fw, i); else { drawChainSkill(key); drawChainPeak(key); } };
+  const upd = () => {
+    const i = +il.value; state.fcOff = i - ip;
+    issueLabel(key, fw, i);
+    drawLage(key, f, fw, i);
+    if ($("#dt-var").open) drawChainFlood({ dn }, key, f, fw, i);
+  };
+  ["dt-rel", "dt-var", "dt-skill"].forEach(id => { const d = $("#" + id); d.ontoggle = () => { state.dt[id] = d.open; if (d.open) drawDetails(id); }; });
+  il.oninput = upd;
+  $(".issue-btns").querySelectorAll("button").forEach(b => b.onclick = () => { il.value = Math.max(+il.min, Math.min(+il.max, +il.value + +b.dataset.d)); upd(); });
+  upd();
+  ["dt-rel", "dt-skill"].forEach(id => { if ($("#" + id).open) drawDetails(id); });
+}
+function issueLabel(key, fw, i) {
+  const t0 = parse(fw.t_start), off = i - fw.i_peak, stm = fw.rain ? FC.isStorm(fw, key, i) : null;
+  $("#issue-l").innerHTML = `${fdt(t0 + i * 900000)} <small>(${off === 0 ? "Scheitel Prümzurlay" : sg(off / 4, 2) + " h zum Scheitel Prümzurlay"})</small>` +
+    (stm == null ? "" : ` <span class="regime ${stm ? "storm" : ""}" title="Einteilung zur Ausgabezeit: Mai–September und größter 1-h-Gebietsregen der letzten 48 h mindestens 4 mm/h">${stm ? "Starkregenhochwasser" : "Winterhochwasser"}</span>`);
+}
+
+function drawLage(key, f, fw, i) {
+  const dn = FC.DN[key], U = D.unc, rc = U.rating[dn], A = FC.A, H = FC.H, t0 = parse(fw.t_start), tI = t0 + i * 900000;
+  const variant = !fw.rain ? "kette" : state.fcRain === "perfekt" ? "kette_vorhersage" : "kette_regen", S = FC.forecast(D.chain.sets[fw.models], fw, key, i, variant);
+  if (!S) { $("#lage").innerHTML = `<p class="note">Zu dieser Ausgabezeit fehlen Messwerte; keine Vorhersage.</p>`; ["#ch-lg", "#lg-warn", "#lg-note", "#lg-warn-note", "#lg-leg", "#lg-state"].forEach(s => $(s).innerHTML = ""); return; }
+  const s = S[key], an = UQ.analyse(fw, key, i, s, A, H, variant), obs = fw.q[dn], cm = state.fcUnit === "cm";
+  const W_ = q => UQ.wOfQ(rc, q), cv = q => q == null ? null : (cm ? W_(q) : q), fmt = v => v == null ? "–" : cm ? cmTxt(v) : qf(v) + " m³/s";
+  const ths = thresholdsOf(dn), q0 = obs[i];
+  const hw = !UPS_OF[key], ups = upstreamPeaks(fw, key, i);
+  const STATE = ["ruhig", "Anstieg", "Welle von oben unterwegs", "fallend"], LEVEL = ["unter 2 MQ", "2 bis 8 MQ", "ab 8 MQ"];
+  $("#lg-state").innerHTML = `Zustand zur Ausgabezeit: <b>${STATE[an.state]}</b> · Abflussstufe ${LEVEL[an.level]}${an.dry ? " · trocken (jetzt unter 0,3 MQ)" : ""}${an.heavy ? ` · <b>Starkregenlage</b> <span title="mindestens 40 mm in 24 h oder 20 mm in 3 h im Gebiet, ${variant === "kette_vorhersage" ? "24 h vor bis 24 h nach der Ausgabezeit" : "in den 24 h bis zur Ausgabezeit"}; Band aus den Starkregenfällen aller Pegel">(eigene Fehlertabelle)</span>` : ""} · ${!fw.rain ? "Kette ohne Regen (für dieses Hochwasser kein Stundenregen)" : variant === "kette_vorhersage" ? "Kette mit dem später gemessenen Regen (perfekte Regenvorhersage)" : "Kette mit Regen bis zur Ausgabezeit"}`;
+
+  // Kachel 1: jetzt
+  const w0 = W_(q0), w1 = obs[i - 4] != null ? W_(obs[i - 4]) : null, dw = w1 == null ? null : w0 - w1;
+  const trend = dw == null ? "" : Math.abs(dw) < 1 ? "gleichbleibend" : (dw > 0 ? "steigt " : "fällt ") + nf(Math.abs(dw), 0) + " cm/h";
+  const t1 = `<div class="tile"><div class="k">Jetzt (${fdt(tI).slice(7)})</div><div class="v">${nf(Math.round(w0), 0)} <small>cm</small></div><div class="s">${trend}${trend ? " · " : ""}${qf(q0)} m³/s</div></div>`;
+
+  // Kachel 2: Scheitel
+  let t2;
+  if (an.peak) {
+    const p = { ...an.peak, q: [Math.max(an.peak.q[0], q0), an.peak.q[1], an.peak.q[2]] }, tp = h => tI + Math.round(h * 4) * 900000;
+    const far = an.peak.lead_h > 12 ? " Scheitel erst in mehr als 12 h: Höhe und Zeit unsicher." : "";
+    t2 = `<div class="tile main"><div class="k">Scheitel erwartet</div><div class="v">${fmt(cv(p.q[1]))}</div>` +
+      `<div class="s">80 %: <b>${fmt(cv(p.q[0]))} bis ${fmt(cv(p.q[2]))}</b><br>um <b>${hmShort(tp(p.t_h[1]), tI)}</b>, 80 %: ${hmShort(tp(Math.max(0.25, p.t_h[0])), tI)} bis ${hmShort(tp(p.t_h[2]), tI)}${far}</div></div>`;
+  } else if (an.state === 2) {
+    let mx = 0; an.q.forEach(r => { if (r[MED] > mx) mx = r[MED]; });
+    t2 = `<div class="tile"><div class="k">Scheitel</div><div class="v" style="font-size:16px">kein deutlicher Anstieg mehr</div><div class="s">Welle von oben gemessen; höchster Median in 48 h ${fmt(cv(Math.max(mx, q0)))}</div></div>`;
+  } else if (an.state === 3) {
+    let km = i; for (let k = i - 192; k <= i; k++) if (obs[k] != null && obs[k] > obs[km]) km = k;
+    t2 = `<div class="tile"><div class="k">Scheitel durch</div><div class="v">${fmt(cv(obs[km]))}</div><div class="s">gemessen ${hm(t0 + km * 900000)}; fällt</div></div>`;
+  } else if (!hw && FC.upstreamOpen(fw, key, i) && an.fcmax > 1.02 * q0) {
+    const open = ups.filter(u => !u.passed).map(u => u.dn).join(" und ");
+    const nOpen = ups.filter(u => !u.passed).length, r = an.q[an.fcarg - 1];
+    t2 = `<div class="tile"><div class="k">Scheitel noch nicht absehbar</div><div class="v">${fmt(cv(r[MED]))} <small>und mehr?</small></div><div class="s">Bis ${hmShort(tI + Math.round(an.fcarg) * 900000, tI)} erwartet (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}). ${esc(open || ups.map(u => u.dn).join(" und "))} ${nOpen > 1 ? "steigen" : "steigt"} noch: erst mit dem Scheitel dort gibt es eine Scheitelvorhersage.</div></div>`;
+  } else if (hw && variant === "kette_vorhersage" && an.fcmax > 1.02 * q0) {
+    const r = an.q[an.fcarg - 1];
+    t2 = `<div class="tile"><div class="k">Höchststand in 48 h</div><div class="v">${fmt(cv(r[MED]))}</div><div class="s">bis ${hmShort(tI + Math.round(an.fcarg) * 900000, tI)} erwartet (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}), mit dem später gemessenen Regen als Vorhersage</div></div>`;
+  } else if (hw && an.state === 1) {
+    t2 = `<div class="tile"><div class="k">Scheitel</div><div class="v" style="font-size:16px">hängt am weiteren Regen</div><div class="s">Oberlauf ohne Oberlieger, im Modell keine Regenvorhersage. Ohne weiteren Regen höchstens ${fmt(cv(Math.max(an.fcmax, q0)))}.</div></div>`;
+  } else {
+    t2 = `<div class="tile"><div class="k">Scheitel</div><div class="v" style="font-size:16px">keine Welle in Sicht</div><div class="s">${an.state === 1 ? "Ereignis läuft (Regen oder Anstieg), Vorhersage ohne deutlichen Anstieg" : "kein Anstieg, kein nennenswerter Regen"}</div></div>`;
+  }
+
+  // Kachel 3: Lage gegenüber den Schwellen
+  const over = ths.filter(t => q0 >= t.q), top = over[over.length - 1], wt = ths.find(t => t.warn);
+  const info = top ? "über " + top.name : "unter " + ths[0].name;
+  let wHead, wLine;
+  if (q0 >= wt.q) { wHead = `<i class="dot" style="--col:var(--th3)"></i>${wt.name} überschritten`; wLine = `${nf(w0 - wt.w, 0)} cm über ${wt.name} (${cmTxt(wt.w)})`; }
+  else { const p48 = an.exceed(wt.q)[H - 1], ws = warnStatus(p48); wHead = `<i class="dot" style="--col:${WST[ws].col}"></i>${WST[ws].t}`; wLine = `${wt.name} in 48 h: <b>${pctTxt(p48)}</b>, noch ${nf(Math.max(0, wt.w - w0), 0)} cm`; }
+  const t3 = `<div class="tile"><div class="k">Warnung (ab ${wt.name}, ${cmTxt(wt.w)})</div><div class="v" style="font-size:17px">${wHead}</div>` +
+    `<div class="s">${wLine}<br>Zur Einordnung: ${info}${ups.length ? "<br>" + ups.map(u => `${esc(u.dn)}: ${u.passed ? `Scheitel ${fdt(t0 + u.k * 900000).slice(7)} gemessen` : "noch kein Scheitel"}`).join("<br>") : ""}</div></div>`;
+  $("#lage").innerHTML = t1 + t2 + t3;
+
+  // Ganglinie: gemessen, Median, 80-%-Band, Schwellen, Scheitel
+  const xa = -24, xb = 48, L = H;
+  const before = [], after = [];
+  for (let k = i + xa * 4; k <= i; k++) if (obs[k] != null) before.push([(k - i) / 4, cv(obs[k])]);
+  for (let k = i; k <= i + xb * 4 && k < obs.length; k++) if (obs[k] != null) after.push([(k - i) / 4, cv(obs[k])]);
+  const med = [[0, cv(q0)]], lo = [[0, cv(q0)]], hi = [[0, cv(q0)]];
+  for (let l = 1; l <= L; l++) { const r = an.q[l - 1]; med.push([l / 4, cv(r[MED])]); lo.push([l / 4, cv(r[LO])]); hi.push([l / 4, cv(r[HI])]); }
+  const shown = [...before, ...after, ...med].map(p => p[1]);
+  let ymax = Math.max(...shown, ...hi.map(p => p[1]).slice(0, 4 * 12)), ymin = Math.min(...shown, ...lo.map(p => p[1]));
+  ymax = Math.min(ymax, Math.max(...shown) * 1.6);
+  const thv = ths.map(t => ({ ...t, y: cm ? t.w : t.q }));
+  const nxt = thv.find(t => t.y > ymax);
+  if (nxt && nxt.y < ymax * 1.3) ymax = nxt.y;
+  const yt = niceTicks(cm ? Math.max(0, ymin - 0.08 * (ymax - ymin)) : 0, ymax * 1.04, 4);
+  const Y0 = yt[0], Y1 = yt[yt.length - 1], clamp = p => [p[0], Math.max(Y0, Math.min(Y1, p[1]))];
+  const errs = an.peak ? [{ x: an.peak.t_h[1], x0: Math.max(0, an.peak.t_h[0]), x1: an.peak.t_h[2], y: cv(an.peak.q[1]), y0: cv(Math.max(an.peak.q[0], q0)), y1: cv(an.peak.q[2]), col: "var(--c-full)" }] : [];
+  const narrow = $("#ch-lg").clientWidth < 520;
+  plot($("#ch-lg"), { x: { min: xa, max: xb, ticks: relClock(tI, xa, xb, narrow ? 12 : 6) }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
+    bands: [{ hi: hi.map(clamp), lo: lo.map(clamp), col: "var(--c-full)", op: .2 }],
+    hlines: thv.filter(t => t.y >= Y0 && t.y <= Y1).map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: t.info, label: `${t.name} ${cm ? cmTxt(t.w) : qf(t.q) + " m³/s"}${t.warn ? " · Warnschwelle" : ""}` })),
+    lines: [{ pts: after, col: "var(--c-obs)", dash: true }, { pts: med, col: "var(--c-full)" }, { pts: before, col: "var(--c-obs)" }],
+    vlines: [{ x: 0, col: "var(--ink)", dash: false, label: "Ausgabe" }], errs,
+    tip: x => { const k = i + Math.round(x * 4), l = k - i, rows = [];
+      if (obs[k] != null) rows.push({ col: "var(--c-obs)", name: l > 0 ? "später gemessen" : "gemessen", val: fmt(cv(obs[k])) });
+      if (l >= 1 && l <= L) { const r = an.q[l - 1]; rows.push({ col: "var(--c-full)", name: "Vorhersage (Median)", val: fmt(cv(r[MED])) }, { col: "var(--c-full)", name: "80 %-Bereich", val: `${cm ? nf(cv(r[LO]), 0) : qf(r[LO])} bis ${fmt(cv(r[HI]))}` }); }
+      return { t: fdt(t0 + k * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 270);
+  $("#lg-leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-obs)"></i>später gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>80 % der Fälle</span>${an.peak ? `<span><i class="dot" style="--col:var(--c-full);width:9px;height:9px;margin:0"></i>Scheitel mit 80 %-Spanne</span>` : ""}`;
+  const wp = f.w_peak && f.w_peak[dn];
+  $("#lg-note").innerHTML = `Band und Median aus den Fehlern der kreuzvalidierten Vorhersagen 2004–2022 (jede Stunde ausgegeben, nicht nur bei Hochwasser) in derselben Lage: Zustand, Abflussstufe und Vorlauf${an.heavy ? ", Starkregenlage (Tabelle aus den Starkregenfällen aller Pegel)" : ""}; ${fw.rain ? "Tabellen ohne die Jahre dieses Hochwassers" : "für die Kette ohne Regen"}. ` +
+    (cm ? `Wasserstand mit der heutigen W-Q-Beziehung aus dem Abfluss gerechnet${dn === "Prümzurlay" ? " (Prümzurlay: seit 2022 bei gleichem Abfluss rund 25 cm tiefer als vorher)" : ""}${wp ? `; damals gemessener Höchststand ${wp} cm` : ""}.` : "");
+
+  // Überschreitung je Schwelle
+  const lead = [24, 48, 96, 192];
+  const row = t => {
+    const cls = t.warn ? "wrn" : t.info ? "info" : "", nm = `<i class="thr" style="--col:${TH_COL[t.id]}"></i>${t.name}${t.warn ? "<small>Warnschwelle</small>" : ""}`;
+    if (q0 >= t.q) return `<tr class="${cls}"><td>${nm}</td><td>${nf(t.w, 0)}</td><td class="now" colspan="6">jetzt darüber</td></tr>`;
+    const P = an.exceed(t.q), first = lv => { for (let l = 0; l < L; l++) if (Math.round(P[l] * 20) / 20 >= lv) return hmShort(tI + (l + 1) * 900000, tI); return "–"; };
+    return `<tr class="${cls}"><td>${nm}</td><td>${nf(t.w, 0)}</td>` +
+      lead.map(l => { const p = P[l - 1]; return `<td class="p ${p < 0.05 ? "lo" : ""}" style="${t.info ? "" : `background:color-mix(in srgb, var(--c-full) ${Math.round(Math.min(p, 1) * 55)}%, transparent)`}">${pctTxt(p)}</td>`; }).join("") +
+      `<td>${first(0.1)}</td><td>${first(0.5)}</td></tr>`;
+  };
+  const rows = ths.filter(t => !t.info).map(row).join("") + `<tr class="grp"><td colspan="8">Zur Einordnung, keine Warnung</td></tr>` + ths.filter(t => t.info).map(row).join("");
+  $("#lg-warn").innerHTML = `<table><thead><tr><th>Schwelle</th><th>cm</th><th>in 6 h</th><th>12 h</th><th>24 h</th><th>48 h</th><th title="Vorwarnung: Zeitpunkt, ab dem die Wahrscheinlichkeit mindestens 10 % ist">ab 10 %</th><th title="Warnung: Zeitpunkt, ab dem die Wahrscheinlichkeit mindestens 50 % ist">ab 50 %</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("#lg-warn-note").innerHTML = `Gewarnt wird erst ab <b>${wt.name}</b> (10-jährlicher Wasserstand, erste Schäden; an allen Pegeln gleich): <b>Vorwarnung</b> ab 10 % Wahrscheinlichkeit, ${wt.name} binnen 48 h zu erreichen, <b>Warnung</b> ab 50 %. Meldehöhe und HW 2 nur zur Einordnung. Wahrscheinlichkeit, dass der Wasserstand die Schwelle bis dahin mindestens einmal erreicht. Kennwerte der Hochwasservorhersagezentrale Rheinland-Pfalz (Meldehöhe nur für Echtershausen und Prümzurlay; HWx = x-jährlicher Wasserstand); gerechnet auf dem Abfluss (HQx${rc.q_meldehoehe ? `; Meldehöhe über die heutige W-Q-Beziehung = ${qf(rc.q_meldehoehe)} m³/s` : ""}). Unter 5 % und über 95 % nicht feiner, die Tabellen geben das nicht her. ` +
+    (hw ? "Oberlauf: ohne Regenvorhersage kündigt sich eine Überschreitung hier kaum vorher an." : "");
+}
+
+const hrs = v => v >= 48 ? "≥ 48 h" : v < 1 ? Math.round(v * 60) + " min" : nf(Math.floor(v * 2) / 2, Math.floor(v * 2) % 2 ? 1 : 0) + " h";   // auf halbe Stunden abgerundet
+/* Warnschwelle (HQ10): jedes Hochwasser einzeln, denn 2004–2022 gibt es je Pegel nur ein bis drei; Mittelwerte sagen da nichts */
+const WVAR = [["kette", "ohne Regen"], ["kette_regen", "Regen bis zur Ausgabe"], ["kette_vorhersage", "perfekte Regen­vorhersage"]];
+function warnEventsHtml(key, c) {
+  const wn = ((D.unc.warn || {})[key] || { name: "HQ10" }).name, wname = "HW " + wn.slice(2), pc = v => nf(100 * v, 0) + " %";
+  const ev = c.wev || [], ph = c.wph || [];
+  if (!ev.length && !ph.length) return "";
+  const byStart = {};
+  ev.forEach(x => { const r = byStart[x.beginn] = byStart[x.beginn] || { beginn: x.beginn, q: x.scheitel_q, thr: x.schwelle_q }; r[x.variante] = x; });
+
+  const one = (nm, v, e, l) => v > 0 ? `${nm} <b>${hrs(v)}</b> vorher${e > v + 1 ? ` (zuerst schon ${hrs(e)} vorher)` : ""}` : e > 0 ? `${nm} ${hrs(e).replace(" h", "")}–${hrs(l)} vorher, dann zurückgenommen` : `keine ${nm}`;
+  const lt = x => !x ? `<span style="color:var(--muted)">–</span>` : !(x.erste_10_h > 0) ? `<b>nicht gewarnt</b><small style="display:block;color:var(--ink2)">höchstens ${pctTxt(x.p_max_48h)}</small>` :
+    one("Vorwarnung", x.vorwarn_10_h, x.erste_10_h, x.letzte_10_h) + `<small style="display:block;color:var(--ink2)">${one("Warnung", x.vorwarn_50_h, x.erste_50_h, x.letzte_50_h)}</small>`;
+  const rows = Object.values(byStart).sort((a, b) => a.beginn < b.beginn ? -1 : 1);
+  let h = `<h2 style="margin-top:12px">Warnung ab ${wname}: jedes Hochwasser einzeln</h2>`;
+  h += rows.length ? `<div class="tw"><table><thead><tr><th class="txt" style="min-width:86px" title="erste Stunde über ${wname} nach mindestens 48 h darunter">Beginn</th><th>Scheitel</th>${WVAR.map(([v, l]) => `<th class="txt" title="Vorwarnung (ab 10 %) / Warnung (ab 50 %): so lange vor dem Überschreiten lag die Wahrscheinlichkeit, ${wname} binnen 48 h zu erreichen, ununterbrochen darüber">${l}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td style="min-width:86px">${fdt(parse(r.beginn)).slice(0, 6)}${r.beginn.slice(0, 4)}<small style="display:block;color:var(--ink2)">${fdt(parse(r.beginn)).slice(7)} Uhr</small></td><td>${qf(r.q)} m³/s<small style="display:block;color:var(--ink2)">${nf(r.q / r.thr, 1)} × HQ10</small></td>${WVAR.map(([v]) => `<td class="txt">${lt(r[v])}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>`
+    : `<p class="note">In den geprüften Jahren hat ${esc(FC.DN[key])} ${wname} nicht erreicht.</p>`;
+  const fr = (v, tag, lev) => ph.find(x => x.variante === v && x.pruefung === tag && x.stufe === lev);
+  const cell = x => !x ? "–" : `${x.fehlalarme}${x.fehlalarme ? `<small style="display:block;color:var(--ink2)">davon ${x.knapp} knapp</small>` : ""}`;
+  h += `<div class="tw"><table><thead><tr><th>Fehlalarme (keine ${wname} in den 48 h danach)</th><th>Jahre</th><th title="Phasen mit Wahrscheinlichkeit ab 10 %, Lücken bis 12 h zusammengefasst">Vorwarnung</th><th title="Phasen mit Wahrscheinlichkeit ab 50 %">Warnung</th></tr></thead><tbody>` +
+    WVAR.map(([v, l]) => `<tr><td>${l}</td><td>2004–2022</td><td>${cell(fr(v, "cv_2004_2022", 0.1))}</td><td>${cell(fr(v, "cv_2004_2022", 0.5))}</td></tr>`).join("") +
+    (fr("kette", "alt_1989_2003", 0.1) ? `<tr><td>ohne Regen</td><td>1989–2003</td><td>${cell(fr("kette", "alt_1989_2003", 0.1))}</td><td>${cell(fr("kette", "alt_1989_2003", 0.5))}</td></tr>` : "") + `</tbody></table></div>`;
+  const fa = fr("kette_regen", "cv_2004_2022", 0.5);
+  h += `<p class="note">Vorwarnung / Warnung „x h vorher“: so lange vor dem Überschreiten lag die Wahrscheinlichkeit, ${wname} binnen 48 h zu erreichen, ununterbrochen bei mindestens 10 % bzw. 50 % (höchstens 48 h gezählt); „dann zurückgenommen“: angekündigt, aber vor dem Überschreiten wieder darunter (meist, weil die Welle später kam als vorhergesagt).${key === "PZ" ? " Prümzurlay 1993 und 2003 lassen sich nicht nachrechnen: Wiersdorf ist damals bei 250 cm abgeschnitten aufgezeichnet." : key === "WI" ? " Ältere Hochwasser in Wiersdorf sind bei 250 cm abgeschnitten aufgezeichnet und nicht nachrechenbar." : ""} „Ohne Regen“: Kette ohne Regenanteil; „Regen bis zur Ausgabe“: wie in dieser Karte; „perfekte Regenvorhersage“: mit dem später gemessenen Regen. Eine echte Vorhersage liegt zwischen den beiden Regenspalten. 2004–2022 kreuzvalidiert (Tabellen ohne den Zeitblock des Hochwassers), 1989–2003 unabhängig (nur ohne Regen, Stundenregen erst ab 2004). Knapp: der Abfluss erreichte danach mindestens 80 % von HQ10.` +
+    (fa && fa.liste.length ? ` Warnungen ohne ${wname} (mit Regen bis zur Ausgabe): ${fa.liste.map(x => `${fdt(parse(x.beginn)).slice(0, 6)}${x.beginn.slice(0, 4)} (bis ${pctTxt(x.p_max)}, erreicht ${pc(x.max_vs_schwelle)} von HQ10)`).join(", ")}.` : "") + `</p>`;
+  return h;
+}
+function drawRel(key, fw) {
+  const dn = FC.DN[key], c = D.unc.check[dn], el = $("#lg-rel"), pc = v => v == null ? "–" : nf(100 * v, 0) + " %";
+  if (!c) { el.innerHTML = ""; return; }
+  const var_ = !fw.rain ? "kette" : state.fcRain === "perfekt" ? "kette_vorhersage" : "kette_regen", b = c.band[var_] || {}, cv_ = b.cv_2004_2022 || {}, alt = (c.band.kette || {}).alt_1989_2003;
+  const br = (lab, x) => x ? `<tr><td>${lab}</td><td>${nf(x.n, 0)}</td>${[1, 6, 12, 24, 48].map(h => `<td>${pc(x[h])}</td>`).join("")}</tr>` : "";
+  let h = `<h2>Band: Wie oft lag die Messung im 80 %-Bereich?</h2><div class="tw"><table><thead><tr><th>Fälle</th><th>Ausgaben</th><th>1 h</th><th>6 h</th><th>12 h</th><th>24 h</th><th>48 h</th></tr></thead><tbody>` +
+    br(`alle Stunden 2004–2022 (${var_ === "kette" ? "ohne Regen" : var_ === "kette_vorhersage" ? "perfekter Regen" : "Regen bis zur Ausgabe"})`, cv_.alle) + br("davon Abflussstufe ab 8 MQ", cv_["Stufe ab 8 MQ"]) + br("davon Welle von oben unterwegs", cv_["Zustand Welle unterwegs"]) +
+    br("davon Starkregenlage (eigene Tabelle)", cv_["Starkregenlage"]) +
+    br("unabhängig 1989–2003 (ohne Regen)", alt && alt.alle) + br("nachträglich: Messung ab HQ2/2", cv_["gemessen ab HQ2/2 (nachträglich ausgewählt)"]) +
+    br("nachträglich: Hochwasser über HQ10", cv_["HQ10-Hochwasser (48 h vor dem Überschreiten bis Scheitel, nachträglich ausgewählt)"]) +
+    `</tbody></table></div><p class="note">Ziel 80 %. Geprüft verschachtelt: Fehlertabellen jeweils ohne den geprüften Zeitblock. Starkregenlage: mindestens 40 mm in 24 h oder 20 mm in 3 h im Gebiet (${var_ === "kette_vorhersage" ? "24 h vor bis 24 h nach der Ausgabezeit" : "24 h vor der Ausgabezeit"}); ihre Tabelle stammt aus den Starkregenfällen aller Pegel. Die letzten zwei Zeilen wählen die Fälle nach dem, was danach tatsächlich kam: dort liegt die Messung seltener im Band, ohne Regenvorhersage vor allem, weil der Regen nach der Ausgabezeit nicht bekannt ist, mit perfektem Regen, weil das Modell Extreme noch unterschätzt (Scheitel bei Ausgabe 24 h vor HQ10 im Median 39 %). Das sind die ehrlichen Zahlen für „im echten Hochwasser“.</p>`;
+  h += warnEventsHtml(key, c);
+  const w = c.warn.filter(x => !x.warnschwelle && x.variante === var_ && x.pruefung === "cv_2004_2022").concat(var_ === "kette" ? c.warn.filter(x => !x.warnschwelle && x.variante === "kette" && x.pruefung === "alt_1989_2003") : []);
+  const tn = s => s === "HQ2/2" ? "halbes HQ2" : s;
+  if (w.length) {
+    h += `<h2 style="margin-top:12px">Zum Vergleich: kleinere Hochwasser (keine Warnung, Prüfung der Methode)</h2><div class="tw"><table><thead><tr><th>Schwelle</th><th title="Überschreitungen (erste Stunde über der Schwelle nach mindestens 48 h darunter)">Fälle</th><th title="Median der Vorwarnzeit: so lange vorher lag die Wahrscheinlichkeit für die nächsten 48 h ununterbrochen bei mindestens 50 %">Vorwarnung</th><th>≥ 3 h</th><th>≥ 6 h</th><th title="Warnphasen (Wahrscheinlichkeit mindestens 50 %), nach denen binnen 48 h keine Überschreitung kam">Fehlalarme</th></tr></thead><tbody>` +
+      w.map(x => `<tr><td>${tn(x.schwelle)}<br><small style="color:var(--ink2)">${x.pruefung === "cv_2004_2022" ? "2004–2022" : "1989–2003, unabhängig"}</small></td><td>${x.ereignisse}</td><td>${nf(x.vorwarn_med_h, 1)} h</td><td>${pc(x.ab3h)}</td><td>${pc(x.ab6h)}</td><td>${x.fehlalarme} / ${x.warnphasen}</td></tr>`).join("") +
+      `</tbody></table></div><p class="note">Fälle: Überschreitungen (erste Stunde über der Schwelle nach mindestens 48 h darunter). Vorwarnung: Median, so lange vorher lag die Wahrscheinlichkeit für „in 48 h überschritten“ ununterbrochen bei mindestens 50 %. Fehlalarme: Warnphasen ohne Überschreitung in 48 h / alle Warnphasen. Diese Schwellen lösen keine Warnung aus; sie zeigen nur, wie sich die Wahrscheinlichkeiten auf breiterer Grundlage verhalten.</p>`;
+  }
+  const rel = D.unc.reliability[`${var_}|cv_2004_2022|6`];
+  if (rel) {
+    const keys = Object.keys(rel).filter(k => k !== "p0.00-0.05");
+    h += `<h2 style="margin-top:12px">Stimmen die Wahrscheinlichkeiten?</h2><div class="tw"><table><thead><tr><th>angesagt</th>${keys.map(k => `<th>${k.slice(1).replace("-", " bis ").replace(/0\.(\d\d)/g, (m, d) => String(+d)).replace("1.00", "100")} %</th>`).join("")}</tr></thead><tbody><tr><td>eingetreten</td>${keys.map(k => `<td>${pc(rel[k][0])}</td>`).join("")}</tr><tr><td>Fälle</td>${keys.map(k => `<td>${nf(rel[k][1], 0)}</td>`).join("")}</tr></tbody></table></div><p class="note">Halbes HQ2 in den nächsten 6 h, alle acht Pegel, 2004–2022. Liegt „eingetreten“ nahe an „angesagt“, sind die Prozentzahlen ehrlich; im oberen Bereich trat es etwas öfter ein als angesagt (die Wahrscheinlichkeiten sind dort eher vorsichtig).</p>`;
+  }
+  const pk = c.peak.filter(x => x.variante === var_ && x.pruefung === "cv_2004_2022" && x.vorlauf !== "alle");
+  if (pk.length) {
+    h += `<h2 style="margin-top:12px">Scheitel: Wie gut, sobald die Welle oben gemessen ist?</h2><div class="tw"><table><thead><tr><th>Scheitel in</th><th>Ausgaben</th><th title="Anteil, bei dem die gemessene Scheitelhöhe im 80 %-Bereich lag">Höhe drin</th><th title="Anteil, bei dem die gemessene Scheitelzeit im 80 %-Bereich lag">Zeit drin</th><th title="Median des Fehlers der Scheitelhöhe (Median der Vorhersage)">± Höhe</th><th title="Median des Zeitfehlers">± Zeit</th></tr></thead><tbody>` +
+      pk.map(x => `<tr><td>${x.vorlauf}</td><td>${x.faelle}</td><td>${pc(x.hoehe_in80)}</td><td>${pc(x.zeit_in80)}</td><td>${nf(100 * x.hoehe_fehler_med_korr, 0)} %</td><td>${nf(x.zeit_fehler_med_korr_h, 1)} h</td></tr>`).join("") +
+      `</tbody></table></div><p class="note">Stündliche Ausgaben, an denen an allen Oberliegern ein Scheitel gemessen war, am Pegel noch nicht, und die Vorhersage noch steigt (Höchstwert mehr als 2 % über jetzt, mindestens 2 MQ). Gemessener Scheitel: höchster Wert bis 12 h nach dem vorhergesagten. „Drin“: Anteil im 80 %-Bereich (Ziel 80 %); ± Höhe in Abfluss, ± Zeit in Stunden (Mediane). „Scheitel in“: Vorlauf bis zum vorhergesagten Scheitel.</p>`;
+  }
+  el.innerHTML = h;
+}
+
+function drawChainFlood(r, key, f, fw, i) {
+  const vis = v => state.vis["cf_" + v] !== false;
+  const hw = !UPS_OF[key];
+  const avail = CFV.filter(v => v[0] !== "pers" && !(hw && v[0] === "einzeln") && (fw && (fw.rain || v[0] === "kette" || v[0] === "einzeln")))
+    .map(v => hw && v[0] === "kette" ? ["kette", "ohne Regen (Abfluss bleibt)", "--c-pers", true] : v);
+  fcLegend("#cf-leg", [["obs", "Messung", "--c-obs", false], ...avail], () => drawChainFlood(r, key, f, fw, i));
+  const set = D.chain.sets[fw.models], A = FC.A, H = FC.H, ip = fw.i_peak, t0 = parse(fw.t_start);
+  const obs = fw.q[r.dn], xh = k => (k - ip) * 0.25;
+  const open = FC.upstreamOpen(fw, key, i);
+  const res = {};
+  avail.forEach(v => { const S = FC.forecast(set, fw, key, i, v[0]); res[v[0]] = S ? S[key] : null; });
+  const lines = [{ name: "Messung", col: "var(--c-obs)", pts: obs.map((q, k) => [xh(k), q]).filter(p => p[0] >= -48 && p[1] != null) }];
+  if (!vis("obs")) lines.pop();
+  avail.forEach(v => { if (!vis(v[0]) || !res[v[0]]) return; const s = res[v[0]]; const pts = []; for (let t = A; t <= A + H; t++) pts.push([xh(i - A + t), s[t]]); lines.push({ name: v[1], col: `var(${v[2]})`, dash: v[3], pts }); });
+  const ymax = Math.max(...obs.filter(v => v != null), ...avail.flatMap(v => res[v[0]] ? Array.from(res[v[0]].slice(A)) : [])) * 1.05, yt = niceTicks(0, ymax, 4);
+  plot($("#ch-cf"), { x: { min: -48, max: 60, ticks: relTicks(-48, 60, $("#ch-cf").clientWidth < 520 ? 24 : 12), label: "Stunden zum Scheitel Prümzurlay" }, y: { min: 0, max: yt[yt.length - 1], ticks: yt, label: "Abfluss (m³/s)" }, lines,
+    bands: [{ hi: [[xh(i), yt[yt.length - 1]], [Math.min(60, xh(i) + 48), yt[yt.length - 1]]], lo: [[xh(i), 0], [Math.min(60, xh(i) + 48), 0]], col: "var(--grid)" }],
+    vlines: [{ x: xh(i), col: "var(--ink)", dash: false, label: "Ausgabe" }, { x: 0, dash: true }],
+    tip: x => { const k = Math.round(x * 4) + ip, lead = (k - i) * 0.25; return { t: fdt(t0 + k * 900000) + (lead > 0 && lead <= 48 ? ` · Vorlauf ${nf(lead, 2)} h` : ""), x: xh(k),
+      rows: [{ col: "var(--c-obs)", name: "Messung", val: qf(obs[k]) + " m³/s" }, ...avail.filter(v => res[v[0]] && lead > 0 && lead <= 48).map(v => ({ col: `var(${v[2]})`, name: v[1], val: qf(res[v[0]][A + k - i]) + " m³/s" }))] }; } }, 250);
+  const main = fw.rain ? "kette_regen" : "kette", s = hw && !fw.rain ? null : res[main];
+  if (s) {
+    let kf = A + 1; for (let t = A + 1; t <= A + H; t++) if (s[t] > s[kf]) kf = t;
+    let ko = i + 1; for (let k = i + 1; k <= i + H; k++) if (obs[k] != null && obs[k] > (obs[ko] ?? -1)) ko = k;
+    $("#cf-kv").innerHTML = `<div><div class="k">${main === "kette_regen" ? (hw ? "Mit Regen" : "Kette mit Regen") : "Kette ohne Regen"}: ${open ? "mindestens (Scheitel oben noch nicht gemessen)" : "höchster Wert in 48 h"}</div><div class="v">${qf(s[kf])} <small>m³/s · ${fdt(t0 + (i - A + kf) * 900000)}</small></div></div>` +
+      `<div><div class="k">Messung: höchster Wert in denselben 48 h</div><div class="v">${qf(obs[ko])} <small>m³/s · ${fdt(t0 + ko * 900000)}</small></div></div>`;
+  } else $("#cf-kv").innerHTML = "";
+  const st = fw.models === "alle" ? "Modelle aus allen Ereignissen 2004–2022 (dieses Hochwasser war nicht dabei)" : `Modelle ohne die Jahre ${D.chain.blocks[+fw.models].join("–")} angepasst (dieses Hochwasser war nicht dabei)`;
+  $("#cf-note").textContent = (hw ? `${r.dn} hat keinen Oberlieger: Vorhersage aus dem Gebietsregen des Einzugsgebiets (Regen-Abfluss-Modell), alle 15 min bis 48 h voraus. ` : `Alles bis zur Ausgabezeit gemessen; danach rechnet die Kette jeden Pegel aus der Vorhersage seines Oberliegers (${chainPaths(key)}), alle 15 min bis 48 h voraus. `) +
+    (fw.rain ? "Mit Regen: gemessen bis zur Ausgabezeit, danach kein Regen; gestrichelt dasselbe mit dem tatsächlich gefallenen Regen (perfekte Regenvorhersage, nur als Obergrenze). " : "Für dieses Hochwasser gibt es keinen Stundenregen, daher nur die Kette ohne Regen (Oberläufe bleiben auf dem Wert zur Ausgabezeit). ") +
+    `Fehlerkorrektur je Pegel aus den Trainingsereignissen. Solange an einem Oberlieger noch kein Scheitel gemessen ist, zeigt die Vorhersage keinen Scheitel, sondern bleibt nach ihrem Höchstwert stehen (gilt die Kette hinunter, nicht für die perfekte Regenvorhersage). ${st}. Grau hinterlegt: Vorhersagezeitraum.`;
+}
+function chainRows(kind, set, key) { const x = D.chain[kind][set]; return x && x[key] ? x[key] : null; }
+function drawChainSkill(key) {
+  const set = state.fcSet, rows = chainRows("skill", set, key), m = state.fcMetric2;
+  segRadio("#seg-cfm", "cfm", [["skill", "Güte gegen Persistenz"], ["nse", "NSE"]], m, v => { state.fcMetric2 = v; drawChainSkill(key); });
+  segRadio("#seg-cfs", "cfs", [["cv", "2004–2022"], ["storm", "nur Starkregen"], ["alt", "1989–2003"]], set, v => { state.fcSet = v; drawChainSkill(key); drawChainPeak(key); });
+  const hw = !UPS_OF[key];
+  const vs = CFV.filter(v => rows && rows[v[0]] && !(m === "skill" && v[0] === "pers") && !(hw && (v[0] === "kette" || v[0] === "einzeln")));
+  fcLegend("#cs-leg", vs, () => drawChainSkill(key));
+  if (!rows) { $("#ch-cs").innerHTML = `<p class="note">Keine prüfbaren Ereignisse für diesen Pegel.</p>`; $("#cs-note").textContent = ""; return; }
+  const lines = vs.filter(v => state.vis["cf_" + v[0]] !== false).map(v => ({ name: v[1], col: `var(${v[2]})`, dash: v[3], pts: rows[v[0]][m].map((y, h) => [(h + 1) * 0.25, y]) }));
+  const all = lines.flatMap(l => l.pts.map(p => p[1])), lo = Math.max(-0.5, Math.min(0, ...all));
+  plot($("#ch-cs"), { x: { min: 0.25, max: 48, ticks: [6, 12, 18, 24, 30, 36, 42, 48], label: "Vorlaufzeit (h)" }, y: { min: lo, max: 1, ticks: [-0.5, -0.25, 0, 0.25, 0.5, 0.75, 1].filter(v => v >= lo - 1e-9), fmt: v => nf(v, 2), label: m === "skill" ? "1 − MSE / MSE Persistenz" : "NSE" }, lines,
+    tip: x => { const h = Math.max(1, Math.min(192, Math.round(x * 4))); return { t: `Vorlaufzeit ${nf(h / 4, 2)} h`, x: h / 4, rows: lines.map(l => ({ col: l.col, name: l.name, val: nf(l.pts[h - 1][1], 3) })) }; } }, 230);
+  $("#cs-note").textContent = set === "cv"
+    ? `${rows.events} Ereignisse 2004–2022 (Scheitel über dem 95-%-Quantil), je 241 Ausgabezeiten von 48 h vor bis 12 h nach dem Scheitel; Modelle jeweils ohne den Zeitblock des Ereignisses angepasst. Fehler je Ereignis durch den Scheitel geteilt. Güte 0 = so gut wie „Abfluss bleibt“, 1 = fehlerfrei.`
+    : set === "storm" ? `Nur die ${rows.events} Starkregenhochwasser unter den Ereignissen 2004–2022 (zur Scheitelzeit: Mai–September und mindestens 4 mm/h Gebietsregen in einer Stunde innerhalb von 48 h), sonst wie oben.`
+    : `${rows.events} Ereignisse 1989–2003 (Scheitel über dem 95-%-Quantil; für diese Jahre gibt es keinen Stundenregen), Modelle aus 2004–2022, also unabhängig; nur Varianten ohne Regen.`;
+}
+function drawChainPeak(key) {
+  const rows = chainRows("peak", state.fcSet, key);
+  const vs = CFV.filter(v => rows && rows[v[0]] && !(!UPS_OF[key] && (v[0] === "kette" || v[0] === "einzeln")));
+  fcLegend("#cp-leg", vs, () => drawChainPeak(key));
+  if (!rows) { $("#ch-cp").innerHTML = ""; $("#cp-note").textContent = ""; return; }
+  const lines = vs.filter(v => state.vis["cf_" + v[0]] !== false).map(v => ({ name: v[1], col: `var(${v[2]})`, dash: v[3], pts: rows[v[0]].med.map((y, j) => [-(j * 0.25), y]) }));
+  const mainK = rows.kette_regen ? "kette_regen" : (UPS_OF[key] ? "kette" : "pers"), mb = rows[mainK];
+  const h6 = v => rows[v] && rows[v].hit ? nf(100 * rows[v].hit[24], 0) + " %" : "–";
+  const bands = state.vis["cf_" + mainK] !== false ? [{ hi: mb.q75.map((y, j) => [-(j * 0.25), y]), lo: mb.q25.map((y, j) => [-(j * 0.25), y]), col: `var(${CFV.find(v => v[0] === mainK)[2]})` }] : [];
+  const hi = Math.max(1.2, ...lines.flatMap(l => l.pts.map(p => p[1])), ...(bands.length ? mb.q75 : []));
+  const yt = niceTicks(0, Math.min(2, hi), 4);
+  plot($("#ch-cp"), { x: { min: -48, max: 0, ticks: [-48, -36, -24, -12, -6, 0].map(v => ({ v, l: String(-v) })), label: "Ausgabe … Stunden vor dem gemessenen Scheitel" }, y: { min: 0, max: yt[yt.length - 1], ticks: yt, fmt: v => nf(v * 100, 0), label: "Vorhersage / Messung (%)" }, lines, bands,
+    vlines: [], tip: x => { const j = Math.max(0, Math.min(192, Math.round(-x * 4))); return { t: `Ausgabe ${nf(j / 4, 2)} h vor dem Scheitel`, x: -j / 4, rows: lines.map(l => ({ col: l.col, name: l.name, val: nf(l.pts[j][1] * 100, 0) + " %" })) }; } }, 220);
+  $("#cp-note").textContent = `Höchster vorhergesagter Wert in den nächsten 48 h, geteilt durch den gemessenen Scheitel; Median über ${mb.events} Ereignisse, Band: mittlere Hälfte (${CFV.find(v => v[0] === mainK)[1]}). 100 % = Scheitel richtig getroffen. Persistenz zeigt den Abfluss zur Ausgabezeit.` +
+    (rows.kette_regen ? ` Scheitel erkannt (Höhe ±15 %, Zeit ±2 h) bei Ausgabe 6 h vorher: ${h6("kette_regen")} mit Umschalten, ${h6("kette_regen_1")} mit einem Modell.` : "");
+}
+function drawOverview(el) {
+  const ids = ["EC", "WI", "PZ", "SE", "AL"].filter(k => D.groups[k]);
+  let h = `<h2>Prüfung an den neun Hochwassern (ohne das jeweilige angepasst)</h2><div class="tw"><table><thead><tr><th>Unterlieger ← Oberlieger</th><th>NSE c(Q)</th><th>NSE konst. c</th><th>NSE fester Lag</th><th title="Hochwasser, in denen c(Q) einen höheren NSE hat als konstantes c">c(Q) vorn</th><th>Ereignisse</th></tr></thead><tbody>`;
+  const wins = k => { let w = 0, n = 0; D.floods.forEach(f => { const x = skillOf(k, "full", f.id), y = skillOf(k, "tied", f.id); if (x && y) { n++; if (x.nse > y.nse) w++; } }); return `${w} von ${n}`; };
+  ids.forEach(k => { const g = D.groups[k]; h += `<tr><td>${esc(g.dn)} ← ${g.links.map(l => esc(l.up)).join(" + ")}</td>` + ["full", "tied", "lag"].map(v => `<td>${nf(medianSkill(k, v), 3)}</td>`).join("") + `<td>${wins(k)}</td><td>${g.n_events}</td></tr>`; });
+  h += `</tbody></table></div><p class="note">Median der Nash-Sutcliffe-Werte über die Testfenster (72 h um den Scheitel Prümzurlay); Ereignisse: Zahl der Anpassungsereignisse (Scheitel über dem 95-%-Quantil).</p>`;
+  if (D.chain && D.chain.skill.cv) {
+    const hz = (k, v) => { const x = D.chain.skill.cv[k] && D.chain.skill.cv[k][v]; if (!x) return null; let h = 0; for (let t = 0; t < x.nse.length && x.nse[t] >= 0.7; t++) h = (t + 1) * 0.25; return h; };
+    const hit6 = (k, v) => { const x = D.chain.peak.cv[k] && D.chain.peak.cv[k][v]; return x && x.hit ? x.hit[24] : null; };
+    h += `<h2>Kettenvorhersage: wie weit voraus? (2004–2022, kreuzvalidiert)</h2><div class="tw"><table><thead><tr><th>Pegel</th><th title="Persistenz: Abfluss bleibt">Pers.</th><th title="Kette ohne Regen">Kette</th><th title="Kette mit Regen bis zur Ausgabezeit, ein Modellsatz">+ Regen</th><th title="Kette mit Regen, Umschalten zwischen Winter- und Starkregenmodellen">umsch.</th><th title="mit dem tatsächlich gefallenen Regen nach der Ausgabezeit: Obergrenze, nicht betrieblich">ideal</th><th title="Scheitel erkannt (Höhe ±15 %, Zeit ±2 h) bei Ausgabe 6 h vorher: ein Modell → Umschalten">erkannt 6 h</th></tr></thead><tbody>`;
+    FC.ORDER.forEach(k => { const e = D.chain.skill.cv[k]; if (!e) return; const best = e.kette_regen ? "kette_regen" : "kette";
+      h += `<tr><td>${esc(FC.DN[k])}</td>` + ["pers", "kette", "kette_regen_1", "kette_regen", "kette_ideal"].map(v => `<td>${v === best ? "<b>" : ""}${hz(k, v) == null ? "–" : nf(hz(k, v), 1) + " h"}${v === best ? "</b>" : ""}</td>`).join("") +
+        `<td>${hit6(k, "kette_regen_1") == null ? "–" : nf(100 * hit6(k, "kette_regen_1"), 0) + " → " + nf(100 * hit6(k, "kette_regen"), 0) + " %"}</td></tr>`; });
+    h += `</tbody></table></div><p class="note">Vorlaufzeit, bis zu der die Vorhersage einen NSE von mindestens 0,7 hält (${Math.min(...FC.ORDER.map(k => D.chain.skill.cv[k].events))} bis ${Math.max(...FC.ORDER.map(k => D.chain.skill.cv[k].events))} Ereignisse je Pegel, Fehler je Ereignis durch den Scheitel geteilt, alle Ausgabezeiten 48 h vor bis 12 h nach dem Scheitel).  Prüm 2, Sinspelt und Giesdorf haben keinen Oberlieger: ohne Regen bleibt dort nur die Persistenz. Spalten: Persistenz, Kette ohne Regen, Kette mit Regen (ein Modellsatz), Kette mit Regen und Umschalten zwischen Winter- und Starkregenmodellen, Kette mit perfekter Regenvorhersage (Obergrenze; mit Umschalten); erkannt 6 h: Anteil der Ereignisse, deren Scheitel bei Ausgabe 6 h vorher auf ±15 % und ±2 h getroffen wird. Fließzeit bei Hochwasser laut Modellen: Prüm 2 bis Prümzurlay etwa 16 bis 18 h, Giesdorf bis Alsdorf-Oberecken etwa 9 bis 10 h.</p>`;
+  }
+  if (D.unc) {
+    const pc = v => v == null ? "–" : nf(100 * v, 0) + " %";
+    h += `<h2 style="margin-top:14px">Vorhersage mit Unsicherheit: Band und Warnung ab HW 10 je Pegel (2004–2022)</h2><div class="tw"><table class="nomin"><thead><tr><th>Pegel</th><th title="Anteil der Messwerte im 80 %-Bereich bei 6 / 24 h Vorlauf, alle stündlichen Ausgaben, mit Regen bis zur Ausgabe">Band 6 / 24 h</th><th title="nur Fälle, in denen die Messung danach HQ2/2 erreichte (nachträglich ausgewählt)">im HW 6 h</th><th class="txt" title="Hochwasser über HW 10 (HQ10), 2004–2022, und wie lange vorher die Warnung (ab 50 %) ununterbrochen stand: ohne Regenvorhersage / mit perfekter Regenvorhersage">HW 10: Warnung vorher</th><th title="Warnphasen (ab 50 %) ohne HW 10 in den 48 h danach: ohne / mit perfekter Regenvorhersage">Fehlalarme</th></tr></thead><tbody>`;
+    FC.ORDER.forEach(k => { const g = FC.DN[k], c = D.unc.check[g]; if (!c) return; const b = ((c.band.kette_regen || {}).cv_2004_2022) || {};
+      const ev = v => (c.wev || []).filter(x => x.variante === v && x.pruefung === "cv_2004_2022"), n = ev("kette_regen").length;
+      const lw = x => !x ? "–" : x.vorwarn_50_h > 0 ? hrs(x.vorwarn_50_h) : x.erste_50_h > 0 ? "zurückg." : "nein";
+      const evl = ev("kette_regen").map(x => { const y = ev("kette_vorhersage").find(z => z.beginn === x.beginn); return `${fdt(parse(x.beginn)).slice(0, 6)}${x.beginn.slice(2, 4)}: ${lw(x)} / ${lw(y)}`; }).join("<br>");
+      const fa = v => { const x = (c.wph || []).find(z => z.variante === v && z.pruefung === "cv_2004_2022" && z.stufe === 0.5); return x ? x.fehlalarme : 0; };
+      h += `<tr><td>${esc(g)}</td><td>${b.alle ? nf(100 * b.alle["6"], 0) + " / " + pc(b.alle["24"]) : "–"}</td><td>${pc(b["gemessen ab HQ2/2 (nachträglich ausgewählt)"] && b["gemessen ab HQ2/2 (nachträglich ausgewählt)"]["6"])}</td><td class="txt" style="font-size:12.5px;white-space:nowrap">${n ? evl : "nicht erreicht"}</td><td>${fa("kette_regen")} / ${fa("kette_vorhersage")}</td></tr>`; });
+    h += `</tbody></table></div><p class="note">Band: Anteil der Messwerte im 80 %-Bereich (Ziel 80 %), verschachtelt geprüft. „Im Hochwasser“: nur die Fälle, in denen die Messung danach HQ2/2 erreichte; dort liegt sie seltener im Band, weil Regen nach der Ausgabezeit nicht bekannt ist. Warnung erst ab HW 10 (erste Schäden; an allen Pegeln gleich). „Warnung vorher“ je Hochwasser: so lange stand die Warnung (Wahrscheinlichkeit ab 50 %) ununterbrochen vor dem Überschreiten, „zurückg.“: angekündigt, aber vorher wieder zurückgenommen; „Warnung vorher“ und „Fehlalarme“ je ohne / mit perfekter Regenvorhersage (dem später gemessenen Regen), eine echte Vorhersage liegt dazwischen. Nur ein bis drei Hochwasser je Pegel: Einzelheiten unter „Wie verlässlich?“ im Vorhersage-Tab.</p>`;
+  }
+  if (D.rain) {
+    const fs = (k, v, lead) => { const x = D.rain.fcskill.find(z => z.group === k && z.variant === v && Math.abs(z.lead_h - lead) < 1e-6); return x ? nf(x.skill_vs_persistence, 2) : "–"; };
+    const sm = (k, v) => D.rain.summary.find(z => z.group === k && z.variant === v);
+    h += `<h2 style="margin-top:14px">Mit Regen: Kreuzvalidierung über alle Ereignisse 2004–2022</h2><div class="tw"><table><thead><tr><th>Unterlieger</th><th>Ereign.</th><th title="gepoolter NSE ohne Regenanteil, gleiche Ereignisse">NSE ohne</th><th title="gepoolter NSE mit Regenanteil">NSE mit</th><th title="Güte gegen Persistenz bei 3 h Vorlauf, ohne / mit Regen">3 h ohne/mit</th><th title="größter Abflussbeiwert phi_max des Zwischengebiets">φ max</th></tr></thead><tbody>`;
+    ["EC", "PZ", "SE", "AL"].filter(k => D.rain.params[k]).forEach(k => { const a = sm(k, "route_full"), b = sm(k, "rain_full"), lt = D.rain.params[k].models.rain_full.lat[0];
+      h += `<tr><td>${esc(D.groups[k].dn)}<br><small style="color:var(--ink2)">Zwischengebiet ${nf(D.rain.params[k].area_km2, 0)} km²</small></td><td>${a.n}</td><td>${nf(a.nse_pooled, 3)}</td><td><b>${nf(b.nse_pooled, 3)}</b></td><td>${fs(k, "route_full", 3)} / <b>${fs(k, "rain_full", 3)}</b></td><td>${nf(lt.phi_max, 2)}</td></tr>`; });
+    h += `</tbody></table></div><p class="note">Gepoolter NSE über die Testereignisse (Fehler je Ereignis durch den Scheitel geteilt), Training jeweils ohne den Zeitblock des Testereignisses und ohne Ereignisse im Abstand von 3,5 Tagen. Der Regenanteil macht aus dem Zwischengebiet einen Abfluss: Abflussbeiwert wächst mit dem Vorregenindex, zwei Speicher dahinter. Die ganz großen Hochwasser (2018, 2021) werden weiter unterschätzt; ein Abflussbeiwert, der mit der Regenintensität oder der Regenmenge im Ereignis wächst, ändert daran in der Kreuzvalidierung nichts (siehe README).</p>`;
+  }
+  h += `<h2 style="margin-top:14px">Laufzeit bei kleinem, mittlerem und großem Abfluss</h2><div class="tw"><table><thead><tr><th>Strecke</th><th>km</th><th>klein</th><th>mittel</th><th>groß</th><th>festes c</th></tr></thead><tbody>`;
+  D.reaches.forEach(r => { const lk = D.groups[r.group].links[r.link]; const bound = lk.c_at_bound && lk.c_at_bound.some(Boolean), t0 = lk.T_h[0], t2 = lk.T_h[2], dir = t2 < t0 * 0.9 ? "schneller" : t2 > t0 * 1.1 ? "langsamer" : "gleich",
+      sep = lk.T_lo ? (t2 < t0 ? lk.T_hi[2] < lk.T_lo[0] : lk.T_lo[2] > lk.T_hi[0]) : false,
+      trend = bound ? "c nicht bestimmt (Grenze)" : dir === "gleich" ? "Laufzeit kaum abflussabhängig" : `bei großem Abfluss ${dir}${sep ? "" : " (Bänder überlappen)"}`;
+    h += `<tr><td>${esc(r.up)} → ${esc(r.dn)}${bound ? ' <span class="badge" title="Wellengeschwindigkeit an der Obergrenze von 4 m/s">c an Grenze</span>' : ""}<br><small style="color:var(--ink2)">${trend}</small></td><td>${nf(r.length_km, 1)}</td>` +
+    lk.nodes_q.map((q, k) => `<td><b>${nf(lk.T_h[k], 1)} h</b><br><small style="color:var(--ink2)">bei ${qf(q)} m³/s${lk.T_lo ? `<br>${nf(lk.T_lo[k], 1)} bis ${nf(lk.T_hi[k], 1)}` : ""}</small></td>`).join("") + `<td><b>${nf(r.length_km / (3.6 * lk.c_tied), 1)} h</b></td></tr>`; });
+  h += `</tbody></table></div><p class="note">Laufzeit = Länge / c(Q) beim Abfluss am Oberlieger (95-%-, 99,9-%-Quantil und 70 % des Maximums); darunter 5 bis 95 % aus dem Bootstrap über die Ereignisse. Wird die Welle bei großem Abfluss schneller, sinkt die Laufzeit von links nach rechts.</p>`;
+  h += `<h2 style="margin-top:14px">Je Hochwasser: NSE des Modells c(Q)</h2><div class="tw"><table><thead><tr><th>Hochwasser</th>${ids.map(k => `<th>${esc(D.groups[k].dn)}</th>`).join("")}</tr></thead><tbody>`;
+  D.floods.forEach(f => { h += `<tr><td>${fdate(parse(f.t_peak))}</td>` + ids.map(k => { const s = skillOf(k, "full", f.id); return `<td>${s ? nf(s.nse, 3) : '<span class="badge" title="Wiersdorf abgeschnitten">–</span>'}</td>`; }).join("") + "</tr>"; });
+  h += `</tbody></table></div>`;
+  el.innerHTML = h;
+}
+
+/* ---------- Steuerung ---------- */
+function buildChips() {
+  const box = $("#chips"); box.innerHTML = "";
+  D.floods.forEach((f, i) => { const l = document.createElement("label"); l.className = "chip"; l.innerHTML = `<input type="radio" name="fl" ${i === state.fi ? "checked" : ""}><span><b>${fdate(parse(f.t_peak))}</b><small>${nf(f.q_pz, 0)} m³/s${f.clipped ? " · Wiersdorf abgeschnitten" : ""}</small></span>`; l.querySelector("input").onchange = () => { state.fi = i; state.i = Math.round((parse(f.t_peak) - parse(f.t0)) / 900000) - 96; if (state.i < 0) state.i = 0; drawMap(); renderPanel(); }; box.appendChild(l); });
+}
+function seg(id, items, key, cb) {
+  const box = $(id); box.innerHTML = "";
+  items.forEach(([v, label]) => { const l = document.createElement("label"); l.innerHTML = `<input type="radio" name="${id.slice(1)}" value="${v}" ${String(state[key]) === String(v) ? "checked" : ""}><span>${label}</span>`; l.querySelector("input").onchange = () => { state[key] = typeof state[key] === "number" ? +v : v; cb(); }; box.appendChild(l); });
+}
+let raf = null, last = 0, acc = 0;
+function tick(ts) {
+  if (!state.play) return;
+  acc += (ts - last) / 1000 * state.speed * 4 * 2;   // Schritte (15 min) pro Sekunde: speed * 8 = speed * 2 h/s
+  last = ts;
+  if (acc >= 1) { const n = Math.floor(acc); acc -= n; state.i = Math.min(288, state.i + n); updateMap(); if (state.i >= 288) { state.play = false; $("#play").textContent = "▶"; return; } }
+  raf = requestAnimationFrame(tick);
+}
+function theme() {
+  const b = $("#theme"), order = [null, "light", "dark"], names = { null: "automatisch", light: "hell", dark: "dunkel" };
+  let c = null; try { c = localStorage.getItem("theme"); } catch (e) {}
+  if (c !== "light" && c !== "dark") c = null;
+  const apply = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; b.textContent = "Darstellung: " + names[t]; };
+  apply(c);
+  b.onclick = () => { c = order[(order.indexOf(c) + 1) % 3]; apply(c); try { if (c) localStorage.setItem("theme", c); else localStorage.removeItem("theme"); } catch (e) {} };
+}
+function init() {
+  theme(); buildChips(); buildTabs();
+  seg("#seg-measure", MEAS, "measure", () => { updateMap(); });
+  seg("#seg-speed", [[1, "1×"], [2, "2×"], [4, "4×"]], "speed", () => {});
+  $("#tilesOn").onchange = e => { state.tiles = e.target.checked; drawTiles(); };
+  $("#munOn").onchange = e => { state.mun = e.target.checked; drawMap(); };
+  $("#play").onclick = () => { state.play = !state.play; $("#play").textContent = state.play ? "❚❚" : "▶"; if (state.play) { if (state.i >= 288) state.i = 0; last = performance.now(); acc = 0; raf = requestAnimationFrame(tick); } };
+  $("#time").oninput = e => { state.i = +e.target.value; updateMap(); };
+  const box = $("#mapbox"); let drag = null;
+  box.addEventListener("pointerdown", e => { if (e.target.closest(".zoom,.reach,.node")) return; drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; box.classList.add("drag"); box.setPointerCapture(e.pointerId); });
+  box.addEventListener("pointermove", e => { if (!drag) return; view.x = drag.vx - (e.clientX - drag.x) / view.k; view.y = drag.vy - (e.clientY - drag.y) / view.k; drawMap(); });
+  box.addEventListener("pointerup", () => { drag = null; box.classList.remove("drag"); });
+  const zoom = (f, cx = mapW / 2, cy = mapH / 2) => { const wx = view.x + cx / view.k, wy = view.y + cy / view.k; view.k *= f; view.x = wx - cx / view.k; view.y = wy - cy / view.k; drawMap(); };
+  box.addEventListener("wheel", e => { e.preventDefault(); const r = box.getBoundingClientRect(); zoom(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  $("#zin").onclick = () => zoom(1.4); $("#zout").onclick = () => zoom(1 / 1.4); $("#zfit").onclick = () => { fitView(); drawMap(); };
+  let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { fitView(); drawMap(); renderPanel(); }, 120); });
+  const f = cur(); state.i = Math.max(0, Math.round((parse(f.t_peak) - parse(f.t0)) / 900000) - 96);
+  fitView(); drawMap(); renderPanel();
+}
+init();
+</script>
+</body>
+</html>

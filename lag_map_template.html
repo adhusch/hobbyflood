@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prüm: Lag-Karte</title>
+<style>
+:root {
+  --bg: #f7f6f2; --card: #ffffff; --text: #1f1e1b; --muted: #6b6a64; --line: #dcdad2; --river: #3c7fb8;
+  --ok: #1d9e75; --warn: #e0951c; --bad: #c8453a; --none: #8a8982; --sp: #d9822b; --acc: #185fa5; --land: #eef0e8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1a1a18; --card: #242422; --text: #ecebe4; --muted: #a3a29a; --line: #3a3a36; --river: #6fb0e0;
+    --ok: #3cc49a; --warn: #f0b04a; --bad: #ee6f63; --none: #9c9b94; --sp: #f0a45a; --acc: #6fb0e0; --land: #2a2c27; }
+  #tiles { filter: brightness(.72) saturate(.8) contrast(1.05); }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 14px 16px 6px; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+.sub { color: var(--muted); font-size: 13px; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 14px; padding: 8px 16px 20px; align-items: start; }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+#mapcard { padding: 0; overflow: hidden; position: sticky; top: 8px; }
+@media (max-width: 900px) { #mapcard { position: static; } }
+#map { position: relative; height: min(78vh, 760px); min-height: 380px; overflow: hidden; background: var(--land); touch-action: none; cursor: grab; user-select: none; }
+#map.drag { cursor: grabbing; }
+#tiles, #svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+#tiles img { position: absolute; max-width: none; pointer-events: none; }
+#svg { overflow: visible; }
+.ctl { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.ctl button { width: 32px; height: 32px; font-size: 18px; line-height: 1; }
+button, select { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--acc); }
+button:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+.mapbar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.mapbar label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.sw { display: inline-block; width: 22px; height: 7px; border-radius: 4px; vertical-align: middle; margin-right: 4px; opacity: .85; }
+#attr { margin-left: auto; font-size: 11px; }
+.seg { display: inline-flex; flex-wrap: wrap; }
+.seg button { margin-top: -1px; }
+.seg button { border-radius: 0; margin-left: -1px; padding: 5px 10px; }
+.seg button:first-child { border-radius: 8px 0 0 8px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 8px 8px 0; }
+.seg button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+#side { display: grid; gap: 12px; }
+.reach { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; margin-bottom: 6px; padding: 7px 10px; }
+.reach.on { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc) inset; }
+.reach .dot { width: 12px; height: 12px; border-radius: 50%; }
+.reach .v { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.reach small { display: block; color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; }
+td.n { font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); margin-right: 4px; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+.muted { color: var(--muted); }
+p { margin: 6px 0; }
+.note { font-size: 13px; }
+#warn { display: none; margin: 8px 12px; font-size: 12.5px; color: var(--muted); }
+svg text { font-family: inherit; }
+#plot, #plot2 { width: 100%; height: auto; display: block; margin: 4px 0 2px; }
+#plot text, #plot2 text { font-size: 10px; fill: var(--muted); }
+#plot .ax, #plot2 .ax { stroke: var(--line); stroke-width: 1; }
+.lg { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 12px; color: var(--muted); }
+.lg i { display: inline-block; width: 22px; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 5px; }
+.lab { font-size: 12px; font-weight: 600; fill: var(--text); paint-order: stroke; stroke: var(--card); stroke-width: 3.5px; stroke-linejoin: round; }
+.lab.small { font-size: 10.5px; font-weight: 400; fill: var(--muted); }
+.lag { font-size: 12.5px; font-weight: 700; paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Prüm: Lags der Welle vom 24. bis 26.10.2026</h1>
+  <span class="sub" id="gen"></span>
+</header>
+<div class="wrap">
+  <section class="card" id="mapcard" aria-label="Karte der Pegel">
+    <div id="map">
+      <div id="tiles"></div>
+      <svg id="svg" role="img" aria-label="Pegel und Strecken mit Lag"></svg>
+      <div class="ctl"><button id="zin" aria-label="Hineinzoomen">+</button><button id="zout" aria-label="Herauszoomen">−</button><button id="fit" aria-label="Alles zeigen" title="Alles zeigen">⌂</button></div>
+    </div>
+    <div id="warn">Die Hintergrundkarte wurde nicht geladen (offline oder blockiert). Pegel und Strecken sind trotzdem an ihren echten Koordinaten eingezeichnet.</div>
+    <div class="mapbar">
+      <label><input type="checkbox" id="tilesOn" checked> Hintergrundkarte (lädt OpenStreetMap-Kacheln)</label>
+      <label><input type="checkbox" id="munOn" checked> kommunale Pegel beschriften</label>
+      <span id="attr">© OpenStreetMap-Mitwirkende</span>
+    </div>
+    <div class="mapbar">
+      <span><span class="sw" style="background:var(--ok)"></span>0,5 bis 3,5 m/s</span>
+      <span><span class="sw" style="background:var(--warn)"></span>3,5 bis 6 m/s oder unter 0,5</span>
+      <span><span class="sw" style="background:var(--bad)"></span>über 6 m/s: keine Welle</span>
+      <span><span class="sw" style="background:var(--none)"></span>nicht bestimmbar</span>
+      <span><span class="sw" style="background:var(--sp)"></span>gestrichelt: über den Speicher, keine Wellenlaufzeit</span>
+      <span>■ Stausee (Speicher) · ● LfU-Pegel · ○ kommunal (nur W)</span>
+    </div>
+  </section>
+  <aside id="side">
+    <section class="card">
+      <h2>Verfahren</h2>
+      <div class="seg" id="mseg" role="group" aria-label="Verfahren"></div>
+      <p class="muted note" id="mdesc"></p>
+    </section>
+    <section class="card">
+      <h2>Strecken</h2>
+      <div id="rlist"></div>
+      <p class="muted note">Farbe und Beschriftung folgen dem gewählten Verfahren. Die Geschwindigkeit ist Fließstrecke geteilt durch Lag. Hochwasserwellen in Mittelgebirgsbächen laufen grob mit 1 bis 3 m/s. Alle Uhrzeiten in MEZ (UTC+1).</p>
+    </section>
+    <section class="card" id="detail"></section>
+    <section class="card note">
+      <h2>Grundlage und Grenzen</h2>
+      <p>Alle Lags stammen aus <b>einer</b> Welle (<span id="evspan"></span>, 15-min-Werte des Wasserportals, ungeprüfte Rohdaten). Der größte Abfluss war 18,3 m³/s in Echtershausen und 17,4 m³/s in Prümzurlay, das sind etwa 3 % des bisher höchsten Hochwassers (HQ 596 m³/s im Juli 2021). Alle Pegel haben gescheitelt.</p>
+      <p>Die Verfahren messen die <b>Reaktionsverzögerung zwischen zwei Ganglinien</b> einschließlich des Zwischenzuflusses, nicht die reine Wellenlaufzeit. Steigende und fallende Äste liegen in einer Welle zeitlich getrennt, deshalb lässt sich ein Einfluss des Abflusses nicht sauber von Speicher- und Rückgangseffekten trennen. Ob die Laufzeit mit dem Abfluss sinkt, zeigt sich erst mit Hochwassern bis in den Bereich von 100 m³/s.</p>
+      <p>Für die <b>Enz</b> gibt es Abfluss nur in Sinspelt. Die kommunalen Pegel (Enzen, Holsthum Schloss) liefern Wasserstände, deshalb werden diese Strecken mit normierten Wasserständen gerechnet. Holsthum Schloss steht ab dem 25.10. um 12:30 MEZ im Rückstau der Prüm und wird ab dann nicht mehr ausgewertet. Die Flusskilometer der Enz-Pegel sind aus den Koordinaten geschätzt.</p>
+      <p>Die Werte wurden über einen schmalen Kanal übertragen (Genauigkeit etwa 0,15 %). Flusskilometer stammen aus dem Wasserportal. Die Linien zwischen den Pegeln sind <b>Luftlinien in Fließreihenfolge</b>, nicht der Flusslauf.</p>
+    </section>
+  </aside>
+</div>
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const N = Object.fromEntries(D.nodes.map(n => [n.id, n]));
+const par = {};
+for (const [a, b] of D.edges) (par[b] = par[b] || []).push(a);
+const fmt = (x, d = 1) => x == null ? "–" : x.toFixed(d).replace(".", ",");
+const METHODS = {
+  P: ["Scheitel", "Zeitversatz der beiden Scheitel (parabolisch verfeinert). Bei Wellen mit Dämpfung der natürlichste Maßstab für die Laufzeit des Maximums, aber nur ein Punkt der Ganglinie. Bei den Enz-Strecken nicht bestimmbar: Der Stand am Schloss steht im Rückstau der Prüm, in Prümzurlay ist der Scheitel 2,5 h flach."],
+  S: ["Schwerpunkt", "Versatz der zeitlichen Schwerpunkte der Welle über dem Basisabfluss. Empfindlich für lange, flache Rückgänge, die vom Zwischengebiet gespeist werden."],
+  F: ["Fit", "Kleinste-Quadrate-Anpassung y(t) = a·x(t−L) + c über das ganze Fenster. Bei Wiersdorf → Prümzurlay gemeinsam mit der Enz (Sinspelt). Bei den Enz-Strecken auf Wasserständen, weil es dort keinen Abfluss gibt. Der Zwischenzufluss steckt in a und c. Mit flachen Scheiteln das robusteste Verfahren."],
+  K: ["Korrelation", "Verschiebung mit der höchsten Korrelation der Abflusswerte (0 bis 24 h). Das Maximum ist flach, der Lag deshalb unscharf."],
+  V: ["Vorläufig 25.10.", "Erste Schätzung vom 25.10. aus dem noch steigenden Ast (Verfahren B: Korrelation der 1-h-Änderungen). Nur zum Vergleich."]
+};
+let method = "F", selReach = null, selNode = null, tilesOn = true, munOn = true;
+
+function lagOf(r, m) {
+  const e = r.ev;
+  if (m === "P") return e.peak.lag;
+  if (m === "S") return e.centroid;
+  if (m === "F") return e.joint ? e.joint.lag : e.fit.all.lag;
+  if (m === "K") return e.corr.level.lag;
+  return r.early ? r.early.B.best : null;
+}
+const speedOf = (r, m) => { const l = lagOf(r, m); return l != null && l > 0 ? r.km * 1000 / (l * 3600) : null; };
+const MN = Object.fromEntries(Object.entries(METHODS).map(([k, v]) => [k, v[0]]));
+const clsOf = v => v == null ? "none" : v > 6 ? "bad" : v > 3.5 || v < 0.5 ? "warn" : "ok";
+
+/* ---------- Projektion (Web-Mercator, wie die OSM-Kacheln) ---------- */
+const TS = 256;
+const mx = (lon, z) => (lon + 180) / 360 * TS * 2 ** z;
+const my = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * TS * 2 ** z; };
+const invLon = (x, z) => x / (TS * 2 ** z) * 360 - 180;
+const invLat = (y, z) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / (TS * 2 ** z)))) * 180 / Math.PI;
+let W = 800, H = 700, view = { lat: 50, lon: 6.4, z: 10 };
+const scr = n => [W / 2 + mx(n.lon, view.z) - mx(view.lon, view.z), H / 2 + my(n.lat, view.z) - my(view.lat, view.z)];
+
+function fit() {
+  const lats = D.nodes.map(n => n.lat), lons = D.nodes.map(n => n.lon);
+  const [la0, la1, lo0, lo1] = [Math.min(...lats) - 0.025, Math.max(...lats), Math.min(...lons), Math.max(...lons)];
+  const w0 = mx(lo1, 0) - mx(lo0, 0), h0 = my(la0, 0) - my(la1, 0);
+  const z = Math.log2(Math.min((W - 150) / w0, (H - 90) / h0));
+  view = { lat: (la0 + la1) / 2, lon: (lo0 + lo1) / 2, z: Math.max(7, Math.min(15, z)) };
+}
+
+/* ---------- Kacheln ---------- */
+const tiles = new Map();
+let tileFail = 0, tileOk = 0;
+function drawTiles() {
+  const layer = $("#tiles");
+  layer.style.display = tilesOn ? "" : "none";
+  $("#attr").style.display = tilesOn ? "" : "none";
+  if (!tilesOn) return;
+  const zi = Math.max(5, Math.min(17, Math.round(view.z))), s = 2 ** (view.z - zi);
+  const cx = mx(view.lon, zi), cy = my(view.lat, zi), n = 2 ** zi;
+  const x0 = Math.floor((cx - W / 2 / s) / TS), x1 = Math.floor((cx + W / 2 / s) / TS);
+  const y0 = Math.floor((cy - H / 2 / s) / TS), y1 = Math.floor((cy + H / 2 / s) / TS);
+  const need = new Set();
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) > 60) return;
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+    if (y < 0 || y >= n) continue;
+    const key = zi + "/" + x + "/" + y;
+    need.add(key);
+    let im = tiles.get(key);
+    if (!im) {
+      im = new Image();
+      im.alt = "";
+      im.decoding = "async";
+      im.onload = () => { tileOk++; $("#warn").style.display = "none"; };
+      im.onerror = () => { im.style.display = "none"; if (++tileFail >= 6 && tileOk === 0) $("#warn").style.display = "block"; };
+      im.src = `https://tile.openstreetmap.org/${zi}/${((x % n) + n) % n}/${y}.png`;
+      layer.appendChild(im);
+      tiles.set(key, im);
+    }
+    im.style.width = im.style.height = TS * s + 0.6 + "px";
+    im.style.left = W / 2 + (x * TS - cx) * s + "px";
+    im.style.top = H / 2 + (y * TS - cy) * s + "px";
+  }
+  for (const [k, im] of tiles) if (!need.has(k)) { im.remove(); tiles.delete(k); }
+}
+
+/* ---------- SVG ---------- */
+function polyInfo(pts) {
+  let tot = 0;
+  const seg = [];
+  for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); tot += l; }
+  let half = tot / 2, i = 0;
+  while (i < seg.length - 1 && half > seg[i]) { half -= seg[i]; i++; }
+  const t = seg[i] ? half / seg[i] : 0, a = pts[i], b = pts[i + 1];
+  return { x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t, ang: Math.atan2(b[1] - a[1], b[0] - a[0]) };
+}
+const arrow = (x, y, ang, sz, col, op = 1) => {
+  const p = [[sz, 0], [-sz * .7, sz * .75], [-sz * .7, -sz * .75]].map(([u, v]) => [x + u * Math.cos(ang) - v * Math.sin(ang), y + u * Math.sin(ang) + v * Math.cos(ang)].map(q => q.toFixed(1)).join(",")).join(" ");
+  return `<polygon points="${p}" fill="${col}" opacity="${op}"/>`;
+};
+
+function drawSvg() {
+  const o = [], labels = [], rects = [];
+  const hit = r => rects.some(q => r.x < q.x + q.w + 2 && r.x + r.w + 2 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y);
+  const place = (t, x, y, fs, cands, force) => {
+    const w = t.length * fs * 0.57 + 2, h = fs + 3;
+    const rectOf = ([dx, dy, an]) => { const tx = x + dx, ty = y + dy, rx = an === "start" ? tx : an === "end" ? tx - w : tx - w / 2; return { tx, ty, an, r: { x: rx, y: ty - fs, w, h } }; };
+    const inb = r => r.x >= 2 && r.x + r.w <= W - 2;
+    for (const c of cands) { const o = rectOf(c); if (!hit(o.r) && inb(o.r)) { rects.push(o.r); return [o.tx, o.ty, o.an]; } }
+    if (!force) return null;
+    let best = null;
+    for (const c of cands) {  // keine freie Lage: die mit der kleinsten Überdeckung nehmen und in die Karte schieben
+      const o = rectOf(c);
+      const sx = o.r.x < 2 ? 2 - o.r.x : o.r.x + o.r.w > W - 2 ? W - 2 - o.r.w - o.r.x : 0, r = { ...o.r, x: o.r.x + sx };
+      const ov = rects.reduce((acc, q) => acc + Math.max(0, Math.min(r.x + r.w, q.x + q.w) - Math.max(r.x, q.x)) * Math.max(0, Math.min(r.y + r.h, q.y + q.h) - Math.max(r.y, q.y)), 0);
+      if (!best || ov < best.ov) best = { ov, o, sx, r };
+    }
+    rects.push(best.r);
+    return [best.o.tx + best.sx, best.o.ty, best.o.an];
+  };
+  const left = new Set(["Enz", "Mehlenbach", "Alfbach"]);
+  for (const n of D.nodes) { const [x, y] = scr(n); rects.push({ x: x - 8, y: y - 8, w: 16, h: 16 }); }
+  for (const [a, b] of D.edges) {
+    const A = scr(N[a]), B = scr(N[b]);
+    o.push(`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="var(--river)" stroke-width="2.4" opacity=".75"/>`);
+  }
+  const stubLabels = [];
+  for (const s of D.stubs) {
+    const n = N[s.from], p = (par[s.from] || [])[0];
+    if (!p) continue;
+    const B = scr(n), A = scr(N[p]), ang = Math.atan2(B[1] - A[1], B[0] - A[0]), L = 34;
+    const ex = B[0] + L * Math.cos(ang), ey = B[1] + L * Math.sin(ang);
+    o.push(`<line x1="${B[0]}" y1="${B[1]}" x2="${ex}" y2="${ey}" stroke="var(--river)" stroke-width="2.4" stroke-dasharray="4 4" opacity=".75"/>` + arrow(ex, ey, ang, 6, "var(--river)", .75));
+    stubLabels.push([s.label, ex, ey]);
+  }
+  const mids = [];
+  D.reaches.forEach((r, i) => {
+    const pts = r.path.map(id => scr(N[id])), on = selReach === i;
+    const v = speedOf(r, method), c = r.via ? "sp" : clsOf(v), col = `var(--${c})`;
+    const pl = pts.map(p => p.map(q => q.toFixed(1)).join(",")).join(" ");
+    o.push(`<g data-reach="${i}" style="cursor:pointer">` +
+      (on ? `<polyline points="${pl}" fill="none" stroke="var(--card)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>` : "") +
+      `<polyline points="${pl}" fill="none" stroke="${col}" stroke-width="${on ? 8 : 6}" stroke-linecap="round" stroke-linejoin="round" opacity="${on ? 1 : .6}"${r.via ? ' stroke-dasharray="9 5"' : ""}/>` +
+      `<polyline points="${pl}" fill="none" stroke="transparent" stroke-width="18"/></g>`);
+    const m = polyInfo(pts);
+    o.push(arrow(m.x, m.y, m.ang, 8, "var(--card)") + arrow(m.x, m.y, m.ang, 6, col));
+    mids.push([r, m, col]);
+  });
+  const names = [];
+  for (const n of D.nodes) {
+    const [x, y] = scr(n), sel = selNode === n.id, lfu = n.art === "LfU", sp = n.art === "Speicher";
+    if (sp) o.push(`<rect data-node="${n.id}" x="${x - 6}" y="${y - 6}" width="12" height="12" rx="2" fill="var(--sp)" stroke="var(--card)" stroke-width="2" style="cursor:pointer"/>`);
+    else o.push(`<circle data-node="${n.id}" cx="${x}" cy="${y}" r="${lfu ? 7 : 4}" fill="${lfu ? "var(--text)" : "var(--card)"}" stroke="${lfu ? "var(--card)" : "var(--muted)"}" stroke-width="${lfu ? 2 : 1.5}" style="cursor:pointer"/>`);
+    if (sel) o.push(`<circle cx="${x}" cy="${y}" r="12" fill="none" stroke="var(--acc)" stroke-width="2"/>`);
+    names.push([n, x, y, lfu || sp || sel]);
+  }
+  const R = [11, 4, "start"], Lf = [-11, 4, "end"], T = [0, -11, "middle"], Bt = [0, 18, "middle"];
+  const R2 = [11, -9, "start"], L2 = [-11, -9, "end"], R3 = [11, 17, "start"], L3 = [-11, 17, "end"];
+  for (const [n, x, y, major] of names) {
+    if (!major) continue;
+    const t = n.name + (n.art === "Speicher" ? " (Speicher)" : "");
+    const pl = place(t, x, y, 12, left.has(n.strang) ? [Lf, R, T, Bt, L2, R2, L3, R3] : [R, Lf, Bt, T, R2, L2, R3, L3], true);
+    labels.push(`<text class="lab" x="${pl[0]}" y="${pl[1]}" text-anchor="${pl[2]}">${t}</text>`);
+  }
+  for (const [r, m, col] of mids) {
+    const l = lagOf(r, method), t = l == null ? "–" : fmt(l, 2) + " h";
+    const pl = place(t, m.x, m.y, 12.5, [[13, 4, "start"], [-13, 4, "end"], [13, -9, "start"], [-13, -9, "end"], [13, 17, "start"], [-13, 17, "end"], [0, -13, "middle"], [0, 21, "middle"]], true);
+    labels.push(`<text class="lag" x="${pl[0]}" y="${pl[1]}" text-anchor="${pl[2]}" fill="${col}">${t}</text>`);
+  }
+  for (const [t, x, y] of stubLabels) {
+    const pl = place(t, x, y, 10.5, [[8, 14, "start"], [-8, 14, "end"], [8, -6, "start"], [-8, -6, "end"]], false);
+    if (pl) labels.push(`<text class="lab small" x="${pl[0]}" y="${pl[1]}" text-anchor="${pl[2]}">${t}</text>`);
+  }
+  if (munOn) for (const [n, x, y, major] of names) {
+    if (major) continue;
+    const pl = place(n.name, x, y, 10.5, left.has(n.strang) ? [[-11, 3.5, "end"], [11, 3.5, "start"]] : [[11, 3.5, "start"], [-11, 3.5, "end"]], false);
+    if (pl) labels.push(`<text class="lab small" x="${pl[0]}" y="${pl[1]}" text-anchor="${pl[2]}">${n.name}</text>`);
+  }
+  $("#svg").innerHTML = o.join("") + labels.join("");
+}
+
+function draw() { drawTiles(); drawSvg(); }
+function resize() { const r = $("#map").getBoundingClientRect(); W = r.width; H = r.height; }
+
+/* ---------- Interaktion ---------- */
+let drag = null, moved = false;
+const map = $("#map");
+map.addEventListener("pointerdown", e => { if (e.target.closest(".ctl")) return; drag = { x: e.clientX, y: e.clientY, c: { ...view }, id: e.pointerId }; moved = false; map.setPointerCapture(e.pointerId); });
+map.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) { moved = true; map.classList.add("drag"); }
+  if (!moved) return;
+  const z = drag.c.z;
+  view = { z, lon: invLon(mx(drag.c.lon, z) - dx, z), lat: invLat(my(drag.c.lat, z) - dy, z) };
+  draw();
+});
+map.addEventListener("pointerup", e => {
+  const wasMove = moved;
+  drag = null; map.classList.remove("drag");
+  if (wasMove) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY);
+  const g = t && t.closest && t.closest("[data-reach]"), nd = t && t.closest && t.closest("[data-node]");
+  if (nd) { selNode = nd.dataset.node; selReach = null; }
+  else if (g) { selReach = +g.dataset.reach; selNode = null; }
+  else { selReach = null; selNode = null; }
+  renderSide(); draw();
+});
+function zoomAt(px, py, dz) {
+  const z0 = view.z, z1 = Math.max(7, Math.min(16, z0 + dz));
+  const wx = mx(view.lon, z0) + (px - W / 2), wy = my(view.lat, z0) + (py - H / 2);
+  const lon = invLon(wx, z0), lat = invLat(wy, z0);
+  view = { z: z1, lon: invLon(mx(lon, z1) - (px - W / 2), z1), lat: invLat(my(lat, z1) - (py - H / 2), z1) };
+  draw();
+}
+map.addEventListener("wheel", e => { e.preventDefault(); const r = map.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, -Math.sign(e.deltaY) * 0.5); }, { passive: false });
+$("#zin").onclick = () => zoomAt(W / 2, H / 2, 0.5);
+$("#zout").onclick = () => zoomAt(W / 2, H / 2, -0.5);
+$("#fit").onclick = () => { fit(); draw(); };
+$("#tilesOn").onchange = e => { tilesOn = e.target.checked; draw(); };
+$("#munOn").onchange = e => { munOn = e.target.checked; draw(); };
+window.addEventListener("resize", () => { resize(); draw(); });
+
+/* ---------- Ganglinien der gewählten Strecke ---------- */
+const p2 = x => String(x).padStart(2, "0");
+function mezAt(i) {
+  const S = D.series, tot = +S.t0Mez.slice(7, 9) * 60 + +S.t0Mez.slice(10, 12) + i * S.stepMin;
+  return `${p2(+S.t0Mez.slice(0, 2) + Math.floor(tot / 1440))}.${S.t0Mez.slice(3, 5)}. ${p2(Math.floor(tot / 60) % 24)}:${p2(tot % 60)}`;
+}
+/* Gitter, Achsenbeschriftung und Zeitmarken für beide Diagramme */
+function axesSvg(g) {
+  const S = D.series, [dd, mm0] = [+S.t0Mez.slice(0, 2), S.t0Mez.slice(3, 5)], hh0 = +S.t0Mez.slice(7, 9), mi0 = +S.t0Mez.slice(10, 12);
+  let o = "";
+  for (let v = 0; v <= g.ymax + 1e-9; v += g.step) o += `<line class="ax" x1="${g.L}" x2="${g.w - g.R}" y1="${g.Y(v)}" y2="${g.Y(v)}"/><text x="${g.L - 4}" y="${g.Y(v) + 3}" text-anchor="end">${v}</text>`;
+  const every = (g.i1 - g.i0) * S.stepMin / 60 > 40 ? 12 : 6;
+  for (let i = g.i0; i <= g.i1; i++) {
+    const tot = hh0 * 60 + mi0 + i * S.stepMin, hh = Math.floor(tot / 60) % 24, mi = tot % 60;
+    if (mi === 0 && hh % every === 0) {
+      const day = dd + Math.floor(tot / 1440);
+      o += `<line class="ax" x1="${g.X(i)}" x2="${g.X(i)}" y1="${g.T}" y2="${g.h - g.B}"/><text x="${g.X(i)}" y="${g.h - g.B + 12}" text-anchor="middle">${hh === 0 ? day + "." + mm0 + "." : hh + " Uhr"}</text>`;
+    }
+  }
+  return o;
+}
+function drawPlot(r) {
+  const el = $("#plot");
+  if (!el || !D.series) return;
+  const S = D.series, isW = r.unit === "W", n = S.n, w = 360, h = 178, L = 30, R = 8, T = 16, B = 26;
+  const norm = (nm, key) => { const [b0, b1] = r.norm[key]; return S.w[nm].map(v => v == null ? null : (v - b0) / (b1 - b0) * 100); };
+  const up = isW ? norm(r.upName, "up") : S.q[r.upName], dn = isW ? norm(r.downName, "dn") : S.q[r.downName];
+  const [i0, i1] = r.xr || [0, n - 1];
+  const lag = lagOf(r, method), e = r.ev, k = lag == null ? 0 : Math.round(lag * 60 / S.stepMin);
+  const sh = i => {
+    if (lag == null) return null;
+    if (isW) return up[i - k] == null ? null : up[i - k];
+    if (method === "F" && e.joint && e.joint.first) { const j = e.joint, k2 = Math.round(j.partnerLag * 4), a = up[i - k], b = S.q[j.partner][i - k2]; return a == null || b == null ? null : j.a * a + j.b * b + j.c; }
+    if (method === "F" && e.joint) return null;
+    const a = up[i - k]; if (a == null) return null;
+    return method === "F" && e.fit.all ? e.fit.all.a * a + e.fit.all.c : a;
+  };
+  let ymax, step;
+  if (isW) { ymax = 110; step = 50; }
+  else {
+    ymax = Math.max(...up, ...dn) * 1.05;
+    step = ymax > 12 ? 5 : ymax > 6 ? 2 : 1;
+    ymax = Math.ceil(ymax / step) * step;
+  }
+  const ymin = isW ? -15 : 0;
+  const X = i => L + (w - L - R) * (i - i0) / (i1 - i0), Y = v => T + (h - T - B) * (1 - (v - ymin) / (ymax - ymin));
+  const path = f => { let d = "", on = false; for (let i = i0; i <= i1; i++) { const v = f(i); if (v == null || v > (isW ? ymax : ymax * 1.4)) { on = false; continue; } d += (on ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); on = true; } return d; };
+  let g = "";
+  if (isW && r.shade != null) {
+    g += `<rect x="${X(r.shade)}" y="${T}" width="${X(i1) - X(r.shade)}" height="${h - T - B}" fill="var(--muted)" opacity=".16"/>`;
+  }
+  g += axesSvg({ ymax, step, X, Y, L, R, T, B, w, h, i0, i1 });
+  if (isW && r.shade != null) g += `<text x="${X(i1) - 3}" y="${h - B - 5}" text-anchor="end">${r.shadeLabel}</text>`;
+  const pk = (arr, col) => {
+    let i = i0; for (let j = i0; j <= i1; j++) if (arr[j] != null && arr[j] > (arr[i] ?? -1)) i = j;
+    return `<circle cx="${X(i)}" cy="${Y(arr[i])}" r="3.5" fill="${col}" stroke="var(--card)" stroke-width="1.5"/>`;
+  };
+  g += `<path d="${path(sh)}" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-dasharray="4 3" opacity=".7"/>`;
+  g += `<path d="${path(i => up[i])}" fill="none" stroke="var(--acc)" stroke-width="2.2"/>`;
+  g += `<path d="${path(i => dn[i])}" fill="none" stroke="var(--sp)" stroke-width="2.2"/>` + pk(up, "var(--acc)") + pk(dn, "var(--sp)");
+  g += `<text x="${L}" y="9">${isW ? "Wasserstand in % der eigenen Spanne" : "m³/s"}, Zeit in MEZ</text>`;
+  el.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  el.innerHTML = g;
+}
+
+/* Prümzurlay als Summe aus Prüm (Wiersdorf), Enz (Sinspelt) und Konstante */
+function drawDecomp() {
+  const el = $("#plot2");
+  if (!el || !D.series) return;
+  const S = D.series, d = S.decomp, n = S.n, w = 360, h = 178, L = 30, R = 8, T = 16, B = 26;
+  const ok = i => d.prum[i] != null && d.enz[i] != null && d.c_[i] != null;
+  let i0 = 0; while (i0 < n && !ok(i0)) i0++;
+  const i1 = n - 1, base = i => d.prum[i] + d.c_[i], top = i => base(i) + d.enz[i];
+  let ymax = Math.max(...d.meas.filter(v => v != null)) * 1.08;
+  const step = ymax > 12 ? 5 : ymax > 6 ? 2 : 1;
+  ymax = Math.ceil(ymax / step) * step;
+  const X = i => L + (w - L - R) * (i - i0) / (i1 - i0), Y = v => T + (h - T - B) * (1 - v / ymax);
+  const area = (lo, hi) => {
+    let a = "", b = "";
+    for (let i = i0; i <= i1; i++) if (ok(i)) a += (a ? "L" : "M") + X(i).toFixed(1) + " " + Y(hi(i)).toFixed(1);
+    for (let i = i1; i >= i0; i--) if (ok(i)) b += "L" + X(i).toFixed(1) + " " + Y(lo(i)).toFixed(1);
+    return a + b + "Z";
+  };
+  const line = f => { let o = "", on = false; for (let i = i0; i <= i1; i++) { const v = f(i); if (v == null) { on = false; continue; } o += (on ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); on = true; } return o; };
+  let g = axesSvg({ ymax, step, X, Y, L, R, T, B, w, h, i0, i1 });
+  g += `<path d="${area(() => 0, base)}" fill="var(--acc)" opacity=".28"/>`;
+  g += `<path d="${area(base, top)}" fill="var(--sp)" opacity=".6"/>`;
+  g += `<path d="${line(i => ok(i) ? top(i) : null)}" fill="none" stroke="var(--sp)" stroke-width="1.2"/>`;
+  g += `<path d="${line(i => d.meas[i])}" fill="none" stroke="var(--text)" stroke-width="1.9"/>`;
+  const iM = decompPeaks().iM, iE = decompPeaks().iE;
+  g += `<circle cx="${X(iM)}" cy="${Y(d.meas[iM])}" r="3.5" fill="var(--text)" stroke="var(--card)" stroke-width="1.5"/>`;
+  g += `<circle cx="${X(iE)}" cy="${Y(top(iE))}" r="3.5" fill="var(--sp)" stroke="var(--card)" stroke-width="1.5"/>`;
+  g += `<text x="${L}" y="9">m³/s, Zeit in MEZ</text>`;
+  el.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  el.innerHTML = g;
+}
+function decompPeaks() {
+  const d = D.series.decomp;
+  let iM = d.meas.findIndex(v => v != null), iE = d.enz.findIndex(v => v != null);
+  d.meas.forEach((v, i) => { if (v != null && v > d.meas[iM]) iM = i; });
+  d.enz.forEach((v, i) => { if (v != null && v > d.enz[iE]) iE = i; });
+  return { iM, iE };
+}
+function decompHtml() {
+  const S = D.series, d = S.decomp, { iM, iE } = decompPeaks();
+  const sh = i => 100 * d.enz[i] / d.meas[i];
+  return `<h2 style="margin-top:12px">Prümzurlay zerlegt: Prüm und Enz</h2>
+    <div class="lg"><span><i style="border-color:var(--acc);opacity:.45"></i>Prüm (aus Wiersdorf) plus Konstante</span><span><i style="border-color:var(--sp)"></i>Enz (aus Sinspelt)</span><span><i style="border-color:var(--text)"></i>gemessen in Prümzurlay</span></div>
+    <svg id="plot2" role="img" aria-label="Abfluss in Prümzurlay als Summe aus Prüm- und Enz-Anteil"></svg>
+    <p class="note">Anpassung: Q<sub>Prümzurlay</sub> = ${fmt(d.a, 2)} · Q<sub>Wiersdorf</sub>(t − ${fmt(d.L1, 2)} h) + ${fmt(d.b, 2)} · Q<sub>Sinspelt</sub>(t − ${fmt(d.L2, 2)} h) + ${fmt(d.c, 1)} m³/s, NSE ${fmt(d.nse, 3)}. Beide Lags stammen aus den Zwischenpegeln (Front der Stausee-Abgabe für die Prüm, Anstieg bis zum Schloss und weiter nach Prümzurlay für die Enz), nicht aus dem Fit. Lässt man beide frei, ergeben sich ${fmt(d.free.L1, 2)} h und ${fmt(d.free.L2, 2)} h bei NSE ${fmt(d.free.nse, 3)}. Der Enz-Lag ist durch die Daten kaum festgelegt, weil der Enz-Anteil klein ist.</p>
+    <p class="note">Der Scheitel von Prümzurlay (${mezAt(iM)}, ${fmt(d.meas[iM], 1)} m³/s) ist der Scheitel der Prüm. Die Enz trägt dort ${fmt(d.enz[iM], 1)} m³/s bei (${fmt(sh(iM), 0)} %). Der Enz-Anteil scheitelt selbst ${mezAt(iE)} mit ${fmt(d.enz[iE], 1)} m³/s, das sind ${fmt(sh(iE), 0)} % von ${fmt(d.meas[iE], 1)} m³/s. Der Scheitel in Prümzurlay ist deshalb kein Maß für die Laufzeit der Enz, der Enz-Scheitel geht im Prüm-Scheitel auf.</p>`;
+}
+
+/* ---------- Seitenleiste ---------- */
+function renderSide() {
+  $("#mseg").innerHTML = Object.entries(METHODS).map(([k, v]) => `<button data-m="${k}" class="${k === method ? "on" : ""}">${v[0]}</button>`).join("");
+  $("#mdesc").textContent = METHODS[method][1];
+  $("#mseg").querySelectorAll("button").forEach(b => b.onclick = () => { method = b.dataset.m; renderSide(); draw(); });
+  $("#rlist").innerHTML = D.reaches.map((r, i) => {
+    const l = lagOf(r, method), v = speedOf(r, method), c = r.via ? "sp" : clsOf(v);
+    return `<button class="reach ${i === selReach ? "on" : ""}" data-i="${i}"><span class="dot" style="background:var(--${c})"></span>` +
+      `<span>${r.upName} → ${r.downName}<small>${fmt(r.km)} km${r.kmEst ? " (geschätzt)" : ""}${r.unit === "W" ? " · nur Wasserstände" : ""}${r.via ? " · über " + r.via : ""}</small></span>` +
+      `<span class="v">${l == null ? "–" : fmt(l, 2) + " h"}<small>${r.via ? "über Speicher" : v == null ? (l === 0 ? "kein Versatz" : "nicht bestimmbar") : fmt(v) + " m/s"}</small></span></button>`;
+  }).join("");
+  $("#rlist").querySelectorAll("button").forEach(b => b.onclick = () => { selReach = +b.dataset.i; selNode = null; renderSide(); draw(); });
+  const el = $("#detail");
+  if (selReach != null) {
+    const r = D.reaches[selReach], e = r.ev, sp = m => { const v = speedOf(r, m); return v == null ? "–" : `<span class="${clsOf(v)}">${fmt(v)} m/s</span>`; };
+    const dc = r.daily, F = e.fit, isW = r.unit === "W", lg = lagOf(r, method);
+    const dcell = o => `${o.same} von ${o.n} am selben Tag, ${o.early} mit Oberlieger einen Tag früher, ${o.late} einen Tag später, ${o.other} weiter entfernt`;
+    const fz = f => f ? `${fmt(f.lag, 2)} h <span class="muted">(NSE ${fmt(f.nse, 3)})</span>` : "–";
+    const lv = e.levels.map(l => `<tr><td class="n">${fmt(l.f * 100, 0)} %</td><td class="n">${isW ? fmt(l.qDn, 0) : fmt(l.qUp, 2)}</td><td class="n">${fmt(l.rise, 2)}</td><td class="n">${l.fall == null ? "–" : fmt(l.fall, 2)}</td></tr>`).join("");
+    const pkTag = isW ? `${r.shade != null ? "höchster Stand im Fenster" : "Scheitel"} W ${fmt(r.norm.up[1], 0)} → ${fmt(r.norm.dn[1], 0)} cm` : `Scheitel ${fmt(e.peak.qUp, 1)} → ${fmt(e.peak.qDn, 1)} m³/s`;
+    const peakRow = e.peak.lag == null
+      ? `<td class="n">nicht bestimmbar<br><span class="muted">Plateau ${fmt(e.peak.platUp, 2)} h oben, ${fmt(e.peak.platDn, 2)} h unten${isW && r.shade != null ? "; der Stand am Schloss ist ab 12:30 vom Rückstau bestimmt" : ""}</span></td>`
+      : `<td class="n">${fmt(e.peak.lag, 2)} h<br><span class="muted">${e.peak.tUp} → ${e.peak.tDn} MEZ<br>Mitten der Scheitel-Plateaus: ${fmt(e.peak.lagMid, 2)} h (Plateau ${fmt(e.peak.platUp, 2)} und ${fmt(e.peak.platDn, 2)} h)</span></td>`;
+    const fitCell = e.joint
+      ? `${fmt(e.joint.lag, 2)} h <span class="muted">(NSE ${fmt(e.joint.nse, 3)}, ${e.joint.partner} ${fmt(e.joint.partnerLag, 2)} h)</span>`
+      : fz(F.all) + (F.all && F.all.lo != null ? `<br><span class="muted">Lags bis 0,005 NSE unter dem besten: ${fmt(F.all.lo, 2)} bis ${fmt(F.all.hi, 2)} h</span>` : "")
+        + (F.alt ? `<br><span class="muted">${F.alt.label}: ${fmt(F.alt.lag, 2)} h (NSE ${fmt(F.alt.nse, 3)}, ${fmt(F.alt.lo, 2)} bis ${fmt(F.alt.hi, 2)} h)</span>` : "");
+    const front = r.front ? `<h2 style="margin-top:12px">Front der Stausee-Abgabe am 25.10.</h2>
+      <table><tr><th>Pegel</th><th>Front (MEZ)</th><th>Δt h</th><th>km</th><th>m/s</th></tr>${r.front.rows.map(f => `<tr><td>${f.name}</td><td class="n">${f.t}</td><td class="n">${fmt(f.lag, 2)}</td><td class="n">${fmt(f.km, 1)}</td><td class="n">${fmt(f.speed, 2)}</td></tr>`).join("")}
+      <tr><td><b>gesamt</b></td><td></td><td class="n"><b>${fmt(r.front.total, 2)}</b></td><td class="n">${fmt(r.front.km, 1)}</td><td class="n"><b>${fmt(r.front.speed, 2)}</b></td></tr></table>
+      <p class="note muted">Die erhöhte Abgabe des Stausees ließ den Stand in Wiersdorf um ${fmt(r.front.rise, 0)} cm in 30 min springen. Die Front ist die schärfste Laufzeitmessung dieser Welle, weil sie sich vom Zwischengebiet abhebt. Kilometer der Zwischenpegel sind geschätzt.</p>` : "";
+    el.innerHTML = `<h2>${r.upName} → ${r.downName}</h2>
+      <p><span class="tag">${fmt(r.km)} km${r.kmEst ? " geschätzt" : ""}</span>${isW ? `<span class="tag">Wasserstände W, kein Abfluss</span>` : ""}${r.via ? `<span class="tag">Speicher: ${r.via}</span>` : ""}<span class="tag">${pkTag}</span></p>
+      <div class="lg"><span><i style="border-color:var(--acc)"></i>${r.upName}</span><span><i style="border-color:var(--sp)"></i>${r.downName}</span>${lg == null ? "" : `<span><i style="border-color:var(--acc);border-top-style:dashed;opacity:.7"></i>Oberlieger um Lag „${MN[method]}“ verschoben${method === "F" && !isW ? " und skaliert" : ""}</span>`}${isW && r.shade != null ? `<span><i style="border-color:var(--muted);opacity:.4;border-top-width:7px"></i>${r.shadeLabel}</span>` : ""}</div>
+      <svg id="plot" role="img" aria-label="Ganglinien von Ober- und Unterlieger"></svg>
+      <table><tr><th>Verfahren</th><th>Lag</th><th>Geschwindigkeit</th></tr>
+      <tr><td>Scheitel</td>${peakRow}<td class="n">${sp("P")}</td></tr>
+      <tr><td>Schwerpunkt</td><td class="n">${e.centroid == null ? "nicht bestimmbar" : fmt(e.centroid, 2) + " h"}</td><td class="n">${sp("S")}</td></tr>
+      <tr><td>Fit${e.joint ? " (gemeinsam mit " + e.joint.partner + ")" : isW ? " (Wasserstände)" : ""}</td><td class="n">${fitCell}<br><span class="muted">steigend ${fz(F.rise)}<br>fallend ${fz(F.fall)}</span></td><td class="n">${sp("F")}</td></tr>
+      <tr><td>Korrelation ${isW ? "Wasserstand" : "Abfluss"}</td><td class="n">${fmt(e.corr.level.lag, 2)} h<br><span class="muted">r = ${fmt(e.corr.level.r, 3)}</span></td><td class="n">${sp("K")}</td></tr>
+      <tr><td>Korrelation Änderungen</td><td class="n">${fmt(e.corr.diff.lag, 2)} h<br><span class="muted">r = ${fmt(e.corr.diff.r, 2)}</span></td><td class="n"><span class="muted">–</span></td></tr>
+      ${r.early ? `<tr><td>Vorläufig 25.10.</td><td class="n">${fmt(r.early.B.best, 2)} h<br><span class="muted">noch steigender Ast, r = ${fmt(r.early.B.r, 2)}</span></td><td class="n">${sp("V")}</td></tr>` : ""}</table>
+      ${front}
+      <h2 style="margin-top:12px">Zeitversatz je Anteil des Anstiegs</h2>
+      <table><tr><th>Anteil</th><th>${isW ? "W Unterlieger cm" : "Q Oberlieger m³/s"}</th><th>Anstieg h</th><th>Rückgang h</th></tr>${lv}</table>
+      <p class="note muted">Zeit, zu der jeder Pegel den Anteil seines eigenen Anstiegs erreicht (steigender Ast) beziehungsweise wieder unterschreitet (fallender Ast), Unterlieger minus Oberlieger. Beim Rückgang fehlen Werte, wenn der Pegel das Niveau noch nicht wieder erreicht hat.${isW ? " Negative Werte heißen, dass der Unterlieger den Anteil früher erreicht: Das Zwischengebiet reagiert vor der Welle aus dem Oberlieger." : ""}</p>
+      <p class="note">${r.note}</p>
+      ${r.decomp ? decompHtml() : ""}
+      ${isW ? `<p class="note muted">Keine Tagesmittel: Die kommunalen Pegel liefern nur Wasserstände.</p>` : dc ? `<h2 style="margin-top:10px">Gegenprobe Tagesmittel (3 Jahre)</h2><p class="note muted">${dc.label}: Tag der Spitze im Oberlieger gegen den Tag der Spitze im Unterlieger, 30 größte Ereignisse.</p>
+      <p class="note">Alle 30: ${dcell(dc.all)}.<br>10 größte: ${dcell(dc.big)}.<br>20 kleinere: ${dcell(dc.small)}.</p>
+      <p class="note muted">Die Mehrheit liegt am selben Tag, der Rest mit dem Oberlieger einen Tag früher. Der Lag liegt damit meist unter einem Tag, was zu den Stundenwerten oben passt. Für die Frage, ob große Ereignisse schneller laufen, sind Tageswerte zu grob und die Zahlen zu klein.</p>` : `<p class="note muted">Keine Tagesmittel für diese Strecke.</p>`}`;
+    drawPlot(r);
+    if (r.decomp) drawDecomp();
+  } else if (selNode) {
+    const n = N[selNode];
+    el.innerHTML = `<h2>${n.name}</h2><p><span class="tag">${n.river}</span><span class="tag">${n.art === "Speicher" ? "Speicher, Abgabe gesteuert" : n.art === "LfU" ? "LfU-Pegel" : "kommunaler Pegel"}</span><span class="tag">${n.vars}</span></p>
+      <p class="note">${n.area ? "Einzugsgebiet " + fmt(n.area, 1) + " km². " : ""}${n.km != null ? "Fluss-km oberhalb Mündung " + fmt(n.km, 2) + ". " : ""}Lage ${fmt(n.lat, 4)} N, ${fmt(n.lon, 4)} E.</p>
+      ${n.art === "Speicher" ? `<p class="note">Der Stausee Bitburg ist ein Sonderfall: Die Abgabe wird gesteuert, deshalb sind Lags über ihn keine Wellenlaufzeiten.</p>` : ""}`;
+  } else {
+    const rs = D.reaches.find(r => r.upName === "Sinspelt"), rh = D.reaches.find(r => r.upName === "Holsthum Schloss"), rw = D.reaches.find(r => r.upName === "Wiersdorf"), dd = D.series.decomp;
+    const fa = rs.ev.fit.all, fh = rh.ev.fit.all;
+    el.innerHTML = `<h2>Auf einen Blick</h2>
+      <p class="note">Die Welle ist an allen Pegeln durchgelaufen und hat gescheitelt. Auf den drei freien Strecken Prüm 2 → Echtershausen, Wiersdorf → Prümzurlay und Giesdorf → Seffern ergeben die <b>Scheitel</b> 1,4 bis 1,6 m/s, ein plausibler Bereich für Mittelgebirgsflüsse. Die Scheitel sind flach (bis 3 h), die Lags deshalb etwa ±1 h unsicher, und die Karte zeigt zunächst das <b>Fit-Verfahren</b>, das mit flachen Scheiteln besser zurechtkommt. Seffern → Alsdorf ist mit 2,5 bis 4,3 m/s zu schnell für eine Welle aus Seffern. Die vorläufigen Werte vom 25.10. (oft 0 bis 2 h, 3 bis 10 m/s) waren die Reaktion des Zwischengebiets auf dem Anstieg und keine Wellenlaufzeit.</p>
+      <p class="note"><b>Prüm von Wiersdorf nach Prümzurlay:</b> Die Front der Stausee-Abgabe vom 25.10. brauchte ${fmt(rw.front.total, 2)} h für ${fmt(rw.front.km, 1)} km (${fmt(rw.front.speed, 2)} m/s). Der Stausee Bitburg dämpft die kleine Welle auf 68 % des Scheitels.</p>
+      <p class="note"><b>Enz und Prümzurlay:</b> Die 15 h in der ersten Auswertung (Sinspelt → Prümzurlay) waren ein Artefakt. Der Scheitel in Prümzurlay ist der Scheitel der Prüm, in dem der kleinere Enz-Scheitel aufgeht. Zerlegt man die Strecke, läuft die Enz von Sinspelt bis zum Schloss in Holsthum in etwa <b>${fmt(fa.lag, 2)} h</b> (${fmt(fa.lo, 2)} bis ${fmt(fa.hi, 2)} h) und von dort bis Prümzurlay in <b>${fmt(fh.lag, 1)} h</b>, zusammen etwa ${fmt(dd.L2, 2)} h. Prümzurlay lässt sich damit als Summe aus Prüm (Wiersdorf, ${fmt(dd.L1, 2)} h) und Enz (Sinspelt) beschreiben (NSE ${fmt(dd.nse, 3)}). Die Enz-Strecken sind aus Wasserständen berechnet und im unteren Teil mit geschätzten Kilometern.</p>
+      <p class="note"><b>Einfluss des Abflusses:</b> nicht belegt, ein Referenzwert spricht eher gegen kürzere Laufzeiten bei großem Abfluss. Beim Hochwasser vom Juni 2018 (Screenshot des Portals, rund 210 m³/s) brauchte der Scheitel von Wiersdorf nach Prümzurlay 7,1 h, jetzt bei 17 m³/s sind es 4,1 bis 5,5 h. Denkbar ist Rückhalt in der Aue bei großem Abfluss. In dieser Welle selbst unterscheiden sich steigender und fallender Ast teils stark (Seffern → Alsdorf 1,5 und 5,0 h), das ist aber ein Speicher- und Rückgangseffekt und kein Abflusseffekt.</p>
+      <p class="note">Strecke oder Pegel anklicken für alle Werte und die Ganglinien.</p>`;
+  }
+}
+
+$("#gen").textContent = "Stand " + D.generated.slice(0, 10) + " · Daten: Wasserportal RLP (15 min, " + D.event.first + " bis " + D.event.last + " MEZ), vorläufige Werte: hochwasser.rlp.de (JSON)";
+$("#evspan").textContent = D.event.first.slice(0, 6) + " bis " + D.event.last.slice(0, 6) + "2026";
+resize(); fit(); renderSide(); draw();
+</script>
+</body>
+</html>

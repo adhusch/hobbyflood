@@ -1,0 +1,33 @@
+lhp_id,name,gewaesser,art,messgroessen,strang,pos,oberlieger_lhp_id,zufluss_lhp_id,reihenfolge_gesichert,hinweis,catchment_km2,easting,northing,elevation_m,km_ob_muendung
+RP_1034232010,Hermespand,Prüm,kommunal,W,Prüm,1,,,teilweise,Reihenfolge aus LHP-ID und VG-Konzept Prüm,,318508,5568335,,
+RP_26280050,Prüm 2,Prüm,LfU,W+Q,Prüm,2,RP_1034232010,,teilweise,Vorhersagepegel laut VG-Konzept Prüm 2025,53.41,317374,5566153,439.171,79.53
+RP_1034232020,Niederprüm,Prüm,kommunal,W,Prüm,3,RP_26280050,,teilweise,,,315434,5564077,,
+RP_1034232030,Niedermehlen,Mehlenbach,kommunal,W,Mehlenbach,1,,,ja,mündet nach Niederprüm bei Prüm; EZG Mehlenbach 32 km2,,313948,5565969,,
+RP_1034232040,Pittenbach,Prüm,kommunal,W,Prüm,4,RP_1034232020,RP_1034232030,teilweise,Mehlenbach mündet zwischen Niederprüm und Pittenbach,,310497,5561434,,
+RP_1034232050,Habscheid,Alfbach,kommunal,W,Alfbach,1,,,ja,EZG Alfbach 56 km2,,306360,5563733,,
+RP_1034232060,Kinzenburg,Prüm,kommunal,W,Prüm,5,RP_1034232040,RP_1034232050,teilweise,Alfbach mündet westlich Pronsfeld zwischen Pittenbach und Kinzenburg,,310356,5555700,,
+RP_1034232070,Mauel,Prüm,kommunal,W,Prüm,6,RP_1034232060,,ja,,,313191,5550442,,
+RP_26280300,Echtershausen,Prüm,LfU,W+Q,Prüm,8,RP_1034232080,,ja,Zufluss zum Stausee,326.34,315091,5544345,266.67,38.44
+RP_1034232080,Merkeshausen,Prüm,kommunal,W,Prüm,7,RP_1034232070,,ja,oberhalb Echtershausen (Koordinaten),,315162,5546241,,
+RP_26280366,Stausee Bitburg,Prüm,Speicher,W,Prüm,9,RP_26280300,,ja,"SONDERFALL Speicher; API liefert nur W (Seestand, ca. 255,5 m, vermutlich m ü. NN); keine Abgabe; EZG ca. 330 km2; Stauvolumen 2,4 Mio m3 gesamt",,316520,5543423,,
+RP_26280402,Wiersdorf,Prüm,LfU,W+Q,Prüm,10,RP_26280366,,ja,unterhalb Stausee; Speicherabfluss beeinflusst,340.2,316787,5542522,245.73,32.14
+RP_1034232090,Brecht,Prüm,kommunal,W,Prüm,11,RP_26280402,,teilweise,,,316197,5539702,,
+RP_1034232100,Bettingen,Prüm,kommunal,W,Prüm,12,RP_1034232090,,teilweise,Pegellatte an Brücke laut Eifelkreis,,313592,5535393,,
+RP_1034232110,Holsthum Prüm,Prüm,kommunal,W,Prüm,13,RP_1034232100,,ja,ca. 100 m oberhalb der Enz-Mündung (Angabe Nutzer); Holsthum Schloss liegt an der Enz,,314083,5529882,,
+RP_26280504,Prümzurlay,Prüm,LfU,W+Q,Prüm,14,RP_1034232110,RP_1034232160,ja,Enz mündet oberhalb; ca. 574 km2 abgeleitet,576.38,315808,5527062,180.37,7.86
+RP_1034232120,Neurath / Arzfeld,Enz,kommunal,W,Enz,1,,,ja,Pegellatte an Brücke laut Eifelkreis,,303616,5550133,,
+RP_1034232130,Neuerburg,Enz,kommunal,W,Enz,2,RP_1034232120,,ja,,,305755,5544176,,
+RP_26280650,Sinspelt,Enz,LfU,W+Q,Enz,4,RP_1034232140,,ja,,101.52,308035,5538729,269.45,15.16
+RP_1034232140,Sinspelt Gemeindehaus,Enz,kommunal,W,Enz,3,RP_1034232130,,ja,ca. 240 m oberhalb des LfU-Pegels Sinspelt (Koordinaten),,307887,5538972,,
+RP_1034232150,Enzen,Enz,kommunal,W,Enz,5,RP_26280650,,ja,,,311064,5533150,,
+RP_1034232160,Holsthum Schloss,Enz,kommunal,W,Enz,6,RP_1034232150,,ja,nahe Mündung in die Prüm,,314061,5529764,,
+RP_1034232240,Rommersheim,Nims,kommunal,W,Nims,1,,,teilweise,Ortskoordinate 50.194 N,,318175,5563342,,
+RP_26280708,Giesdorf,Nims,LfU,W+Q,Nims,2,RP_1034232240,,ja,Ortskoordinate 50.179 N; Wasserportal-ID per Sensoto bestätigt,17.78,318254,5560961,413.123,53.49
+RP_1034232250,Nimsreuland,Nims,kommunal,W,Nims,3,RP_26280708,,teilweise,Ortskoordinate 50.131 N; Pegellatte an Brücke laut Eifelkreis,,317944,5556322,,
+RP_26280800,Seffern,Nims,LfU,W+Q,Nims,4,RP_1034232250,,teilweise,Ortskoordinate 50.065 N,137.0,321081,5548780,312.817,35.04
+RP_1034232260,Rittersdorf,Nims,kommunal,W,Nims,5,RP_26280800,,teilweise,Ortskoordinate 49.998 N,,320856,5542808,,
+RP_1034232270,Dockendorf,Nims,kommunal,W,Nims,6,RP_1034232260,,teilweise,Ortskoordinate 49.926 N,,317834,5532756,,
+RP_26280854,Alsdorf-Oberecken,Nims,LfU,W+Q,Nims,7,RP_1034232270,,ja,Wasserportal-ID per Wikipedia-Fußnote bestätigt; ca. 264 km2 abgeleitet,265.07,317663,5528697,203.943,6.23
+RP_26200505,Bollendorf 2,Sauer,LfU-Sauer,W,Sauer,1,,,teilweise,oberhalb der Prüm-Mündung vermutet; kein Teil des Prüm-Gebiets,,,,,
+RP_16,Rosport,Sauer,Luxemburg,W,Sauer,2,RP_26200505,,teilweise,unterhalb der Prüm-Mündung vermutet,,,,,
+RP_11,Diekirch,Sauer,Luxemburg,W,Sauer,0,,,teilweise,weiter oberhalb an der Sauer,,,,,

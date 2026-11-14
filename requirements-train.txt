@@ -1,0 +1,9 @@
+# zusätzlich zu requirements.txt, nur für Anpassung und Radar-Aufbereitung (nicht für den Live-Betrieb)
+jax
+optax
+numba
+rasterio
+pyproj
+shapely
+wradlib
+matplotlib

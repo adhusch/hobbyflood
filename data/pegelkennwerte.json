@@ -1,0 +1,14 @@
+{
+  "quelle": "Hochwasservorhersagezentrale Rheinland-Pfalz, https://www.hochwasser.rlp.de (Konfiguration /api/v1/config: legends.thresholds und measurementsite.mh1), abgerufen am 12.11.2026",
+  "hinweis": "HWx = x-jährlicher Wasserstand, aus HQx mit der aktuell gültigen Wasserstand-Abfluss-Beziehung berechnet (Angabe der HVZ). Meldehöhe nur für Echtershausen und Prümzurlay vergeben. Warnstufen der HVZ: mäßig ab HW 2, mittel ab HW 10, hoch ab HW 20, sehr hoch ab HW 50.",
+  "pegel": {
+    "Prüm 2":            {"nummer": "26280050", "meldehoehe": null, "W": {"MNW": 12, "MW": 36, "HW2": 105, "HW10": 145, "HW20": 169, "HW50": 210, "HW100": 248}, "Q": {"MNQ": 0.042, "MQ": 0.937, "HQ2": 16.3, "HQ10": 31.8, "HQ20": 43.4, "HQ50": 65.2, "HQ100": 88.6}},
+    "Echtershausen":     {"nummer": "26280300", "meldehoehe": 160,  "W": {"MNW": 15, "MW": 66, "HW2": 166, "HW10": 224, "HW20": 261, "HW50": 321, "HW100": 380}, "Q": {"MNQ": 0.199, "MQ": 4.94, "HQ2": 71.9, "HQ10": 136, "HQ20": 184, "HQ50": 274, "HQ100": 369}},
+    "Wiersdorf":         {"nummer": "26280402", "meldehoehe": null, "W": {"MNW": 17, "MW": 67, "HW2": 198, "HW10": 258, "HW20": 295, "HW50": 348, "HW100": 398}, "Q": {"MNQ": 0.229, "MQ": 4.96, "HQ2": 76.5, "HQ10": 146, "HQ20": 194, "HQ50": 279, "HQ100": 365}},
+    "Prümzurlay":        {"nummer": "26280504", "meldehoehe": 270,  "W": {"MNW": 24, "MW": 51, "HW2": 276, "HW10": 399, "HW20": 464, "HW50": 550, "HW100": 616}, "Q": {"MNQ": 0.849, "MQ": 7.79, "HQ2": 109, "HQ10": 199, "HQ20": 259, "HQ50": 362, "HQ100": 463}},
+    "Sinspelt":          {"nummer": "26280650", "meldehoehe": null, "W": {"MNW": 8, "MW": 29, "HW2": 127, "HW10": 174, "HW20": 196, "HW50": 225, "HW100": 250}, "Q": {"MNQ": 0.038, "MQ": 1.31, "HQ2": 27.5, "HQ10": 52.7, "HQ20": 67.7, "HQ50": 91, "HQ100": 112}},
+    "Giesdorf":          {"nummer": "26280708", "meldehoehe": null, "W": {"MNW": 10, "MW": 37, "HW2": 131, "HW10": 151, "HW20": 159, "HW50": 170, "HW100": 180}, "Q": {"MNQ": 0.022, "MQ": 0.262, "HQ2": 6.33, "HQ10": 11.1, "HQ20": 13.8, "HQ50": 18.1, "HQ100": 21.9}},
+    "Seffern":           {"nummer": "26280800", "meldehoehe": null, "W": {"MNW": 23, "MW": 35, "HW2": 125, "HW10": 187, "HW20": 232, "HW50": 300, "HW100": 348}, "Q": {"MNQ": 0.393, "MQ": 1.64, "HQ2": 30, "HQ10": 50.2, "HQ20": 64.8, "HQ50": 91.4, "HQ100": 119}},
+    "Alsdorf-Oberecken": {"nummer": "26280854", "meldehoehe": null, "W": {"MNW": 26, "MW": 52, "HW2": 226, "HW10": 303, "HW20": 323, "HW50": 345, "HW100": 360}, "Q": {"MNQ": 0.595, "MQ": 2.75, "HQ2": 47.1, "HQ10": 86, "HQ20": 108, "HQ50": 142, "HQ100": 171}}
+  }
+}

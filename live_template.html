@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prüm Vorhersage live</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--wash:rgba(11,11,11,.05);
+  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
+  --th0:#52514e;--th1:#a68a00;--th2:#d26a0c;--th3:#c81e28;--th4:#8a2d87;--th5:#5b1a59;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
+    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+    --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
+  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+  --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;gap:12px 16px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:21px;margin:0 0 4px;font-weight:650;line-height:1.2}
+h2{font-size:15px;margin:0 0 6px;font-weight:650}
+.sub{color:var(--ink2);margin:0;font-size:13.5px;max-width:90ch}
+.btn{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;min-height:34px}
+.btn:hover{background:var(--wash)}
+.btn:focus-visible,.card:focus-visible,.seg input:focus-visible+span,.chk input:focus-visible{outline:2px solid var(--c-full);outline-offset:2px}
+.notice{border:1px solid var(--border);border-left:4px solid var(--th2);background:var(--surface);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--ink2);margin:8px 0 14px}
+.notice b{color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.card:hover{background:var(--wash)}
+.card[aria-pressed="true"]{border-color:var(--c-full);box-shadow:inset 0 0 0 1px var(--c-full)}
+.card .n{font-weight:650;font-size:14px}
+.card .r{color:var(--ink2);font-size:12px}
+.card .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:4px}
+.card .v small{font-size:12px;font-weight:500;color:var(--ink2)}
+.card .s{font-size:12.5px;color:var(--ink2);margin-top:3px;line-height:1.35}
+.card .s b{color:var(--ink);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.lage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
+.tile{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface);min-width:0}
+.tile .k{color:var(--ink2);font-size:12px}
+.tile .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .v small{font-size:12.5px;font-weight:500;color:var(--ink2)}
+.tile .s{color:var(--ink2);font-size:12.5px;line-height:1.35;margin-top:2px}
+.tile .s b{color:var(--ink);font-weight:600}
+.tile.main{border-color:var(--c-full);box-shadow:inset 0 0 0 1px var(--c-full)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--col);margin-right:6px;vertical-align:1px}
+.thr{display:inline-block;width:16px;border-top:2px dashed var(--col);vertical-align:middle;margin-right:6px}
+.tools{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:4px 0 6px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;padding:4px 10px;font-size:13px;cursor:pointer;min-height:30px;line-height:22px}
+.seg input:checked+span{background:var(--ink);color:var(--surface)}
+.chk{font-size:13px;color:var(--ink2);display:inline-flex;gap:6px;align-items:center}
+.legs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 4px;font-size:12.5px;color:var(--ink2)}
+.legs span{display:inline-flex;align-items:center;gap:6px}
+.legs i{width:16px;height:0;border-top:2px solid var(--col);display:inline-block}
+.legs i.dash{border-top-style:dashed}
+.legs i.thin{border-top-width:1px}
+.legs i.area{height:10px;border:0;background:var(--col);opacity:.3;border-radius:2px}
+.chart{position:relative;width:100%;touch-action:pan-y}
+.chart svg{display:block;max-width:100%}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.14);border-radius:8px;padding:7px 9px;font-size:12px;line-height:1.35;z-index:3;display:none;min-width:130px}
+.tip .t{color:var(--ink2);margin-bottom:2px}
+.tip .r{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.tip .r i{width:14px;border-top:2px solid var(--col);display:inline-block;margin-right:5px;vertical-align:middle}
+.tip b{font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink2);font-size:12px;vertical-align:bottom}
+td.p{text-align:center;min-width:58px}
+td.p small{display:block;color:var(--muted);font-size:11px}
+td.p.lo{color:var(--muted)}
+td.now{text-align:center;font-weight:600}
+tr.wrn td:first-child{font-weight:650}
+tr.wrn td:first-child small{display:block;font-weight:500;color:var(--ink2);font-size:11px}
+tr.grp td{color:var(--ink2);font-size:12px;font-weight:600;text-align:left;padding-top:10px;border-bottom:1px solid var(--grid)}
+tr.info td{color:var(--muted)}
+.stat{font-weight:650;color:var(--ink)}
+td small.sub{display:block;color:var(--ink2);font-size:11px;font-weight:400}
+th.txt,td.txt{text-align:left;white-space:normal;min-width:170px}
+.note{color:var(--ink2);font-size:12.5px;margin:6px 0 0}
+details.more{border-top:1px solid var(--border);margin-top:12px;padding-top:8px}
+details.more>summary{cursor:pointer;font-weight:600;font-size:14px;list-style-position:inside;padding:2px 0}
+details.more ul{margin:4px 0 0;padding-left:20px;color:var(--ink2);font-size:13px}
+details.more li{margin:3px 0}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.lage{grid-template-columns:1fr}.tile .v,.card .v{font-size:20px}}
+@media (max-width:380px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Prüm, Enz und Nims: Vorhersage mit Wettervorhersage</h1>
+    <p class="sub" id="stand"></p>
+  </div>
+  <button class="btn" id="theme" type="button">Darstellung: automatisch</button>
+</header>
+<div class="notice"><b>Eigene Modellrechnung, keine amtliche Warnung.</b> Amtliche Hochwasserinformationen: <a href="https://www.hochwasser.rlp.de" target="_blank" rel="noopener">hochwasser.rlp.de</a>. Die Seite zeigt den Stand der letzten Rechnung (<code>python live.py</code>), sie lädt nichts nach.</div>
+<div class="cards" id="cards" role="group" aria-label="Pegel"></div>
+<section class="panel" aria-label="Pegel im Detail">
+  <h2 id="dn"></h2>
+  <p class="note" id="state" style="margin:0 0 4px"></p>
+  <div class="lage" id="lage"></div>
+  <div class="tools"><span class="seg" id="seg-unit" role="radiogroup" aria-label="Einheit"></span>
+    <label class="chk"><input type="checkbox" id="opt-runs"> einzelne Läufe</label>
+    <label class="chk"><input type="checkbox" id="opt-none"> ohne Regenvorhersage</label>
+    <label class="chk" id="opt-hvz-l"><input type="checkbox" id="opt-hvz" checked> Vorhersage der HVZ</label></div>
+  <div class="legs" id="leg"></div>
+  <div class="chart" id="ch"></div>
+  <h2 style="margin-top:10px">Regen im Einzugsgebiet</h2>
+  <div class="legs" id="leg-r"></div>
+  <div class="chart" id="ch-r"></div>
+  <p class="note" id="note-r"></p>
+  <h2 style="margin-top:12px">Wird die Warnschwelle erreicht?</h2>
+  <div class="tw" id="warn"></div>
+  <p class="note" id="note-w"></p>
+  <details class="more" id="dt-wc"><summary>Wie hätte diese Warnung bei früheren Hochwassern abgeschnitten?</summary><div id="wc"></div></details>
+  <details class="more" id="dt-how"><summary>Wie wird gerechnet, und wie verlässlich ist das?</summary><div id="how"></div></details>
+</section>
+</div>
+<script>
+"use strict";
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nf = (v, d = 1) => v == null || !isFinite(v) ? "–" : v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+const qf = v => v == null ? "–" : nf(v, v < 10 ? 1 : 0);
+const pad2 = n => String(n).padStart(2, "0");
+const parse = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10), +s.slice(11, 13), +s.slice(14, 16));
+const fdt = ms => { const d = new Date(ms); return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}. ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`; };
+const WD = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const hmShort = (ms, ref) => { const d = new Date(ms), r = new Date(ref), same = d.getUTCDate() === r.getUTCDate() && d.getUTCMonth() === r.getUTCMonth(); return (same ? "" : WD[d.getUTCDay()] + " ") + fdt(ms).slice(7); };
+const pctTxt = p => p < 0.05 ? "< 5 %" : p > 0.95 ? "> 95 %" : nf(Math.round(p * 20) * 5, 0) + " %";
+/* Diagramme: wie plot() in routing_map_template.html (dünne Linien zusätzlich) */
+function niceTicks(lo, hi, n) {
+  const span = Math.max(hi - lo, 1e-9), raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p, a = Math.floor(lo / step + 1e-9) * step, out = [];
+  for (let v = a; v <= hi + step * 0.999; v += step) { out.push(+v.toFixed(6)); if (v >= hi - 1e-9) break; }
+  return out;
+}
+/* spec: {x:{min,max,log,ticks,fmt,label}, y:{min,max,ticks,fmt,label}, lines:[{key,name,pts:[[x,y]],col,dash}], bands:[{hi:[[x,y]],lo:[[x,y]],col}], vlines:[{x,col,label}], points:[{x,y,col}], tip:fn(x)->{t,rows:[{col,name,val}]} } */
+function plot(el, spec, H = 220) {
+  const W = Math.max(260, el.clientWidth || 360), pad = { l: 44, r: 12, t: 10, b: 36 };
+  const X = spec.x, Y = spec.y;
+  const fx = X.log ? Math.log : (v => v), x0 = fx(X.min), x1 = fx(X.max);
+  const xs = v => pad.l + (fx(v) - x0) / (x1 - x0) * (W - pad.l - pad.r), ys = v => pad.t + (1 - (v - Y.min) / (Y.max - Y.min)) * (H - pad.t - pad.b);
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  (Y.ticks || niceTicks(Y.min, Y.max, 4)).forEach(v => { s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="${v === 0 ? "var(--axis)" : "var(--grid)"}"/><text x="${pad.l - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)">${(Y.fmt || (v => nf(v, Number.isInteger(v) ? 0 : 1)))(v)}</text>`; });
+  (X.ticks).forEach(t => { const v = t.v !== undefined ? t.v : t; s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 14}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l !== undefined ? t.l : (X.fmt ? X.fmt(v) : v)}</text>`; if (t.l2) s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 26}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l2}</text>`; });
+  if (X.label) s += `<text x="${(pad.l + W - pad.r) / 2}" y="${H - 3}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${X.label}</text>`;
+  if (Y.label) s += `<text transform="translate(11 ${(pad.t + H - pad.b) / 2}) rotate(-90)" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${Y.label}</text>`;
+  (spec.bands || []).forEach(b => { s += `<path d="${b.hi.map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}${b.lo.slice().reverse().map(p => "L" + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}Z" fill="${b.col}" fill-opacity="${b.op || .13}"/>`; });
+  let lastL = -1e9, lastR = -1e9, hlab = "";             // Beschriftung links; liegt sie zu nah an der vorigen, rechts (sonst weggelassen); Text über allen Linien
+  (spec.hlines || []).slice().sort((a, b) => a.y - b.y).forEach(h => { if (h.y < Y.min || h.y > Y.max) return; const y = ys(h.y); s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${h.col}" stroke-width="${h.bold ? 2.5 : 1.5}" stroke-dasharray="6 4" opacity="${h.faint ? .45 : .9}"/>`;
+    if (!h.label) return;
+    const side = Math.abs(lastL - y) >= 15 ? "l" : Math.abs(lastR - y) >= 15 ? "r" : null;
+    if (!side) return;
+    if (side === "l") lastL = y; else lastR = y;
+    hlab += `<text x="${side === "l" ? pad.l + 4 : W - pad.r - 4}" y="${(y - 4).toFixed(1)}" text-anchor="${side === "l" ? "start" : "end"}" font-size="11" fill="${h.col}" paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" font-weight="600">${esc(h.label)}</text>`; });
+  s += hlab;
+  (spec.bars || []).forEach(b => { const y0 = ys(0), y1 = ys(Math.min(Y.max, b.y)); if (b.y > 0) s += `<rect x="${xs(b.x).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(1, xs(b.x + b.w) - xs(b.x) - 1).toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${b.col}" fill-opacity=".8"/>`; });
+  (spec.vlines || []).forEach(v => { s += `<line x1="${xs(v.x).toFixed(1)}" x2="${xs(v.x).toFixed(1)}" y1="${pad.t}" y2="${H - pad.b}" stroke="${v.col || "var(--muted)"}" stroke-width="1" ${v.dash === false ? "" : 'stroke-dasharray="1 3"'}/>` + (v.label ? `<text x="${(xs(v.x) + 4).toFixed(1)}" y="${pad.t + 10}" font-size="11" fill="var(--ink2)">${v.label}</text>` : ""); });
+  (spec.lines || []).forEach(l => { if (l.hidden) return; s += `<path d="${l.pts.filter(p => p[1] != null).map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(Math.max(Y.min, Math.min(Y.max, p[1]))).toFixed(1)).join("")}" fill="none" stroke="${l.col}" stroke-width="${l.thin ? 1 : 2}" ${l.thin ? 'opacity=".55"' : ""} stroke-linejoin="round" stroke-linecap="round" ${l.dash ? 'stroke-dasharray="6 4"' : ""}/>`; });
+  (spec.errs || []).forEach(e => { const cx = xs(e.x), cy = ys(e.y), c = e.col; s += `<g stroke="${c}" stroke-width="2" stroke-linecap="round"><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${cy.toFixed(1)}" y2="${cy.toFixed(1)}"/><line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x0).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${xs(e.x1).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y0).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y1).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/></g><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="${c}"/>`; });
+  (spec.points || []).forEach(p => { s += `<circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="4" fill="${p.hollow ? "var(--surface)" : p.col}" stroke="${p.col}" stroke-width="${p.hollow ? 2 : 0}"/>`; });
+  s += `<line class="xh" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--ink2)" visibility="hidden"/><g class="cur"></g><rect class="hit" x="${pad.l}" y="${pad.t}" width="${W - pad.l - pad.r}" height="${H - pad.t - pad.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  el.innerHTML = s;
+  const svg = $("svg", el), xh = $(".xh", svg), tip = $(".tip", el);
+  const inv = px => { const f = (px - pad.l) / (W - pad.l - pad.r) * (x1 - x0) + x0; return X.log ? Math.exp(f) : f; };
+  const move = e => {
+    if (!spec.tip) return;
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width), x = Math.max(X.min, Math.min(X.max, inv(px))), info = spec.tip(x);
+    if (!info) return;
+    const xx = xs(info.x !== undefined ? info.x : x); xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="t">${info.t}</div>` + info.rows.map(r => `<div class="r"><span><i style="--col:${r.col}"></i>${esc(r.name)}</span><b>${r.val}</b></div>`).join("");
+    tip.style.display = "block"; const w = tip.offsetWidth; tip.style.left = (xx > W * 0.55 ? xx - w - 10 : xx + 10) + "px"; tip.style.top = pad.t + "px";
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+  svg.addEventListener("pointerleave", () => { xh.setAttribute("visibility", "hidden"); tip.style.display = "none"; });
+  el._plot = { xs, ys, pad, H, W, svg };
+  return el._plot;
+}
+
+const ORDER = ["P2", "EC", "WI", "PZ", "SI", "GI", "SE", "AL"];
+const RIVER = { P2: "Prüm, Oberlauf", EC: "Prüm", WI: "Prüm, unter dem Stausee", PZ: "Prüm, vor der Mündung in die Sauer", SI: "Enz", GI: "Nims, Oberlauf", SE: "Nims", AL: "Nims, vor der Mündung" };
+const TH_COL = { MH: "var(--th0)", HW2: "var(--th1)", HW10: "var(--th2)", HW20: "var(--th3)", HW50: "var(--th4)", HW100: "var(--th5)" };
+const LO = 1, Q20 = 2, MED = 5, Q80 = 8, HI = 9;
+const T0 = parse(D.meta.t0), H = 192;
+const state = { k: "PZ", unit: "cm", runs: false, none: false, hvz: true };
+try { const s = JSON.parse(localStorage.getItem("pruem-live") || "{}"); Object.assign(state, s); } catch (e) {}
+const save = () => { try { localStorage.setItem("pruem-live", JSON.stringify(state)); } catch (e) {} };
+const STATE = ["ruhig", "Anstieg", "Welle von oben unterwegs", "fallend"];
+function wOfQ(dn, q) {
+  const c = D.rating[dn], n = c.q.length, x = Math.log(Math.max(q, 1e-4)), lq = c.q.map(Math.log), w = c.w;
+  let y;
+  if (x > lq[n - 1]) y = w[n - 1] + (w[n - 1] - w[n - 2]) / (lq[n - 1] - lq[n - 2]) * (x - lq[n - 1]);
+  else if (x < lq[0]) y = w[0] + (w[1] - w[0]) / (lq[1] - lq[0]) * (x - lq[0]);
+  else { let k = 0; while (k < n - 2 && x > lq[k + 1]) k++; y = w[k] + (w[k + 1] - w[k]) * (x - lq[k]) / (lq[k + 1] - lq[k]); }
+  return Math.max(y, 0);
+}
+function status(r) {                                     // Einordnung (Meldehöhe, HW 2 …): höchste jetzt überschrittene Schwelle
+  const top = r.thresholds.filter(t => t.now).pop();
+  return { top, info: top ? "über " + top.name : "unter " + r.thresholds[0].name };
+}
+/* Warnung nur ab der Warnschwelle (HW 10): Vorwarnung ab 10 %, Warnung ab 50 % Wahrscheinlichkeit, sie binnen 48 h zu erreichen */
+const WST = { keine: { col: "var(--c-ok)", t: "keine Warnung" }, "möglich": { col: "var(--th1)", t: "Vorwarnung" }, Warnung: { col: "var(--th3)", t: "Warnung" }, "über": { col: "var(--th3)", t: "über" } };
+function warnHead(r) {
+  const w = r.warn, s = WST[w.status];
+  return `<i class="dot" style="--col:${s.col}"></i><span class="stat">${w.status === "über" ? w.name + " überschritten" : s.t}</span>`;
+}
+function warnLine(r) {
+  const w = r.warn;
+  if (w.status === "über") return `${w.name} (${nf(w.w, 0)} cm) jetzt überschritten`;
+  return `${w.name} in 48 h: <b>${pctTxt(w.p48)}</b>` + (w.status === "möglich" ? " (möglich)" : w.status === "Warnung" ? " (wahrscheinlich)" : "");
+}
+function relClock(a, b, step) {
+  const out = [], s = step * 3600000, first = Math.ceil((T0 + a * 3600000) / s) * s;
+  for (let t = first; t <= T0 + b * 3600000 + 1; t += s) { const d = fdt(t); out.push({ v: (t - T0) / 3600000, l: d.slice(7), l2: d.slice(0, 6) }); }
+  return out;
+}
+function cards() {
+  const box = $("#cards"); box.innerHTML = "";
+  ORDER.forEach(k => {
+    const r = D.res[k]; if (!r) return;
+    const dw = r.w0 - r.w1, b = document.createElement("button");
+    b.className = "card"; b.type = "button"; b.setAttribute("aria-pressed", state.k === k);
+    b.innerHTML = `<div class="n">${esc(r.dn)}</div><div class="r">${RIVER[k]}</div>` +
+      `<div class="v">${nf(Math.round(r.w0), 0)} <small>cm ${Math.abs(dw) < 1 ? "→" : dw > 0 ? "↑" : "↓"} ${qf(r.q0)} m³/s</small></div>` +
+      `<div class="s">${warnHead(r)}<br>${warnLine(r)}<br>` +
+      `48 h höchstens etwa <b>${nf(Math.round(r.max48.w[1]), 0)} cm</b> (80 %: ${nf(Math.round(r.max48.w[0]), 0)}–${nf(Math.round(r.max48.w[2]), 0)})</div>`;
+    b.onclick = () => { state.k = k; save(); cards(); detail(); };
+    box.appendChild(b);
+  });
+}
+function segRadio(id, name, opts, val, on) {
+  const seg = $(id); seg.innerHTML = "";
+  opts.forEach(([v, l]) => { const lab = document.createElement("label"); lab.innerHTML = `<input type="radio" name="${name}" value="${v}" ${val === v ? "checked" : ""}><span>${l}</span>`; lab.querySelector("input").onchange = () => on(v); seg.appendChild(lab); });
+}
+function detail() {
+  const k = state.k, r = D.res[k], dn = r.dn, cm = state.unit === "cm", st = status(r);
+  const cv = q => q == null ? null : cm ? wOfQ(dn, q) : q, fmt = v => v == null ? "–" : cm ? nf(Math.round(v), 0) + " cm" : qf(v) + " m³/s";
+  $("#dn").textContent = dn + (k === "PZ" ? " ← Wiersdorf + Sinspelt" : "");
+  const hv = r.heavy || { runs: 0, of: 0, past: false };
+  $("#state").innerHTML = `Zustand: <b>${STATE[r.state]}</b>${r.dry ? " · trocken (unter 0,3 MQ)" : ""}` +
+    (hv.runs || hv.past ? ` · <b>Starkregenlage</b> <span title="mindestens 40 mm in 24 h oder 20 mm in 3 h im Gebiet, 24 h vor bis 24 h nach der Ausgabezeit; diese Läufe rechnen mit der Fehlertabelle aus den Starkregenfällen aller Pegel">${hv.past ? "(Regen bereits gefallen)" : `in ${hv.runs} von ${hv.of} Läufen`}</span>` : "") + (r.ups.length ? " · " + r.ups.map(u => `${esc(u.dn)}: ${u.peak.passed ? `Scheitel gemessen vor ${nf(u.peak.steps_ago / 4, 1)} h` : "noch kein Scheitel"}`).join(" · ") : "") +
+    (r.up_open ? " · Scheitel-Regel: solange oben kein Scheitel gemessen ist, fällt die Vorhersage nach ihrem Höchstwert nicht" : "");
+  // Kacheln
+  const dw = r.w0 - r.w1, trend = Math.abs(dw) < 1 ? "gleichbleibend" : (dw > 0 ? "steigt " : "fällt ") + nf(Math.abs(dw), 0) + " cm/h";
+  const m = r.max48, tmax = T0 + m.t_steps[1] * 900000;
+  const t1 = `<div class="tile"><div class="k">Jetzt (${fdt(T0).slice(7)})</div><div class="v">${nf(Math.round(r.w0), 0)} <small>cm</small></div><div class="s">${trend} · ${qf(r.q0)} m³/s</div></div>`;
+  const rising = m.q[1] > r.q0 * 1.05 && m.w[1] - r.w0 >= 5;
+  const t2 = `<div class="tile main"><div class="k">${rising ? (r.up_open ? "Höchststand in 48 h (Scheitel oben noch offen)" : "Scheitel erwartet") : "Höchststand in 48 h"}</div><div class="v">${fmt(cv(m.q[1]))}</div>` +
+    `<div class="s">80 %: <b>${fmt(cv(Math.max(m.q[0], r.q0)))} bis ${fmt(cv(m.q[2]))}</b>${rising ? `<br>um <b>${hmShort(tmax, T0)}</b>, 80 %: ${hmShort(T0 + m.t_steps[0] * 900000, T0)} bis ${hmShort(T0 + m.t_steps[2] * 900000, T0)}` : "<br>kein deutlicher Anstieg erwartet"}</div></div>`;
+  const wv = r.warn, wtime = wv.status === "über" ? "" : wv.ab50 ? `Warnung ab ${hmShort(T0 + wv.ab50 * 900000, T0)}` : wv.ab10 ? `Vorwarnung ab ${hmShort(T0 + wv.ab10 * 900000, T0)}` : "";
+  const t3 = `<div class="tile"><div class="k">Warnung (ab ${wv.name}, ${nf(wv.w, 0)} cm)</div><div class="v" style="font-size:17px">${warnHead(r)}</div>` +
+    `<div class="s">${warnLine(r)}${wv.status !== "über" ? `, noch ${nf(Math.max(0, wv.w - r.w0), 0)} cm` : ""}${wtime ? `<br>${wtime}` : ""}<br>Zur Einordnung: ${st.info}<br>Regen 48 h im Gebiet: ICON-D2 ${nf(r.rain_area.sum48.d2, 1)} mm, Ensemble ${nf(r.rain_area.sum48.eps[0], 1)}–${nf(r.rain_area.sum48.eps[2], 1)} mm</div></div>`;
+  $("#lage").innerHTML = t1 + t2 + t3;
+  // Ganglinie
+  segRadio("#seg-unit", "unit", [["cm", "cm"], ["q", "m³/s"]], state.unit, v => { state.unit = v; save(); detail(); });
+  $("#opt-runs").checked = state.runs; $("#opt-none").checked = state.none; $("#opt-hvz").checked = state.hvz;
+  $("#opt-hvz-l").style.display = r.hvz ? "" : "none";
+  ["runs", "none", "hvz"].forEach(o => $("#opt-" + o).onchange = e => { state[o] = e.target.checked; save(); detail(); });
+  const xa = -72, xb = 48;
+  const obs = (cm ? r.obs_w : r.obs_q).map((v, j) => [(j - (r.obs_q.length - 1)) / 4, v]).filter(p => p[1] != null);
+  const B = cm ? r.band_w : r.band_q, b0 = cm ? r.band0_w : r.band0_q, y0 = cm ? r.w0 : r.q0;
+  const ser = j => [[0, y0], ...B[j].map((v, l) => [(l + 1) / 4, v])];
+  const lines = [];
+  if (state.runs) Object.entries(cm ? r.runs_w : r.runs_q).forEach(([nm, v]) => { if (nm !== "ICON-D2") lines.push({ pts: [[0, y0], ...v.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", thin: true }); });
+  if (state.none) lines.push({ pts: [[0, y0], ...(cm ? r.band0_w[MED] : r.band0_q[MED]).map((x, l) => [(l + 1) / 4, x])], col: "var(--c-none)", dash: true });
+  const hvzOn = r.hvz && state.hvz;
+  let hvzPts = null;
+  if (hvzOn) { hvzPts = ["p10", "p50", "p90"].map(p => r.hvz[p].map(([t, v]) => [(parse(t) - T0) / 3600000, cm ? v : null]).filter(z => z[0] >= xa && z[0] <= xb && z[1] != null)); if (cm) lines.push({ pts: hvzPts[1], col: "var(--c-hvz)", dash: true }); }
+  const d2 = cm ? r.runs_w["ICON-D2"] : r.runs_q["ICON-D2"];
+  lines.push({ pts: [[0, y0], ...d2.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", dash: true });
+  lines.push({ pts: ser(MED), col: "var(--c-full)" });
+  lines.push({ pts: obs, col: "var(--c-obs)" });
+  const ths = r.thresholds.map(t => ({ ...t, y: cm ? t.w : t.q }));
+  const vals = [...obs.map(p => p[1]), ...ser(MED).map(p => p[1]), ...ser(HI).map(p => p[1])];
+  let ymax = Math.max(...vals), ymin = Math.min(...obs.map(p => p[1]), ...ser(LO).map(p => p[1]));
+  const nx = ths.find(t => t.y > ymax); if (nx && nx.y < ymax * 1.35) ymax = nx.y;
+  const yt = niceTicks(cm ? Math.max(0, ymin - 0.1 * (ymax - ymin + 10)) : 0, ymax * 1.05, 4), Y0 = yt[0], Y1 = yt[yt.length - 1];
+  const cl = p => [p[0], Math.max(Y0, Math.min(Y1, p[1]))];
+  const bands = [{ hi: ser(HI).map(cl), lo: ser(LO).map(cl), col: "var(--c-full)", op: .16 }, { hi: ser(Q80).map(cl), lo: ser(Q20).map(cl), col: "var(--c-full)", op: .2 }];
+  if (hvzOn && cm && hvzPts[0].length) bands.push({ hi: hvzPts[2].map(cl), lo: hvzPts[0].map(cl), col: "var(--c-hvz)", op: .1 });
+  const narrow = $("#ch").clientWidth < 560;
+  plot($("#ch"), { x: { min: xa, max: xb, ticks: relClock(xa, xb, narrow ? 24 : 12) }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
+    bands, hlines: ths.map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: t.info, label: `${t.name} ${cm ? nf(t.w, 0) + " cm" : qf(t.q) + " m³/s"}${t.warn ? " · Warnschwelle" : ""}` })),
+    lines: lines.map(l => ({ ...l, pts: l.pts.map(cl) })), vlines: [{ x: 0, col: "var(--ink)", dash: false, label: "jetzt" }],
+    tip: x => { const l = Math.round(x * 4), rows = [];
+      if (l <= 0) { const j = r.obs_q.length - 1 + l; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cv(r.obs_q[j])) }); }
+      else if (l <= H) { rows.push({ col: "var(--c-full)", name: "Median", val: fmt(cv(r.band_q[MED][l - 1])) }, { col: "var(--c-full)", name: "80 % der Fälle", val: `${cm ? nf(Math.round(cv(r.band_q[LO][l - 1])), 0) : qf(r.band_q[LO][l - 1])} bis ${fmt(cv(r.band_q[HI][l - 1]))}` }, { col: "var(--c-run)", name: "ICON-D2-Hauptlauf", val: fmt(cv(r.runs_q["ICON-D2"][l - 1])) });
+        if (state.none) rows.push({ col: "var(--c-none)", name: "ohne Regenvorhersage", val: fmt(cv(r.band0_q[MED][l - 1])) }); }
+      return { t: fdt(T0 + l * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 290);
+  $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="dash" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
+    (state.runs ? `<span><i class="thin" style="--col:var(--c-run)"></i>Ensemble-Läufe</span>` : "") + (state.none ? `<span><i class="dash" style="--col:var(--c-none)"></i>ohne Regenvorhersage (wie bisher)</span>` : "") +
+    (hvzOn && cm ? `<span><i class="dash" style="--col:var(--c-hvz)"></i>Vorhersage der HVZ (Median, 10–90 %), Stand ${fdt(parse(r.hvz.time))}</span>` : "");
+  // Regen
+  const ra = r.rain_area, ro = ra.obs.map((v, j) => ({ x: (parse(ra.t_obs[j]) - T0) / 3600000 - 1, w: 1, y: v, col: "var(--c-rain)" }));
+  const rf = ra.d2.map((v, j) => ({ x: (parse(ra.t_fc[j]) - T0) / 3600000 - 1, w: 1, y: v, col: "var(--c-rainfc)" }));
+  const rmax = Math.max(1, ...ra.obs, ...ra.d2, ...ra.q[2]), rt = niceTicks(0, rmax * 1.1, 3);
+  const eh = ra.q[2].map((v, j) => [(parse(ra.t_fc[j]) - T0) / 3600000 - 0.5, v]), el = ra.q[0].map((v, j) => [(parse(ra.t_fc[j]) - T0) / 3600000 - 0.5, v]);
+  plot($("#ch-r"), { x: { min: xa, max: xb, ticks: relClock(xa, xb, narrow ? 24 : 12) }, y: { min: 0, max: rt[rt.length - 1], ticks: rt, label: "mm je Stunde" },
+    bars: [...ro, ...rf], bands: [{ hi: eh, lo: el, col: "var(--c-run)", op: .25 }], vlines: [{ x: 0, col: "var(--ink)", dash: false }],
+    tip: x => { const h = Math.ceil(x); if (h <= 0) { const j = ra.t_obs.length - 1 + h; return j >= 0 ? { t: fdt(T0 + h * 3600000) + " (Stunde bis)", x: h - 0.5, rows: [{ col: "var(--c-rain)", name: "gemessen", val: nf(ra.obs[j], 1) + " mm" }] } : null; }
+      const j = h - 1; if (j >= ra.d2.length) return null; return { t: fdt(T0 + h * 3600000) + " (Stunde bis)", x: h - 0.5, rows: [{ col: "var(--c-rainfc)", name: "ICON-D2", val: nf(ra.d2[j], 1) + " mm" }, { col: "var(--c-run)", name: "Ensemble 10–90 %", val: `${nf(ra.q[0][j], 1)} bis ${nf(ra.q[2][j], 1)} mm` }] }; } }, 120);
+  $("#leg-r").innerHTML = `<span><i class="area" style="--col:var(--c-rain);opacity:1"></i>gemessen (DWD-Stationen)</span><span><i class="area" style="--col:var(--c-rainfc);opacity:1"></i>ICON-D2</span><span><i class="area" style="--col:var(--c-run)"></i>Ensemble 10–90 %</span>`;
+  $("#note-r").innerHTML = `Gebietsregen über das ganze Einzugsgebiet von ${esc(dn)} (Flächenmittel der Teilgebiete), Stundensummen. Summe der nächsten 48 h: ICON-D2 ${nf(ra.sum48.d2, 1)} mm, Ensemble Median ${nf(ra.sum48.eps[1], 1)} mm (80 %: ${nf(ra.sum48.eps[0], 1)} bis ${nf(ra.sum48.eps[2], 1)} mm). ICON-Werte an den Stationen um den Faktor Station / ICON aus 2024–2026 angeglichen.`;
+  // Warnung
+  const row = t => {
+    const cls = t.warn ? "wrn" : t.info ? "info" : "", nm = `<i class="thr" style="--col:${TH_COL[t.id]}"></i>${t.name}${t.warn ? "<small>Warnschwelle</small>" : ""}`;
+    if (t.now) return `<tr class="${cls}"><td>${nm}</td><td>${nf(t.w, 0)}</td><td class="now" colspan="6">jetzt darüber</td></tr>`;
+    return `<tr class="${cls}"><td>${nm}</td><td>${nf(t.w, 0)}</td>` +
+      t.p.map((p, j) => `<td class="p ${p < 0.05 ? "lo" : ""}" style="${t.info ? "" : `background:color-mix(in srgb, var(--c-full) ${Math.round(Math.min(p, 1) * 55)}%, transparent)`}">${pctTxt(p)}${state.none ? `<small>ohne: ${pctTxt(t.p0[j])}</small>` : ""}</td>`).join("") +
+      `<td>${t.ab10 ? hmShort(T0 + t.ab10 * 900000, T0) : "–"}</td><td>${t.ab50 ? hmShort(T0 + t.ab50 * 900000, T0) : "–"}</td></tr>`;
+  };
+  const rows = r.thresholds.filter(t => !t.info).map(row).join("") + `<tr class="grp"><td colspan="8">Zur Einordnung, keine Warnung</td></tr>` + r.thresholds.filter(t => t.info).map(row).join("");
+  $("#warn").innerHTML = `<table><thead><tr><th>Schwelle</th><th>cm</th><th>in 6 h</th><th>12 h</th><th>24 h</th><th>48 h</th><th title="Vorwarnung: ab wann die Wahrscheinlichkeit mindestens 10 % ist">ab 10 %</th><th title="Warnung: ab wann die Wahrscheinlichkeit mindestens 50 % ist">ab 50 %</th></tr></thead><tbody>${rows}</tbody></table>`;
+  warnCheck();
+  $("#note-w").innerHTML = `Gewarnt wird erst ab <b>${r.warn.name}</b> (10-jährlicher Wasserstand, ab dem erste Schäden zu erwarten sind; an allen Pegeln gleich): <b>Vorwarnung</b>, wenn die Wahrscheinlichkeit, ${r.warn.name} binnen 48 h zu erreichen, mindestens 10 % ist, <b>Warnung</b> ab 50 %. Meldehöhe und HW 2 stehen nur zur Einordnung da. Wahrscheinlichkeit = Mittel über ${D.meta.members} Läufe (ICON-D2 und ICON-D2-EPS), je Lauf mit dem Restfehler des Abflussmodells bei bekanntem Regen; unter 5 % und über 95 % nicht feiner. Schwellen der Hochwasservorhersagezentrale Rheinland-Pfalz (HWx = x-jährlicher Wasserstand).` + (state.none ? " Klein darunter: dieselbe Rechnung ohne Regenvorhersage." : "");
+}
+/* Zelle der Rückrechnung: Vorwarnung (10 %) und Warnung (50 %), je ununterbrochen bis zum Überschreiten (v) oder angekündigt und vorher wieder zurückgenommen (e bis l) */
+const hrs = v => v >= 48 ? "≥ 48 h" : v < 1 ? Math.round(v * 60) + " min" : nf(Math.floor(v * 2) / 2, Math.floor(v * 2) % 2 ? 1 : 0) + " h";   // auf halbe Stunden abgerundet
+function wcell(v10, e10, l10, v50, e50, l50, pmax) {
+  if (!(e10 > 0)) return `<b>nicht gewarnt</b><small class="sub">höchstens ${pctTxt(pmax)}</small>`;
+  const one = (nm, v, e, l) => v > 0 ? `${nm} <b>${hrs(v)}</b> vorher${e > v + 1 ? ` (zuerst schon ${hrs(e)} vorher)` : ""}` : e > 0 ? `${nm} ${hrs(e).replace(" h", "")}–${hrs(l)} vorher, dann zurückgenommen` : `keine ${nm}`;
+  return one("Vorwarnung", v10, e10, l10) + `<small class="sub">${one("Warnung", v50, e50, l50)}</small>`;
+}
+function warnCheck() {                                   // Rückrechnung 2004–2022 (uncert.py): jedes Hochwasser über der Warnschwelle einzeln
+  const r = D.res[state.k], g = D.warncheck && D.warncheck[r.dn], el = $("#wc"), wn = r.warn.name;
+  if (!g) { el.innerHTML = `<p class="note">Keine Rückrechnung vorhanden.</p>`; return; }
+  const yrs = s => fdt(parse(s)).slice(0, 6) + s.slice(0, 4) + " " + fdt(parse(s)).slice(7);
+  const lt = x => !x ? "–" : wcell(x.v10, x.e10, x.l10, x.v50, x.e50, x.l50, x.pmax);
+  let h = g.events.length ? `<div class="tw"><table><thead><tr><th>Hochwasser (Beginn über ${wn})</th><th>Scheitel</th><th class="txt" title="Vorwarnung (ab 10 %) / Warnung (ab 50 %) so viele Stunden vor dem Überschreiten">ohne Regenvorhersage</th><th class="txt" title="mit dem später gemessenen Regen als Vorhersage">perfekte Regenvorhersage</th></tr></thead><tbody>` +
+    g.events.map(e => `<tr><td>${yrs(e.beginn)}</td><td>${qf(e.q)} m³/s<small class="sub">${nf(e.q / e.thr, 1)} × HQ10</small></td><td class="txt">${lt(e.kette_regen)}</td><td class="txt">${lt(e.kette_vorhersage)}</td></tr>`).join("") + `</tbody></table></div>`
+    : `<p class="note">${esc(r.dn)} hat ${wn} in 2004–2022 nicht erreicht; die Warnung lässt sich hier nur an den Fehlalarmen prüfen.</p>`;
+  const f = (v, l) => { const x = g.fa[`${v}|${l}`]; return x ? `${x.n}${x.n ? `<small class="sub">davon ${x.knapp} knapp</small>` : ""}` : "0"; };
+  h += `<div class="tw" style="margin-top:6px"><table><thead><tr><th>Fehlalarme 2004–2022 (keine ${wn} in den 48 h danach)</th><th>Vorwarnung</th><th>Warnung</th></tr></thead><tbody>` +
+    `<tr><td>ohne Regenvorhersage</td><td>${f("kette_regen", "0.1")}</td><td>${f("kette_regen", "0.5")}</td></tr><tr><td>perfekte Regenvorhersage</td><td>${f("kette_vorhersage", "0.1")}</td><td>${f("kette_vorhersage", "0.5")}</td></tr></tbody></table></div>`;
+  h += `<p class="note">Rückrechnung mit derselben Kette und denselben Fehlertabellen, kreuzvalidiert (Tabellen ohne den Zeitblock des Hochwassers), jede Stunde 2004–2022. Vorwarnung / Warnung „x h vorher“: so lange vor dem Überschreiten lag die Wahrscheinlichkeit, ${wn} binnen 48 h zu erreichen, ununterbrochen bei mindestens 10 % bzw. 50 % (höchstens 48 h gezählt, auf halbe Stunden abgerundet); „dann zurückgenommen“: angekündigt, aber vor dem Überschreiten wieder darunter gefallen (meist, weil die Welle später kam als vorhergesagt). Eine archivierte ICON-Vorhersage gibt es für diese Hochwasser nicht; die echte Regenvorhersage liegt zwischen „ohne“ und „perfekt“. Phasen mit Lücken bis 12 h zählen als eine; knapp: der Abfluss erreichte danach mindestens 80 % von HQ10. Sehr wenige Hochwasser: das ist eine Fallsammlung, keine Statistik. Vor 2004 gibt es keinen Stundenregen, die älteren Hochwasser rechnet nur die Karte nach (Kette ohne Regen)${state.k === "PZ" ? "; Prümzurlay 1993 und 2003 auch dort nicht, weil Wiersdorf damals bei 250 cm abgeschnitten aufgezeichnet ist" : ""}.</p>`;
+  el.innerHTML = h;
+}
+function how() {
+  const v = D.verif || {}, c = D.check || {}, a = v["0-3 h"], b = v["24-27 h"];
+  $("#how").innerHTML = `<ul>
+    <li><b>Daten:</b> Pegel der HVZ (letzte 5 Tage, 15 min, bis ${fdt(parse(D.meta.t0))}), Stundenregen von ${D.meta.stationen.length} DWD-Stationen (bis ${esc(Object.values(D.meta.stationen_letzte).sort()[0].slice(0, 16))} bzw. ${esc(Object.values(D.meta.stationen_letzte).sort().pop().slice(0, 16))}, danach ICON-D2), ICON-D2 und ICON-D2-EPS über Open-Meteo (ICON-D2-Lauf ${D.meta.icon.meta_d2 ? esc(D.meta.icon.meta_d2.slice(0, 16)) + " MEZ" : "–"}). Alle Zeiten MEZ.</li>
+    <li><b>Modell:</b> dieselbe Kette wie in der Karte (Regen-Abfluss-Modelle der Oberläufe, Routing mit abflussabhängiger Wellengeschwindigkeit, Fehlerkorrektur, Umschalten Winter / Starkregen, Scheitel-Regel, seit 13.11.2026 Sättigungsüberschuss bei großen Regenmengen und nichtlineare Speicher, die bei sehr großen Wellen schneller ablaufen, beides gemeinsam für alle Gebiete angepasst), Modellsatz aus allen Ereignissen 2004–2022. Neu: Regen nach jetzt aus der Vorhersage statt 0, für jeden der ${D.meta.members} Läufe.</li>
+    <li><b>Band:</b> Mischung aus den Läufen und dem Restfehler des Abflussmodells bei bekanntem Regen (kreuzvalidiert 2004–2022, gerechnet mit dem gemessenen Regen als „perfekter Vorhersage“${c.Prümzurlay ? `; damit liegt die Messung bei 6 h in ${nf(100 * c.Prümzurlay[6], 0)} % und bei 24 h in ${nf(100 * c.Prümzurlay[24], 0)} % der Fälle im 80 %-Band, Prümzurlay` : ""}). Läufe in einer Starkregenlage (mindestens 40 mm in 24 h oder 20 mm in 3 h im Gebiet, 24 h vor bis 24 h nach jetzt) nehmen eine eigene Fehlertabelle aus den Starkregenfällen aller Pegel; in Hochwassern über HQ10 lag die Messung damit bei 6 h in 58 % der Fälle im 80 %-Band (vorher 45 %), weil das Modell Extreme auch mit richtigem Regen noch unterschätzt. Die Streuung des Ensembles selbst ließ sich hier nicht prüfen: Open-Meteo bewahrt die einzelnen Läufe nur drei Tage auf.</li>
+    <li><b>Wie gut ist ICON-D2 hier?</b> Gegen die DWD-Stationen, Gebietsregen wie im Modell: ${a ? `in den ersten Stunden eines Laufs Korrelation der 6-h-Summen ${nf(a.r6, 2)}, Tagessummen ${nf(a.r24, 2)}` : ""}${b ? `; einen Tag voraus (24–27 h) ${nf(b.r6, 2)} und ${nf(b.r24, 2)}. Starkregen (6 h über 10 mm im Gebiet) wird einen Tag voraus in ${nf(100 * b.hit10, 0)} % der Fälle vorhergesagt, ${nf(100 * b.fa10, 0)} % der vorhergesagten Fälle kommen nicht` : ""}. ICON liegt an den höheren Stationen 12 bis 17 % unter der Messung; das gleicht ein Faktor je Station aus. Nachrechnung der Welle vom Oktober 2026 mit den damaligen ICON-D2-Läufen: Prümzurlay 1 bis 2 Tage vorher 16 bis 21 statt gemessen 15 bis 17 m³/s; ohne Regenvorhersage nichts (README).</li>
+    <li><b>Grenzen:</b> Für die Hochwasser 2011, 2018 und 2021 gibt es keine archivierte ICON-Vorhersage; ob die Regenvorhersage dort rechtzeitig gewarnt hätte, lässt sich nicht nachrechnen. Mit dem gemessenen Regen als perfekter Vorhersage stand die Warnung im Juli 2021 an allen acht Pegeln 38 bis 48 h vorher, die Höhe blieb aber zu niedrig (Scheitel 24 h vor dem Überschreiten im Median 57 % des gemessenen, Prümzurlay 15 h vor dem Scheitel 558 statt 698 cm). Gewitter wie im Juni 2018 erfasst der Stationsregen kaum, Schneeschmelze (Prüm 2, Januar 2021) kennt das Modell nicht. Die amtliche Vorhersage der HVZ (Prümzurlay, Alsdorf-Oberecken) ist zum Vergleich eingeblendet.</li>
+  </ul>`;
+}
+function theme() {
+  const b = $("#theme"), order = [null, "light", "dark"], names = { null: "automatisch", light: "hell", dark: "dunkel" };
+  let c = null; try { c = localStorage.getItem("theme"); } catch (e) {}
+  if (c !== "light" && c !== "dark") c = null;
+  const apply = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; b.textContent = "Darstellung: " + names[t]; };
+  apply(c);
+  b.onclick = () => { c = order[(order.indexOf(c) + 1) % 3]; apply(c); try { if (c) localStorage.setItem("theme", c); else localStorage.removeItem("theme"); } catch (e) {} detail(); };
+}
+const m = D.meta;
+$("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> · Pegel bis ${fdt(parse(m.t0)).slice(7)} · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ, Ensemble ${m.members - 1} Läufe ICON-D2-EPS · Vorhersage 48 h`;
+if (!D.res[state.k]) state.k = "PZ";
+theme(); cards(); detail(); how();
+let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(detail, 120); });
+</script>
+</body>
+</html>
