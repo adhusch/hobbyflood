@@ -96,11 +96,12 @@ def fetch() -> Path:
     (out / "hvz.json").write_text(json.dumps(hvz), encoding="utf-8")
     st = station_table()
     base = "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/"
-    for sid in st.id:
+    alt = pd.to_datetime(st.bis.astype(str), format="%Y%m%d") < pd.Timestamp.now() - pd.Timedelta(days=365)
+    for sid in st.id[~alt]:                                       # seit über einem Jahr eingestellte Stationen (Bitburg, 2018) nicht abfragen
         for rel in (f"hourly/precipitation/recent/stundenwerte_RR_{sid}_akt.zip", f"10_minutes/precipitation/now/10minutenwerte_nieder_{sid}_now.zip"):
             try:
                 (out / "dwd" / rel.split("/")[-1]).write_bytes(_get(base + rel))
-            except RuntimeError as e:                             # Station eingestellt (z. B. Bitburg seit 2018): überspringen
+            except RuntimeError as e:                             # Datei fehlt (Station ausgefallen): überspringen
                 print("  ", e)
     data = {}
     for k, u in icon_urls(st).items():
