@@ -19,6 +19,11 @@ ICON-D2 und Unsicherheitsband; Warnung ab HW 10. Die Abschnitte unten sind das A
   (`python live.py`) und liefert `live.html` auf Port 8080; jede Ausgabe wird unter `archiv/` aufgehoben (`deploy/run_live.sh`).
   Einmalig von Hand: `python live.py` (braucht Internet und `requirements.txt`).
 - **Anpassung und Radar:** zusätzlich `requirements-train.txt`.
+- **Immer eine Seite:** Bis zum ersten Lauf steht eine Platzhalterseite da; scheitert ein Lauf, bleibt die letzte Seite stehen und zeigt
+  ab drei Stunden Alter den Hinweis „Stand veraltet“. Im Container lädt die Seite alle 15 Minuten neu.
+- **Ausblick 7 Tage** (`live.outlook`): eine Linie je Pegel ohne Band. Regen je Station aus ICON-D2, nach dessen Ende aus ICON-EU (bis 120 h),
+  danach aus ICON global (Open-Meteo); ICON-EU und global ohne Angleichfaktor. Für Vorläufe über 48 h gibt es keine Rückrechnung, die
+  Warnung gilt weiter nur für 48 h.
 
 # Arbeitsprotokoll: Abfluss-zu-Abfluss-Modelle und Pegel-GUI
 

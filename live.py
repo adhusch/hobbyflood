@@ -80,6 +80,11 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
                    f"&models=icon_d2&past_days=3&forecast_days=3&timezone=GMT",
         "icon_d2_eps": f"https://ensemble-api.open-meteo.com/v1/ensemble?latitude={lat}&longitude={lon}&hourly=precipitation&models=icon_d2_eps"
                        f"&past_days=1&forecast_days=3&timezone=GMT",
+        # Ausblick 7 Tage: nach dem Ende von ICON-D2 (48 h) ICON-EU (7 km, bis 120 h), danach ICON global (13 km, bis 180 h)
+        "icon_eu": f"https://api.open-meteo.com/v1/dwd-icon?latitude={lat}&longitude={lon}&hourly=precipitation&models=icon_eu"
+                   f"&past_days=1&forecast_days=8&timezone=GMT",
+        "icon_global": f"https://api.open-meteo.com/v1/dwd-icon?latitude={lat}&longitude={lon}&hourly=precipitation&models=icon_global"
+                       f"&past_days=1&forecast_days=8&timezone=GMT",
         "meta_d2": "https://api.open-meteo.com/data/dwd_icon_d2/static/meta.json",
         "meta_d2_eps": "https://ensemble-api.open-meteo.com/data/dwd_icon_d2_eps/static/meta.json",
     }
@@ -105,7 +110,12 @@ def fetch() -> Path:
                 print("  ", e)
     data = {}
     for k, u in icon_urls(st).items():
-        data[k] = json.loads(_get(u))
+        try:
+            data[k] = json.loads(_get(u))
+        except RuntimeError as e:
+            if k not in ("icon_eu", "icon_global"):               # ohne ICON-EU / global entfällt nur der Ausblick
+                raise
+            print("  ", e)
     (out / "icon.json").write_text(json.dumps(dict(abgerufen_utc=now, stationen=st[["id", "lat", "lon"]].values.tolist(), data=data)), encoding="utf-8")
     (out / "abruf.json").write_text(json.dumps(dict(dwd=now, hvz=now, icon=now), indent=1), encoding="utf-8")
     print("Rohdaten in", out)
@@ -187,6 +197,13 @@ def read_icon(raw: Path) -> dict:
         idx = _mez(h["time"])
         keys = ["precipitation"] + sorted(k for k in h if k.startswith("precipitation_member"))
         eps[sid] = pd.DataFrame({k: pd.to_numeric(pd.Series(h[k]), errors="coerce").to_numpy() for k in keys}, index=idx)
+    longer = {}
+    for key in ("icon_eu", "icon_global"):                        # stündlich, Stempel = Ende der Stunde wie beim Ensemble
+        if key in j["data"]:
+            longer[key] = {}
+            for sid, loc in zip(ids, j["data"][key]):
+                h = loc["hourly"]
+                longer[key][sid] = pd.Series(pd.to_numeric(pd.Series(h["precipitation"]), errors="coerce").to_numpy(), index=_mez(h["time"]))
     meta = {}
     for k in ("meta_d2", "meta_d2_eps"):
         m = j["data"].get(k) or {}
@@ -197,7 +214,7 @@ def read_icon(raw: Path) -> dict:
     last = e0["precipitation"].dropna().index.max()
     meta["eps_end"] = str(last)
     meta["d2_end"] = str(next(iter(d2.values())).dropna().index.max())
-    return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"])
+    return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"))
 
 
 # ------------------------------------------------------------------ Aufbau
@@ -271,6 +288,71 @@ def wquant(x: np.ndarray, w: np.ndarray, q) -> np.ndarray:
     return np.interp(q, c, x[o])
 
 
+OUTLOOK_H = 168                                                  # Ausblick in Stunden
+
+
+def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: dict, d2h: dict, icon: dict, info: dict, corr48: dict,
+            offs: dict, rc: dict) -> dict | None:
+    """Ausblick über 7 Tage, eine Linie je Pegel ohne Unsicherheitsband: dieselbe Kette (kette_vorhersage), Regen je Station aus ICON-D2, nach
+    dessen Ende aus ICON-EU, danach aus ICON global (jeweils das nächste Modell der ICON-Kette; EU und global ohne Angleichfaktor, dafür gibt es
+    keine Prüfung). Die Fehlerkorrektur (beta) klingt nach 48 h weiter ab; bis 48 h gilt der Median-Abgleich des ICON-D2-Laufs (corr48), danach
+    bleibt dessen letzter Faktor stehen. Nicht geprüft: Für Vorläufe über 48 h gibt es keine Rückrechnung."""
+    if not icon.get("eu"):
+        return None
+    H0, H7 = C.H, int(OUTLOOK_H / DT)
+    grid = pd.date_range(t0 - pd.Timedelta(days=HISTORY_D), t0 + pd.Timedelta(hours=OUTLOOK_H), freq="15min")
+    i0 = int(grid.get_loc(t0))
+    hours = pd.date_range(grid[0].ceil("1h"), grid[-1].ceil("1h"), freq="1h")
+    tH = t0.ceil("1h")
+    Qn = {}
+    for k in NUM:
+        q = hv[k]["Q"].reindex(grid).to_numpy().copy()
+        q[i0 + 1:] = np.nan
+        q[:i0 + 1] = pd.Series(q[:i0 + 1]).interpolate(limit=4, limit_area="inside").to_numpy()
+        Qn[C.DN[k]] = q
+    ends, st_fc = {}, {}
+    for sid in next(iter(w_live.values())):
+        parts = [("ICON-D2", d2h[sid]), ("ICON-EU", icon["eu"][sid])] + ([("ICON global", icon["glob"][sid])] if icon.get("glob") else [])
+        s = pd.Series(np.nan, index=hours)
+        for name, x in parts:
+            x = x.reindex(hours)
+            use = s.isna() & x.notna() & (hours > tH)
+            s[use] = x[use]
+            if use.any():
+                ends[name] = max(ends.get(name, hours[0]), hours[use].max())
+        s[hours <= tH] = obs_filled[sid].reindex(hours)[hours <= tH]
+        st_fc[sid] = s
+    p = {k: np.nan_to_num(hourly_to_grid(RN.areal_series(st_fc, w_live[k]), grid)) for k in C.RAINK}
+    m7 = C.from_json(C.to_json(models))
+    for ms in m7.values():
+        for m in ms.values():
+            b = np.asarray(m.beta, float)
+            r = float(np.clip((abs(b[-1]) / max(abs(b[-97]), 1e-9)) ** (1 / 96), 0.0, 1.0)) if len(b) >= 97 and b[-97] != 0 else 0.0
+            m.beta = np.concatenate([b, b[-1] * r ** np.arange(1, H7 - len(b) + 1)])
+    keep = {k: C._S.get(k) for k in ("pm", "month")}
+    out = {}
+    try:
+        C.H = H7
+        C._S.update(pm=C.storm_index({k: dict(p=np.where(grid > t0, 0.0, p[k])) for k in C.RAINK}, info), month=grid.month.to_numpy())
+        fr = build_frames(p, Qn)
+        for target in C.ORDER:
+            dn = C.DN[target]
+            raw = C.forecast(m7, target, Qn, fr, np.array([i0]), "kette_vorhersage")[target][0][C.A + 1:]
+            d = offs[target]
+            c48 = np.asarray(corr48[target])                       # ICON-D2-Lauf nach der Fehlerstatistik, 192 Schritte
+            f = (c48 + d) / (np.maximum(raw[:H0], 0) + d)
+            q = np.concatenate([c48, np.maximum((np.maximum(raw[H0:], 0) + d) * f[-1] - d, 0)])[3::4]      # stündlich
+            cw = _chain_weights(target, info)
+            pa = sum(w * p[x] for w, x in zip(*cw))
+            day = pd.Series(pa[i0 + 1:] * DT, index=grid[i0 + 1:]).resample("1D").sum()
+            out[target] = dict(q=[round(float(x), 3) for x in q], w=[round(float(x), 1) for x in RT.w_of_q(rc[dn], q)],
+                               regen_tag=[[str(t)[:10], round(float(v), 1)] for t, v in day.items()])
+    finally:
+        C.H = H0
+        C._S.update(**keep)
+    return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H)
+
+
 def build(raw: Path, out_html: Path) -> dict:
     t_start = time.time()
     hv = read_hvz(raw)
@@ -279,6 +361,7 @@ def build(raw: Path, out_html: Path) -> dict:
     fac = json.loads((HERE / "data" / "verif" / "rain_factors.json").read_text(encoding="utf-8"))["stationen"]
     K = UN.kennwerte()
     rc = json.loads((HERE / "data" / "rating_curves.json").read_text(encoding="utf-8"))["pegel"]
+    rc_all = rc
     U = json.loads((HERE / "data" / "uncert_tables.json").read_text(encoding="utf-8"))
     models = C.from_json(json.loads((HERE / "data" / "chain_models.json").read_text(encoding="utf-8"))["sets"]["alle"])
 
@@ -411,10 +494,15 @@ def build(raw: Path, out_html: Path) -> dict:
         hvz = hv[target]
         if "W_pred" in hvz:
             res[target]["hvz"] = dict(time=hvz["W_pred_time"], **{p: [[str(t), float(v)] for t, v in s.items()] for p, s in hvz["W_pred"].items()})
+    try:
+        aus = outlook(models, hv, t0, filled, w_live, d2h, icon, info, {k: res[k]["runs_q"]["ICON-D2"] for k in res}, U["offset"], rc_all)
+    except Exception as e:                                         # noqa: BLE001  Ausblick ist Zusatz: scheitert er, bleibt die 48-h-Seite
+        print("   Ausblick entfällt:", repr(e))
+        aus = None
     meta = dict(t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
-    data = dict(meta=meta, res=res, lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
+    data = dict(meta=meta, res=res, ausblick=aus, lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
                 verif=_verif_summary(), check=_check_summary(), warncheck=_warn_check())
     tpl = (HERE / "live_template.html").read_text(encoding="utf-8")
     html = tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False))
