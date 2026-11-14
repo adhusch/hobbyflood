@@ -15,7 +15,7 @@ RUN python -c "import routing" \
     && useradd --create-home app && mkdir -p gui/archiv data/live && chown -R app:app /app
 USER app
 
-ENV INTERVAL_MIN=60 PORT=8080
+ENV INTERVAL_MIN=30 PORT=8080
 EXPOSE 8080
 VOLUME ["/app/data/live", "/app/gui/archiv"]
 CMD ["sh", "deploy/run_live.sh"]
