@@ -253,4 +253,11 @@ if __name__ == "__main__":
         RF2.radar_hourly = lambda: None            # Fenster ohne Radarspalten ...
         _rw = C.rain_window
         C.rain_window = lambda frame, t0, ideal: no_radar(_rw(frame, t0, ideal))   # ... und Vorhersagefenster mit Stationsgrößen
+        _tr = C._training
+
+        def _training_norad(key, block):
+            d = _tr(key, block)
+            d.P = {k: no_radar(v) for k, v in d.P.items()}
+            return d
+        C._training = _training_norad
     run(a)
