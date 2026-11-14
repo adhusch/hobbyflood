@@ -1,0 +1,25 @@
+# Live-Betrieb: docker compose up -d   (Seite danach auf http://localhost:8080)
+# Eigene Modellrechnung, keine amtliche Warnung.
+services:
+  hobbyflood:
+    image: ghcr.io/adhusch/hobbyflood:latest
+    container_name: hobbyflood
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      INTERVAL_MIN: "60"        # Abstand der Läufe in Minuten (Quellen schonen: nicht unter 30)
+      TZ: Europe/Berlin
+    volumes:
+      - hobbyflood_live:/app/data/live       # Rohdaten jedes Abrufs
+      - hobbyflood_archiv:/app/gui/archiv    # jede Ausgabe als HTML
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/live.html', timeout=5)"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 3m
+
+volumes:
+  hobbyflood_live:
+  hobbyflood_archiv:

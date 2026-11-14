@@ -14,7 +14,7 @@ ICON-D2 und Unsicherheitsband; Warnung ab HW 10. Die Abschnitte unten sind das A
 - **Nicht im Repository:** die Abflussreihen des LfU Rheinland-Pfalz (`data/lfu_pkg/`, Wasserportal-Exporte, Ereignisdateien mit gemessenen
   Ganglinien), die Radar-Ausschnitte (`data/radar/crop/`, 55 MB, mit `radar_crop_browser.js` oder `radar_crop.py` aus RADKLIM neu zu erzeugen),
   die Höhenmodell-Kacheln, ICON-Archive und erzeugte Seiten. Für eine Neuanpassung müssen diese Daten wieder nach `data/` gelegt werden.
-- **Live im Container:** `docker build -t hobbyflood .` und `docker run -p 8080:8080 -v hobbyflood_live:/app/data/live -v hobbyflood_archiv:/app/gui/archiv hobbyflood`.
+- **Live im Container:** `docker compose up -d` (`docker-compose.yml`, Image aus ghcr.io) oder selbst bauen: `docker build -t hobbyflood .` und `docker run -p 8080:8080 -v hobbyflood_live:/app/data/live -v hobbyflood_archiv:/app/gui/archiv hobbyflood`.
   Der Container holt stündlich (`INTERVAL_MIN`) Pegel (hochwasser.rlp.de), Stationsregen (DWD) und ICON-D2 (Open-Meteo), rechnet die Kette
   (`python live.py`) und liefert `live.html` auf Port 8080; jede Ausgabe wird unter `archiv/` aufgehoben (`deploy/run_live.sh`).
   Einmalig von Hand: `python live.py` (braucht Internet und `requirements.txt`).
