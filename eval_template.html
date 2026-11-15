@@ -136,7 +136,7 @@ td.h{text-align:center;min-width:46px}
   </div>
   <button class="btn" id="theme" type="button">Darstellung: automatisch</button>
 </header>
-<div class="notice"><b>Eigene Modellrechnung, keine amtliche Warnung.</b> Messwerte: Landesamt für Umwelt Rheinland-Pfalz (15-Minuten-Werte), Regen: Deutscher Wetterdienst (Stundenwerte von neun Stationen, ab 2004). Wasserstände in cm, wie sie beim jeweiligen Hochwasser am Pegel gemessen wurden.</div>
+<div class="notice"><b>Eigene Modellrechnung, keine amtliche Warnung.</b> Messwerte: Landesamt für Umwelt Rheinland-Pfalz (15-Minuten-Werte), Regen: Deutscher Wetterdienst (Stundenwerte von neun Stationen ab 2004, 2001–2003 Radar RADKLIM). Wasserstände in cm, wie sie beim jeweiligen Hochwasser am Pegel gemessen wurden.</div>
 
 <section class="panel" aria-label="Ereignis wählen">
   <h2>1 · Hochwasser wählen</h2>
@@ -175,7 +175,7 @@ td.h{text-align:center;min-width:46px}
   <h2>Hinweise</h2>
   <ul style="margin:0;padding-left:20px;color:var(--ink2);font-size:13px">
     <li><b>Unabhängigkeit:</b> Hochwasser 2004–2022 werden mit dem Modellsatz gerechnet, der ohne ihren Zeitblock angepasst wurde (Blöcke 2004–07, 2008–11, 2012–15, 2016–18, 2019–22); auch die Fehlerstatistik für Band und Warnung stammt dann aus den anderen Blöcken. Hochwasser vor 2004 laufen mit dem Modell aus 2004–2022.</li>
-    <li><b>Regen:</b> „Regen bis jetzt“ kennt nur den bis zur Ausgabezeit gemessenen Regen (wie ohne Wettervorhersage). „Gemessener Regen als Vorhersage“ setzt den später gemessenen Regen als perfekte Wettervorhersage ein und zeigt, was das Abflussmodell bei richtigem Regen leistet. Vor 2004 gibt es keinen Stundenregen; dort rechnet die Kette nur mit den Pegeln oberhalb.</li>
+    <li><b>Regen:</b> „Regen bis jetzt“ kennt nur den bis zur Ausgabezeit gemessenen Regen (wie ohne Wettervorhersage). „Gemessener Regen als Vorhersage“ setzt den später gemessenen Regen als perfekte Wettervorhersage ein und zeigt, was das Abflussmodell bei richtigem Regen leistet. Für 2001–2003 gibt es keinen Stundenregen der Stationen; dort steht das Radar-Gebietsmittel (RADKLIM), mit dem mittleren Verhältnis Station / Radar je Gebiet angeglichen (Faktor 1,00 bis 1,13). Vor 2001 gibt es keinen Stundenregen; dort rechnet die Kette nur mit den Pegeln oberhalb.</li>
     <li><b>Vorhersage:</b> Linie = Median nach der Fehlerstatistik, Fläche = 80 % der Fälle. Warnung ab HW 10: Vorwarnung, wenn die Wahrscheinlichkeit für HW 10 in 48 h mindestens 10 % ist, Warnung ab 50 %.</li>
     <li><b>Wasserstand und Jährlichkeit:</b> Gerechnet wird in m³/s. In cm umgerechnet wird mit der Beziehung zwischen Wasserstand und Abfluss, die beim Ereignis galt (aus den Messwertpaaren des Ereignisses), damit die Wasserstände den damaligen Pegelablesungen entsprechen. Die Beziehung hat sich geändert: In Prümzurlay stehen 199 m³/s (HQ10) seit 2022 bei 399 cm, bis 2021 bei 442 cm. Die Marken HW 2 bis HW 100 sind die Abflüsse HQ2 bis HQ100 der heutigen Statistik der Hochwasservorhersagezentrale (Stand November 2026, einschließlich Juli 2021), umgerechnet in den damaligen Wasserstand. Frühere Statistiken ordneten dieselben Hochwasser höher ein: Januar 2003 in Prümzurlay (252 m³/s, 492 cm) liegt heute knapp unter HQ20, vor 2021 galt es als deutlich seltener.</li>
     <li><b>Ereignisse:</b> jedes Hochwasser, bei dem ein Pegel 0,7 HQ2 erreicht (Mai bis September ab 2004: 0,4 HQ2). Wiersdorf ist bei älteren Hochwassern bei 250 cm abgeschnitten; solche Ereignisse sind markiert.</li>
@@ -344,7 +344,7 @@ function draw() {
   $("#issue-btns").querySelectorAll("button").forEach(bt => bt.onclick = () => setIssue(state.i + +bt.dataset.d));
   const dn = FC.DN[state.key], kw = D.unc.kennwerte[dn];
   $("#ttl").textContent = `2 · Vorhersage prüfen: ${dn}, Hochwasser vom ${fdate(parse(e.t_peak))}`;
-  $("#evinfo").innerHTML = `${esc(e.art)} · Modellsatz ${e.models === "alle" ? "aus 2004–2022 (Ereignis davor, unabhängig)" : "ohne den Block " + ["2004–07", "2008–11", "2012–15", "2016–18", "2019–22"][+e.models]} · ${VNAME[variantOf(e)]}` +
+  $("#evinfo").innerHTML = `${esc(e.art)} · Modellsatz ${e.models === "alle" ? "aus 2004–2022 (Ereignis davor, unabhängig)" : "ohne den Block " + ["2004–07", "2008–11", "2012–15", "2016–18", "2019–22"][+e.models]} · ${VNAME[variantOf(e)]}${e.regenquelle ? ` · Regen: ${esc(e.regenquelle)}` : ""}` +
     (e.wi_abgeschnitten && ["WI", "PZ"].includes(state.key) ? ` · <b>Wiersdorf bei 250 cm abgeschnitten</b>: Messung und Vorhersage dort unvollständig` : "") + (kw.Q.MQ ? ` · MQ ${qf(kw.Q.MQ)} m³/s` : "");
   drawKennzahlen();
   drawMain();
@@ -432,7 +432,7 @@ function drawMain() {
     (state.fan ? `<span><i class="thin" style="--col:var(--c-run)"></i>Vorhersagen alle ${state.fan / 4} h</span>` : "") + (f ? "" : `<span style="color:var(--th3)">Zu dieser Ausgabezeit fehlen Messwerte: keine Vorhersage</span>`);
   // Regen im Einzugsgebiet (flächengewichtet über die Gebiete der Kette), Stundensummen
   const el = $("#ch-r");
-  if (!e.rain) { el.innerHTML = `<p class="note">Für dieses Hochwasser gibt es keinen Stundenregen (vor 2004).</p>`; }
+  if (!e.rain) { el.innerHTML = `<p class="note">Für dieses Hochwasser gibt es keinen Stundenregen (vor 2001).</p>`; }
   else {
     const ks = FC.chain(key).filter(k => e.p[k]), at = ks.reduce((s, k) => s + D.area[k], 0), bars = [];
     let rmax = 1;
