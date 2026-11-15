@@ -4,7 +4,7 @@
 
 Ereignisse: jedes Hochwasser 1989-2022, bei dem ein Pegel 0,7 HQ2 erreicht (Mai bis September ab 2004: 0,4 HQ2, damit auch kleinere
 Starkregenhochwasser dabei sind); Scheitel im Abstand von weniger als 72 h bilden ein Ereignis. Fenster wie chain_fc.flood_windows: Abfluss aller
-acht Pegel ab Bezugsscheitel - 96 h bis + 60 h, Regen ab - 168 h. Modellsatz: ohne den Zeitblock des Ereignisses (kreuzvalidiert), vor 2004 der
+acht Pegel ab Bezugsscheitel - 96 h bis + 60 h, Regen ab - 168 h (2001-2003 aus dem Radar, siehe rain_fit.RADAR_FILL). Modellsatz: ohne den Zeitblock des Ereignisses (kreuzvalidiert), vor 2004 der
 Satz aus 2004-2022 (unabhängig, dort ohne Regen).
 
 Braucht die Pegeldaten der LfU-Pakete; die fertige Seite enthält die gemessenen Ganglinien der Ereignisse (Quelle: Landesamt für Umwelt
@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 import chain_fc as C
+import rain_fit as RF2
 import routing as R
 import routing_map as RM
 import uncert as UN
@@ -138,6 +139,8 @@ def windows() -> list[dict]:
             rec["rain_start"] = str(Q.index[ip - r0])
             rec["p"] = {k: [round(float(v), 3) for v in frames[k]["p"].to_numpy()[ip - r0:ip + b0 + 1]] for k in C.RAINK}
             rec["api0"] = {k: [float(frames[k]["api"].to_numpy()[ip - r0 - 1]), float(frames[k]["api_s"].to_numpy()[ip - r0 - 1])] for k in C.RAINK}
+            if tref < pd.Timestamp(RF2.RADAR_FILL_BIS):
+                rec["regenquelle"] = "Radar (RADKLIM), an die Stationen angeglichen"      # vor 2004 gibt es keinen Stundenregen der Stationen
             rec["art"] = "Starkregen" if any(rec["storm"][k][peaks[k]["i"]] == "1" for k in peaks) else "Winter / Dauerregen"
         else:
             rec["art"] = "ohne Regendaten"

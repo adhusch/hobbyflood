@@ -617,3 +617,21 @@ Prüfung (`niveau_check.py`, Median Vorhersage/Messung, Modellsatz ohne 2019–2
 | Alsdorf-Oberecken, gemessener Regen | 0,97 / 0,94 / 0,88–0,90 | 1,02 / 1,00 / 0,97 | 0,97 / 0,94 / 0,90 |
 
 Mit Faktor liegt die Vorhersage wieder dort, wo sie in den Bezugsjahren lag, und die Fehlerstatistik für Band und Warnung passt wieder. Grenzen: 2022 war trocken (Prümzurlay 529 Werte, Alsdorf-Oberecken 118, kaum Hochwasser); ob die neue Kurve bei großem Abfluss trägt, ist offen; der Faktor ist fest und wird noch nicht aus den Live-Daten nachgeführt.
+
+## Radarregen 2001–2003 für die Zeit vor den Stationsdaten (15.11.2026)
+
+RADKLIM (RW 2017.002) liegt jetzt von Januar 2001 bis Ende 2025 als Ausschnitt vor (`radar_crop_browser.js`; 2023–2025 nützen erst mit Pegeldaten dieser Jahre). Vor 2004 gibt es keinen Stundenregen der Stationen; `rain_fit.rain_frames` setzt dort das Radar-Gebietsmittel ein, angeglichen mit dem Verhältnis Station / Radar des Gebiets aus den gemeinsamen Stunden ab 2004 (Faktor 1,00 für Prüm 2 bis 1,13 für die Nims), Lücken bis 6 h linear gefüllt (`RADAR_FILL`, abschaltbar mit `PRUEM_RADAR_FILL=0`). Ab 2004 bleibt der Stationsregen unverändert; die Modelle sind nicht neu angepasst.
+
+Damit lassen sich neun Hochwasser 2001–2003 mit Regen nachrechnen, mit dem Modell aus 2004–2022, also unabhängig. Januar 2003, gemessener (Radar-)Regen als Vorhersage, Höchstwert der Kette im Verhältnis zum gemessenen Scheitel 24 / 12 / 6 h vorher (ohne Abgleich mit der Fehlerstatistik):
+
+| Pegel | ohne Regen | mit Regen |
+|---|---|---|
+| Prüm 2 | 0,24 / 0,29 / 0,58 | 0,86 / 0,79 / 0,76 |
+| Sinspelt | 0,22 / 0,45 / 0,61 | 0,82 / 0,86 / 0,82 |
+| Echtershausen | 0,26 / 0,35 / 0,54 | 0,99 / 0,73 / 0,55 |
+| Prümzurlay | 0,41 / 0,74 / 0,94 | 1,15 / 0,75 / 0,86 |
+| Giesdorf | 0,22 / 0,36 / 0,77 | 1,44 / 1,33 / 1,18 |
+| Seffern | 0,44 / 0,34 / 0,53 | 1,55 / 1,29 / 0,84 |
+| Alsdorf-Oberecken | 0,60 / 0,71 / 0,89 | 1,65 / 1,17 / 0,64 |
+
+An der Prüm und der Enz trifft die Kette das Hochwasser 2003 einen Tag vorher auf 15 bis 20 %; an der Nims liegt sie einen Tag vorher 45 bis 65 % zu hoch. Wiersdorf ist bei diesem Hochwasser bei 250 cm abgeschnitten und nicht bewertbar.

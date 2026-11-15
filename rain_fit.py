@@ -77,6 +77,8 @@ def load_stations(shift_h: float) -> dict[str, pd.Series]:
     return out
 
 
+RADAR_FILL = os.environ.get("PRUEM_RADAR_FILL", "1") != "0"     # vor 2004 (kein Stundenregen der Stationen) angeglichenes Radar als Gebietsregen
+RADAR_FILL_BIS = "2004-01-01"
 EXCESS_F = (4.0, 10.0, 20.0)                            # Schwellen des Starkregenanteils in mm/h (Spalten x4, x10, x20; aus radar.EXCESS_MM_H)
 XCOLS = ("xr",) + tuple(f"x{f:g}" for f in EXCESS_F)    # Radar-Zusatzgrößen je Gebiet: Gebietsmittel und Starkregenanteile (lateral "ml")
 RAIN_SOURCE = os.environ.get("PRUEM_RAIN", "station")   # Regenmenge p: "station" (Standard) oder "radar" (RADKLIM-Gebietsmittel, Lücken mit Stationsregen).
@@ -128,6 +130,19 @@ def rain_frames(Qindex: pd.DatetimeIndex, shift_h: float = 1.0, extra: dict | No
             h = r.where(r.notna(), hs)
             both = r.notna() | hs.notna()
             info[k]["radar_share"] = round(float(r.notna()[both].mean()), 4)
+        if radar is not None and source == "station" and RADAR_FILL:
+            # Vor Beginn der Stationsdaten (2004) das Radar-Gebietsmittel, angeglichen mit dem Verhältnis Station / Radar des Gebiets aus den gemeinsamen
+            # Stunden ab 2004 (das Radar liegt 7 bis 12 % tiefer); Lücken im Radar bis 6 h linear gefüllt, längere bleiben leer
+            r = radar[k]
+            cut = pd.Timestamp(RADAR_FILL_BIS)
+            hh = h[h.index >= cut]
+            rc = r.reindex(hh.index)
+            both = hh.notna() & rc.notna()
+            fac = float(hh[both].sum() / rc[both].sum())
+            idx = pd.date_range(r.index.min(), cut - pd.Timedelta(hours=1), freq="1h")
+            rr = r.reindex(idx).interpolate(limit=6, limit_area="inside") * fac
+            h = pd.concat([rr, hh])
+            info[k]["radar_vor_2004"] = dict(faktor=round(fac, 3), ab=str(idx[0]), fehlend=round(float(rr.isna().mean()), 4))
         frames[k] = RN.areal_frame(h, Qindex)
         if radar is not None and exc is not None:             # Radar-Zusatzgrößen; ohne Radar aus dem Stationsmittel (unterschätzt Schauerzellen)
             hr = pd.date_range(hst.index.min(), hst.index.max(), freq="1h")
