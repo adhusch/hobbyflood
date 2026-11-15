@@ -85,6 +85,15 @@ RAIN_SOURCE = os.environ.get("PRUEM_RAIN", "station")   # Regenmenge p: "station
 # Versuch 14.11.2026: Radar-Gebietsmittel statt Stationsregen war schlechter (7-12 % weniger Regen, HQ10-Scheitel 41 statt 56 %), siehe README.
 
 
+_MERGE = {}
+
+
+def _merge() -> pd.DataFrame:
+    if "df" not in _MERGE:
+        _MERGE["df"] = pd.read_csv(HERE / "data" / "radar" / "areal_merge.csv", index_col=0, parse_dates=True)
+    return _MERGE["df"]
+
+
 def radar_hourly() -> pd.DataFrame | None:
     p = HERE / "data" / "radar" / "areal_hourly.csv"
     return pd.read_csv(p, index_col=0, parse_dates=True) if p.exists() else None
@@ -130,6 +139,12 @@ def rain_frames(Qindex: pd.DatetimeIndex, shift_h: float = 1.0, extra: dict | No
             h = r.where(r.notna(), hs)
             both = r.notna() | hs.notna()
             info[k]["radar_share"] = round(float(r.notna()[both].mean()), 4)
+        if source == "merge":                                # Menge von den Stationen, Muster vom Radar (grid_rain.py); wo es fehlt, der Stationsregen
+            mg = _merge()[k]
+            idx = pd.date_range(min(h.index.min(), mg.index.min()), max(h.index.max(), mg.index.max()), freq="1h")
+            mg, hs = mg.reindex(idx), h.reindex(idx)
+            h = mg.where(mg.notna(), hs)
+            info[k]["merge_share"] = round(float(mg.notna()[mg.notna() | hs.notna()].mean()), 4)
         if radar is not None and source == "station" and RADAR_FILL:
             # Vor Beginn der Stationsdaten (2004) das Radar-Gebietsmittel, angeglichen mit dem Verhältnis Station / Radar des Gebiets aus den gemeinsamen
             # Stunden ab 2004 (das Radar liegt 7 bis 12 % tiefer); Lücken im Radar bis 6 h linear gefüllt, längere bleiben leer

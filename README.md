@@ -635,3 +635,19 @@ Damit lassen sich neun Hochwasser 2001–2003 mit Regen nachrechnen, mit dem Mod
 | Alsdorf-Oberecken | 0,60 / 0,71 / 0,89 | 1,65 / 1,17 / 0,64 |
 
 An der Prüm und der Enz trifft die Kette das Hochwasser 2003 einen Tag vorher auf 15 bis 20 %; an der Nims liegt sie einen Tag vorher 45 bis 65 % zu hoch. Wiersdorf ist bei diesem Hochwasser bei 250 cm abgeschnitten und nicht bewertbar.
+
+## Versuch: flächiger Regen auf dem Radarraster (15.11.2026, nicht übernommen)
+
+Bisher ist der Gebietsregen der abstandsgewichtete Stationswert am Gebietsmittelpunkt. `grid_rain.py` baut zwei Flächenmittel auf dem 1-km-Raster: (A) Stationen interpoliert mit Höhenabhängigkeit (rund 8 % mehr Regen je 100 m), (B) Menge von den Stationen, Muster vom Radar (je Stunde der Faktor Station / Radar an den Stationsorten, interpoliert, auf das Radarfeld angewendet).
+
+- **A** ist praktisch derselbe Regen wie bisher (Jahressummen +0 bis +6 %, stündliche Korrelation 0,97 bis 1,00, Ereignissummen der Starkregen-Hochwasser im Median +2 %); nicht weiterverfolgt.
+- **B** ordnet die 148 Starkregen-Hochwasser besser (Rangkorrelation Regensumme – abgeflossenes Volumen 0,69 statt 0,61, größte 3-h-Summe – Scheitel 0,30 statt 0,20). Mit B neu angepasst und kreuzvalidiert (`PRUEM_RAIN=merge`) wird die Kette aber nicht besser:
+
+| gemessener Regen als Vorhersage | Stationsregen (Betrieb) | Stationen + Radarmuster |
+|---|---|---|
+| HQ10-Scheitel 24 / 12 / 6 h vorher (Median) | 0,79 / 0,77 / 0,82 | 0,67 / 0,62 / 0,70 |
+| Starkregen-Hochwasser, Scheitel 24 / 12 / 6 h (Median über die Pegel) | 0,72 / 0,77 / 0,83 | 0,65 / 0,69 / 0,83 |
+| Starkregen-Hochwasser, NSE bei 12 h (Mittel über die Pegel) | 0,62 | 0,66 |
+| alle Hochwasser, Scheitel 12 h | 0,86 | 0,87 |
+
+Der Verlauf passt bei Starkregen etwas besser (NSE), die Scheitel liegen aber tiefer, am deutlichsten bei den HQ10-Hochwassern. Vermutlich unterschätzt das Radar gerade die stärksten Regen (Dämpfung), und das Muster trägt diese Unterschätzung in das kombinierte Feld. Der Betrieb bleibt beim Stationsregen.
