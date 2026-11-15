@@ -85,6 +85,7 @@ HOLD_TAU_H = float(__import__("os").environ.get("PRUEM_HOLD_TAU", "inf"))   # Ab
 LAT_TERMS = ("bfa",)                                        # Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, additiv)
 RAIN_EVENTS, RAIN_EVENT_MM = True, 25.0                     # Anpassung zusätzlich an Regenereignissen ohne Hochwasser (48-h-Gebietsregen ab 25 mm)
 BASE_CACHE = os.environ.get("PRUEM_BASE")                    # Grundmodelle aus einem früheren Lauf übernehmen (siehe base_models)
+LEVEL: dict[str, float] = {}                                # Niveaufaktor je Pegel auf die Simulation (leer = aus; der Live-Betrieb setzt ihn aus data/niveau.json)
 ML_NET = True                                               # lernender Abflussbeiwert (lateral "ml", ml_fit.py) nach der gemeinsamen Anpassung
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
 SAT_SPEC = dict(rs=(0.97, 0.0, 1.0), log_sev=(float(np.log(170.0)), float(np.log(10.0)), float(np.log(3000.0))), g_ev=(0.2, 0.0, 10.0),
@@ -450,6 +451,8 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             m = models[k][("route_full" if (variant in NORAIN or k == "WI") else "rain_full") + suffix]
             P = {k: rain_window(frames[k], t0, variant in FUTURE_RAIN)} if m.lat else None
             sim = m.route(X, P)
+        if k in LEVEL:                                         # Niveaufaktor (niveau.py): heutige Wasserstand-Abfluss-Beziehung des Pegels
+            sim = sim * LEVEL[k]
         err0 = obs[:, A] - sim[:, A]
         if C0_SHIFT:
             # Versuch (nicht übernommen): Liegt das Modell über der Messung, den Sockel c0 dauerhaft abziehen. Bei Niedrigwasser steigt die Vorhersage

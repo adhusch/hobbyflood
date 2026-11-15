@@ -92,11 +92,13 @@ def main() -> None:
                     if v not in C.NORAIN and not fl["rain"]:
                         continue
                     cases.append(dict(f=fl["id"], target=target, i=i, v=v))
+                    if fl is floods[-1] and target in ("PZ", "AL"):                 # dasselbe mit Niveaufaktor (niveau.py)
+                        cases.append(dict(f=fl["id"], target=target, i=i, v=v, nv={"PZ": 1.16, "AL": 0.76}))
     js = r"""
 const fs = require("fs"), FC = require(process.argv[1]);
 const M = JSON.parse(fs.readFileSync(process.argv[2])), FL = JSON.parse(fs.readFileSync(process.argv[3])), cases = JSON.parse(fs.readFileSync(0));
 FC.setConsts(M.consts);
-const out = cases.map(c => { const fl = FL.find(x => x.id === c.f), S = FC.forecast(M.sets[fl.models], fl, c.target, c.i, c.v);
+const out = cases.map(c => { const fl = FL.find(x => x.id === c.f); fl.niveau = c.nv || null; const S = FC.forecast(M.sets[fl.models], fl, c.target, c.i, c.v);
   return S ? Object.fromEntries(Object.entries(S).map(([k, a]) => [k, Array.from(a)])) : null; });
 process.stdout.write(JSON.stringify(out));
 """
@@ -107,7 +109,10 @@ process.stdout.write(JSON.stringify(out));
     worst, n = 0.0, 0
     for c, j in zip(cases, res):
         fl = next(x for x in floods if x["id"] == c["f"])
+        C.LEVEL.clear()
+        C.LEVEL.update(c.get("nv") or {})
         py = py_forecast(fl, sets[fl["models"]], c["target"], c["i"], c["v"])
+        C.LEVEL.clear()
         ok_py = all(np.isfinite(v[:C.A + 1]).all() for v in py.values())
         if j is None:
             assert not ok_py, ("JS ohne Ergebnis, Python mit", c)

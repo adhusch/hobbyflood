@@ -592,3 +592,28 @@ Je HQ10-Ereignis 24 h vorher: Vorwarnschwelle bei 10 von 13 überschritten, Warn
 **Nachbarschafts-Ensemble** (`live.py`). ICON-D2 zusätzlich an acht um 30 km versetzten Orten; die Seite zeigt die Spanne von Regen und Höchststand und in wie vielen Richtungen Vorwarnung oder Warnung erreicht würde. Nicht im Band und nicht in der Warnung. Der Abruf ist von der Entwicklungsumgebung aus nicht testbar; im Protokoll steht `Nachbarschaft: n von 8 Richtungen`.
 
 **Prüf-Seite** (`eval_view.py`, `eval_template.html` → `eval.html`). Vorhersagen an 76 Hochwassern 1989–2022 nachrechnen (40 mit Stundenregen): Ereignisliste mit Filter, je Pegel die Vorhersagen im Verlauf (Fächer), Kennzahlen (Scheitelhöhe 24/12/6 h vorher, Vorwarnzeit vor HW 10 oder Fehlalarm, Messung im 80-%-Band), Tabelle der Entwicklung je Ausgabezeit und eine Übersicht aller Ereignisse und Pegel. Gerechnet wird im Browser mit `forecast_core.js`, jeweils mit dem Modellsatz ohne den Zeitblock des Ereignisses. Die Seite braucht zum Bauen die LfU-Pakete und enthält gemessene Ganglinien; sie liegt deshalb nicht im Repository, sondern wird über den Ordner `seiten/` in den Container gegeben (siehe `seiten/README.md`).
+
+## Niveaufaktor für Prümzurlay und Alsdorf-Oberecken (15.11.2026)
+
+Die Abflussreihen beruhen auf der jeweils gültigen Beziehung zwischen Wasserstand und Abfluss. In Prümzurlay hat das Hochwasser vom Juli 2021 das Gerinne unterhalb des Pegels freigespült; seit Januar 2022 gilt eine neue Beziehung (HQ10 = 199 m³/s: bis 2021 bei 442 cm, heute bei 399 cm). Die Kennwerte HQ2 bis HQ100 der HVZ passen zur historischen Abflussreihe (Überschreitungen in 32 Jahren: 12 / 4 / 1 für HQ2 / HQ10 / HQ20, erwartet 16 / 3 / 2); alte Wasserstände mit der heutigen Kurve umzurechnen wäre falsch (dann käme in Prümzurlay das 1,7- bis 1,9-Fache der Oberlieger an). Die Prüf-Seite rechnet deshalb je Ereignis mit der damals gültigen Beziehung.
+
+Unabhängig davon zeigt Prümzurlay seit 2022 bei gleichem Zufluss aus Wiersdorf und Sinspelt 20 bis 30 % mehr Abfluss als in den Jahren davor; an der Nims gab es mehrere solche Wechsel. Die Kette ist fast nur an den Jahren bis 2021 angepasst. `niveau.py` misst das Verhältnis Messung / reine Simulation (gemessene Oberlieger, gemessener Regen, ohne Fehlerkorrektur, ab 1,5 MQ) je Jahr (`data/niveau_jahre.csv`):
+
+| | 2008–2018 | 2019 | 2020 | 2021 | 2022 |
+|---|---|---|---|---|---|
+| Prümzurlay | 0,95–1,04 | 0,93 | 0,95 | 0,93 | 1,16 |
+| Alsdorf-Oberecken | 0,99–1,24 | 1,38 | 1,17 | 0,79 | 0,72 |
+| Seffern | 0,95–1,20 | 1,02 | 1,23 | 1,30 | 1,43 |
+
+Der Betrieb multipliziert die Simulation des Pegels vor der Fehlerkorrektur mit einem Faktor (`data/niveau.json`, `chain_fc.LEVEL`, in `forecast_core.js` `fl.niveau`): Prümzurlay 1,16 (seit Januar 2022, Bereich ab 4 MQ), Alsdorf-Oberecken 0,76 (seit April 2022; Seffern lag von Juli 2021 bis März 2022 vorübergehend höher). Seffern bekommt keinen Faktor: seit April 2022 bei kleinem Abfluss 0,99, ab 4 MQ 1,31 aus einem einzigen Ereignis.
+
+Prüfung (`niveau_check.py`, Median Vorhersage/Messung, Modellsatz ohne 2019–2022):
+
+| Pegel, Variante | Bezugsjahre 2012–2018 | heute ohne Faktor | heute mit Faktor |
+|---|---|---|---|
+| Prümzurlay, ohne Regen, 6 / 12 / 24 h | 1,02–1,03 / 1,03–1,05 / 1,07–1,10 | 0,97 / 0,96 / 0,97 | 1,01 / 1,03 / 1,07 |
+| Prümzurlay, gemessener Regen | 1,00 / 0,98 / 0,92–0,94 | 0,96 / 0,92 / 0,85 | 0,99 / 0,96 / 0,90 |
+| Alsdorf-Oberecken, ohne Regen | 1,00–1,01 / 1,02–1,04 / 1,05–1,06 | 1,07 / 1,11 / 1,11 | 0,98 / 1,00 / 0,97 |
+| Alsdorf-Oberecken, gemessener Regen | 0,97 / 0,94 / 0,88–0,90 | 1,02 / 1,00 / 0,97 | 0,97 / 0,94 / 0,90 |
+
+Mit Faktor liegt die Vorhersage wieder dort, wo sie in den Bezugsjahren lag, und die Fehlerstatistik für Band und Warnung passt wieder. Grenzen: 2022 war trocken (Prümzurlay 529 Werte, Alsdorf-Oberecken 118, kaum Hochwasser); ob die neue Kurve bei großem Abfluss trägt, ist offen; der Faktor ist fest und wird noch nicht aus den Live-Daten nachgeführt.
