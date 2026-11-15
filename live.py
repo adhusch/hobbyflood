@@ -94,6 +94,7 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
 NB_KM = 30.0                                                     # Versatz der Nachbarschaftsläufe
 _D = 0.7071
 NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -1), "SW": (-_D, -_D), "W": (-1, 0), "NW": (-_D, _D)}   # (Ost, Nord)
+RUC_MAX_H = 30.0                                                 # längste glaubhafte Reichweite von ICON-D2-RUC ab jetzt (Läufe bis 27 h)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
 
 
@@ -493,7 +494,11 @@ def build(raw: Path, out_html: Path) -> dict:
                 ends.append(hours[use].max())
         if ends:
             ruc_end = round((min(ends) - t0) / pd.Timedelta(hours=1), 1)
-            p_ruc = {k: np.where(fut, np.nan_to_num(areal_fc(comb, k)), np.nan_to_num(p_obs[k])) for k in C.RAINK}
+            if ruc_end > RUC_MAX_H:                                # ICON-D2-RUC reicht höchstens gut einen Tag: sonst hat die Schnittstelle ein anderes Modell geliefert
+                print(f"   ICON-RUC verworfen: Daten reichen {ruc_end:.0f} h weit ({icon.get('ruc_modell')}), das ist nicht ICON-D2-RUC")
+                ruc_end = None
+            else:
+                p_ruc = {k: np.where(fut, np.nan_to_num(areal_fc(comb, k)), np.nan_to_num(p_obs[k])) for k in C.RAINK}
 
     # Nachbarschaft: ICON-D2 an versetzten Punkten, mit denselben Angleichfaktoren; nicht im Band und nicht in der Warnwahrscheinlichkeit
     p_nb = {}
@@ -568,6 +573,7 @@ def build(raw: Path, out_html: Path) -> dict:
             sr = C.forecast(models, target, Qn, build_frames(p_ruc, Qn), np.array([i0]), "kette_vorhersage")[target][0]
             hr = bool(UN.heavy_flags(sum(w_ * p_ruc[x] for w_, x in zip(*cw)), np.array([i0]))[1][0])
             cr = np.maximum((np.maximum(sr[A + 1:], 0) + d) * np.exp(_interp(T_v[target]["q"][st * UN.NSUB + lev_of(sr) + UN.NB * hr])[:, 5]) - d, 0)
+            cr = cr[:int(ruc_end * 4)]                             # die Linie endet, wo der RUC-Regen endet (danach käme nur noch ICON-D2)
             ruc = dict(q=[round(float(x), 3) for x in cr], w=wq(cr), ende_h=ruc_end, modell=icon.get("ruc_modell"),
                        regen_mm=round(float(sum(w_ * p_ruc[x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1),
                        regen_d2_mm=round(float(sum(w_ * p_runs["ICON-D2"][x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1))
