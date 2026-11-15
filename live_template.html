@@ -8,21 +8,21 @@
 :root{
   color-scheme:light;
   --page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--wash:rgba(11,11,11,.05);
-  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-scn:#b4530a;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
+  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-scn:#b4530a;--c-ruc:#0f8a72;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
   --th0:#52514e;--th1:#a68a00;--th2:#d26a0c;--th3:#c81e28;--th4:#8a2d87;--th5:#5b1a59;
 }
 @media (prefers-color-scheme: dark){
   :root:where(:not([data-theme="light"])){
     color-scheme:dark;
     --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
-    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-ruc:#46c7ac;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
     --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
-  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-ruc:#46c7ac;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
   --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
 }
 *{box-sizing:border-box}
@@ -287,8 +287,16 @@ function detail() {
   const m = r.max48, tmax = T0 + m.t_steps[1] * 900000;
   const t1 = `<div class="tile"><div class="k">Jetzt (${fdt(T0).slice(7)})</div><div class="v">${nf(Math.round(r.w0), 0)} <small>cm</small></div><div class="s">${trend} · ${qf(r.q0)} m³/s</div></div>`;
   const rising = m.q[1] > r.q0 * 1.05 && m.w[1] - r.w0 >= 5;
-  const t2 = `<div class="tile main"><div class="k">${rising ? "Scheitel erwartet" : "Höchststand in 48 h"}</div><div class="v">${fmt(cv(m.q[1]))}</div>` +
-    `<div class="s">80 %: <b>${fmt(cv(Math.max(m.q[0], r.q0)))} bis ${fmt(cv(m.q[2]))}</b>${rising ? `<br>um <b>${hmShort(tmax, T0)}</b>, 80 %: ${hmShort(T0 + m.t_steps[0] * 900000, T0)} bis ${hmShort(T0 + m.t_steps[2] * 900000, T0)}` : "<br>kein deutlicher Anstieg erwartet"}</div></div>`;
+  // Scheitel nur melden, wenn der Höchstwert nicht am Rand der 48 h liegt: sonst steigt es am Ende noch, der Scheitel kommt später
+  const HS = r.band_q[0].length, offen = rising && m.t_steps[1] >= HS - 8;
+  let spaeter = "";
+  if (offen) {
+    const a = D.ausblick && D.ausblick.pegel[k], v = a ? (cm ? a.w : a.q) : null, mx = v ? Math.max(...v) : null, im = v ? v.indexOf(mx) : -1;
+    spaeter = "<br><b>steigt am Ende der 48 h noch</b>, Scheitel erst danach" +
+      (v && im >= 0 && im < v.length - 3 ? `<br>7-Tage-Ausblick: Scheitel etwa ${fmt(mx)} am ${hmShort(T0 + (im + 1) * 3600000, T0)} (eine Rechnung, ohne Band)` : v ? "<br>auch im 7-Tage-Ausblick noch kein Scheitel" : "");
+  }
+  const t2 = `<div class="tile main"><div class="k">${rising && !offen ? "Scheitel erwartet" : "Höchststand in 48 h"}</div><div class="v">${fmt(cv(m.q[1]))}</div>` +
+    `<div class="s">80 %: <b>${fmt(cv(Math.max(m.q[0], r.q0)))} bis ${fmt(cv(m.q[2]))}</b>${offen ? spaeter : rising ? `<br>um <b>${hmShort(tmax, T0)}</b>, 80 %: ${hmShort(T0 + m.t_steps[0] * 900000, T0)} bis ${hmShort(T0 + m.t_steps[2] * 900000, T0)}` : "<br>kein deutlicher Anstieg erwartet"}</div></div>`;
   const wv = r.warn, wtime = wv.status === "über" ? "" : wv.ab50 ? `Warnung ab ${hmShort(T0 + wv.ab50 * 900000, T0)}` : wv.ab10 ? `Vorwarnung ab ${hmShort(T0 + wv.ab10 * 900000, T0)}` : "";
   const t3 = `<div class="tile"><div class="k">Warnung (ab ${wv.name}, ${nf(wv.w, 0)} cm)</div><div class="v" style="font-size:17px">${warnHead(r)}</div>` +
     `<div class="s">${warnLine(r)}${wv.status !== "über" ? `, noch ${nf(Math.max(0, wv.w - r.w0), 0)} cm` : ""}${wtime ? `<br>${wtime}` : ""}<br>Zur Einordnung: ${st.info}<br>Regen 48 h im Gebiet: ICON-D2 ${nf(r.rain_area.sum48.d2, 1)} mm, Ensemble ${nf(r.rain_area.sum48.eps[0], 1)}–${nf(r.rain_area.sum48.eps[2], 1)} mm</div></div>`;
@@ -311,6 +319,8 @@ function detail() {
   const d2 = cm ? r.runs_w["ICON-D2"] : r.runs_q["ICON-D2"];
   lines.push({ pts: [[0, y0], ...d2.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", dash: true });
   lines.push({ pts: ser(MED), col: "var(--c-full)" });
+  const ruc = r.ruc && state.ruc !== false ? r.ruc : null;
+  if (ruc) lines.push({ pts: [[0, y0], ...(cm ? ruc.w : ruc.q).map((x, l) => [(l + 1) / 4, x])], col: "var(--c-ruc)", dash: true });
   const scn = state.scn && state.scn.k === k ? state.scn : null;
   if (scn) lines.push({ pts: [[0, y0], ...(cm ? scn.w : scn.q).map((x, l) => [(l + 1) / 4, x])], col: "var(--c-scn)" });
   lines.push({ pts: obs, col: "var(--c-obs)" });
@@ -330,9 +340,11 @@ function detail() {
       if (l <= 0) { const j = r.obs_q.length - 1 + l; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cv(r.obs_q[j])) }); }
       else if (l <= H) { rows.push({ col: "var(--c-full)", name: "Median", val: fmt(cv(r.band_q[MED][l - 1])) }, { col: "var(--c-full)", name: "80 % der Fälle", val: `${cm ? nf(Math.round(cv(r.band_q[LO][l - 1])), 0) : qf(r.band_q[LO][l - 1])} bis ${fmt(cv(r.band_q[HI][l - 1]))}` }, { col: "var(--c-run)", name: "ICON-D2-Hauptlauf", val: fmt(cv(r.runs_q["ICON-D2"][l - 1])) });
         if (state.none) rows.push({ col: "var(--c-none)", name: "ohne Regenvorhersage", val: fmt(cv(r.band0_q[MED][l - 1])) });
+        if (ruc) rows.push({ col: "var(--c-ruc)", name: "mit ICON-RUC", val: fmt(cv(ruc.q[l - 1])) });
         if (scn) rows.push({ col: "var(--c-scn)", name: "Szenario", val: fmt(cv(scn.q[l - 1])) }); }
       return { t: fdt(T0 + l * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 290);
   $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="dash" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
+    (ruc ? `<span><i class="dash" style="--col:var(--c-ruc)"></i>mit ICON-RUC bis ${nf(ruc.ende_h, 0)} h (Regen dort ${nf(ruc.regen_mm, 1)} mm, ICON-D2 ${nf(ruc.regen_d2_mm, 1)} mm; ungeprüft, nicht im Band)</span>` : "") +
     (scn ? `<span><i style="--col:var(--c-scn)"></i>Szenario (${nf(scn.mm, 0)} mm)</span>` : "") +
     (state.runs ? `<span><i class="thin" style="--col:var(--c-run)"></i>Ensemble-Läufe</span>` : "") + (state.none ? `<span><i class="dash" style="--col:var(--c-none)"></i>ohne Regenvorhersage (wie bisher)</span>` : "") +
     (hvzOn && cm ? `<span><i class="dash" style="--col:var(--c-hvz)"></i>Vorhersage der HVZ (Median, 10–90 %), Stand ${fdt(parse(r.hvz.time))}</span>` : "");

@@ -56,6 +56,14 @@ def check_lateral_terms() -> None:
                        log_oref=float(np.log(0.4)), a_nl=0.8)
         py = L.response(L.Rain(p[None, :], api[None, :], lead, aps[None, :], np.array([0.7])), lt)[0]
         cases.append(dict(lt=lt.to_dict(), py=py.tolist()))
+    nets = [dict(W1=rng.normal(0, 0.4, (L.ML_NF, 16)).tolist(), b1=rng.normal(0, 0.2, 16).tolist(), W2=rng.normal(0, 0.3, (16, 16)).tolist(),
+                 b2=rng.normal(0, 0.2, 16).tolist(), W3=rng.normal(0, 0.6, (16, 2)).tolist(), b3=[0.4, -0.3]) for _ in range(2)]
+    for net in (nets[0], nets):                                         # lernender Abflussbeiwert: ein Netz und Mittel aus zwei Netzen
+        lt = L.Lateral("X", 87.0, 0.6, float(np.log(150.0)), float(np.log(2.5)), float(np.log(14.0)), ("bfa", "satx", "nlrx", "ml"), 0.45, float(np.log(12.0)),
+                       2.0, w_bf=120.0, log_kf=float(np.log(0.8)), rs=0.7, log_sev=float(np.log(60.0)), g_ev=1.3, lam=0.35,
+                       log_oref=float(np.log(0.4)), a_nl=0.8, net=net)
+        py = L.response(L.Rain(p[None, :], api[None, :], lead, aps[None, :], np.array([0.7])), lt)[0]
+        cases.append(dict(lt=lt.to_dict(), py=py.tolist()))
     js = r"""
 const M = require(process.argv[1]), cases = JSON.parse(require("fs").readFileSync(0)), p = JSON.parse(process.argv[2]);
 const r = { p: Float64Array.from(p.p), api: Float64Array.from(p.api), aps: Float64Array.from(p.aps), lead: p.lead, bf: 0.7 };

@@ -80,9 +80,17 @@ const FC = (() => {
       if (t >= lead) out[t - lead] = (add ? out[t - lead] : 0) + f * o2;
     }
   }
+  const sig = x => 1 / (1 + Math.exp(-x)), logit = x => { x = Math.min(Math.max(x, 1e-4), 1 - 1e-4); return Math.log(x / (1 - x)); };
+  function mlp(n, x) {                                    // 11 -> 16 -> 16 -> 2, tanh (Gewichte wie in Python: W[Eingang][Knoten])
+    const layer = (W, b, v, act) => b.map((bj, j) => { let s = bj; for (let i = 0; i < v.length; i++) s += v[i] * W[i][j]; return act ? Math.tanh(s) : s; });
+    return layer(n.W3, n.b3, layer(n.W2, n.b2, layer(n.W1, n.b1, x, true), true), false);
+  }
   function lateral(r, lt) {
     const T = r.p.length, terms = lt.terms || [], peff = new Float64Array(T), fast = terms.includes("fast"), sat = terms.includes("sat") || terms.includes("satx");
     const pf = fast || sat ? new Float64Array(T) : null;
+    const ml = terms.includes("ml") && lt.net ? (Array.isArray(lt.net) ? lt.net : [lt.net]) : null;
+    const c3 = Math.exp(-DT / 3), bfm = Math.min(Math.max(r.bf ?? 0, 0), 10);
+    let a3 = 0;
     // Sättigungsüberschuss (sat): Rückhalt Sv = sev * exp(-g_ev * B), Anteil rs * SCS-Steigung bei Pe = api_s
     const sv = sat ? Math.exp(lt.log_sev) * Math.exp(-lt.g_ev * Math.max(r.bf ?? 0, 0)) : 0;
     const S = Math.exp(lt.log_s), pc2 = Math.exp(2 * (lt.log_pc ?? Math.log(10)));
@@ -100,6 +108,16 @@ const FC = (() => {
         let qf = 0;
         if (fast) { const p2 = r.p[t] * r.p[t]; qf += (1 - phi) * lt.rho * p2 / (p2 + pc2); }
         if (sat) { const lam = lt.lam ?? 0.2, pe = r.aps[t], a = Math.max(pe - lam * sv, 0), den = pe + (1 - lam) * sv; qf += (1 - phi) * lt.rs * a * (pe + (2 - lam) * sv) / (den * den); }
+        if (ml) {            // lernender Abflussbeiwert (lateral.ml_fractions): Netz verschiebt langsamen und schnellen Anteil auf der Logit-Skala
+          a3 = a3 * c3 + r.p[t] * DT;
+          const p = r.p[t], q0 = qf / Math.max(1 - phi, 1e-6);
+          const x = [Math.log1p(r.api[t]) / 4, Math.log1p(r.aps[t]) / 4, Math.log1p(a3) / 3, Math.log1p(bfm), Math.log1p(p) / 3, Math.log1p(p) / 3,
+                     Math.log1p(Math.max(p - 4, 0)) / 2, Math.log1p(Math.max(p - 10, 0)) / 2, Math.log1p(Math.max(p - 20, 0)) / 2, phi, q0];
+          let d0 = 0, d1 = 0;
+          for (const n of ml) { const d = mlp(n, x); d0 += d[0] / ml.length; d1 += d[1] / ml.length; }
+          const s = sig(logit(phi) + d0);
+          qf = (1 - s) * sig(logit(q0) + d1); phi = s;
+        }
         pf[t] = qf * r.p[t];
       }
       peff[t] = phi * r.p[t];

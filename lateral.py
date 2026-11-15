@@ -183,19 +183,23 @@ def _quick_part(r: Rain, lat: Lateral, phi_a: np.ndarray) -> np.ndarray:
 
 
 ML_TAU3_H = 3.0
+ML_EXCESS_F = (4.0, 10.0, 20.0)      # Schwellen mm/h der Starkregenanteile (wie rain_fit.EXCESS_F)
 ML_NF = 11
 
 
 def ml_features(r: Rain, phi_a: np.ndarray, quick: np.ndarray, dt_h: float = DT_H) -> np.ndarray:
     """Eingänge des Netzes [E, T_ext, 11] (Skalierung fest, ml_fit.py rechnet dieselben in JAX)."""
-    if r.ex is None or r.api_s is None or r.bf is None:
-        raise ValueError("Erweiterung 'ml' braucht api_s, bf und ex im Regenfenster")
+    if r.api_s is None or r.bf is None:
+        raise ValueError("Erweiterung 'ml' braucht api_s und bf im Regenfenster")
     from scipy.signal import lfilter
     c = float(np.exp(-dt_h / ML_TAU3_H))
     a3 = lfilter([dt_h], [1.0, -c], r.rain, axis=1)
     bf = np.minimum(np.maximum(np.asarray(r.bf, float), 0.0), 10.0)[:, None] * np.ones_like(r.rain)
     q0 = quick / np.maximum(1.0 - phi_a, 1e-6)
-    ex = np.asarray(r.ex, float)
+    if r.ex is None:        # Betrieb ohne Radar (Standard): dieselben Größen aus dem Gebietsmittel der Stationen
+        ex = np.stack([r.rain] + [np.maximum(r.rain - f, 0.0) for f in ML_EXCESS_F], axis=-1)
+    else:
+        ex = np.asarray(r.ex, float)
     return np.stack([np.log1p(r.api) / 4.0, np.log1p(r.api_s) / 4.0, np.log1p(a3) / 3.0, np.log1p(bf), np.log1p(r.rain) / 3.0,
                      np.log1p(ex[..., 0]) / 3.0, np.log1p(ex[..., 1]) / 2.0, np.log1p(ex[..., 2]) / 2.0, np.log1p(ex[..., 3]) / 2.0, phi_a, q0], axis=-1)
 

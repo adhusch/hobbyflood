@@ -97,6 +97,10 @@ def clip_globals(th):
 
 
 # ------------------------------------------------------------------ Daten
+STORM_NET = True   # eigenes Netz für den Starkregensatz (an den Starkregenereignissen und dem Starkregen-Modellsatz angepasst)
+STORM_STEPS, STORM_LR = 150, 2e-3   # Feinanpassung des Starkregennetzes: Start beim Netz des Gesamtmodells
+STORM_ONLY = True  # Netz nur im Starkregensatz; Gesamtmodell und Wintersatz bleiben ohne Netz (Vergleich 15.11.2026: das Netz im Wintersatz ändert
+                   # die Winterhochwasser nicht, drückt aber Starkregenhochwasser vor dem Umschalten: Scheitel 12 h vorher 0,67 -> 0,56 der Messung)
 NORAD = False     # Gegenprobe: Radargrößen durch die Stationswerte ersetzen (wie im Betrieb ohne Radar)
 
 
@@ -125,16 +129,26 @@ def val_block(b: int | None) -> int:
     return 2 if b == 1 else 1
 
 
-def datasets(b: int | None, base: dict, wexp: float) -> tuple[list, list]:
+def datasets(b: int | None, base: dict, wexp: float, reg: str | None = None) -> tuple[list, list]:
+    """reg=None: alle Ereignisse am Gesamtmodell; reg="storm"/"winter": nur die Ereignisse dieser Lage am zugehörigen Modellsatz."""
     vb = val_block(b)
     tr, va = [], []
     for k in C.RAINK:
         d = C._training(k, b)
         m = base[k][C.rain_type(k)]
+        if reg:
+            st = C.is_storm(k, d.peaks)
+            sel = st if reg == "storm" else ~st
+            if sel.sum() < 4:                       # zu wenige Ereignisse: dieser Satz ist ohnehin das Gesamtmodell
+                continue
+            d = d.subset(sel)
+            m = base[k][f"{C.rain_type(k)}_{reg}"]
         yrs = pd.DatetimeIndex(d.times).year.to_numpy()
         isv = (yrs >= C.BLOCKS[vb][0]) & (yrs <= C.BLOCKS[vb][1])
-        tr.append(pack(d.subset(~isv), m, wexp))
-        va.append(pack(d.subset(isv), m, 0.0))
+        if (~isv).any():
+            tr.append(pack(d.subset(~isv), m, wexp))
+        if isv.any():
+            va.append(pack(d.subset(isv), m, 0.0))
     return tr, va
 
 
@@ -147,7 +161,7 @@ def init(seed: int, hidden: int, P: dict) -> dict:
                 a_nl=jnp.asarray(P["a_nl"]))
 
 
-def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden: int, lr: float, tag: str) -> tuple[list, dict, list]:
+def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden: int, lr: float, tag: str, start: list | None = None) -> tuple[list, dict, list]:
     """Rückgabe: Netze (je Startwert der beste Stand auf dem Abbruch-Block), gemittelte Speichergrößen, Protokoll."""
     grad = jax.jit(jax.value_and_grad(lambda th: loss(th, tr, wd)))       # Daten als Konstanten (lead muss fest sein)
     val_tr = jax.jit(lambda th: sse(th, tr))
@@ -156,6 +170,8 @@ def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden
     nets, glob, log = [], [], []
     for sd in range(seeds):
         th = init(sd, hidden, P)
+        if start is not None:                    # Feinanpassung: vom fertigen Netz des Gesamtmodells aus (start = dessen Netze je Startwert)
+            th = dict(th, net={k: jnp.asarray(v) for k, v in start[sd % len(start)].items()})
         st = opt.init(th)
         v0 = float(val(th)); t0 = float(val_tr(th))
         best = (v0, th, 0)
@@ -177,14 +193,17 @@ def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden
     return nets, dict(log_kf=float(g[0]), log_oref=float(g[1]), a_nl=float(g[2])), log
 
 
-def apply(base: dict, nets: list, G: dict, b: int | None) -> dict:
-    """Modelle mit Netz in jedem Zwischengebiet, Fehlerkorrektur neu (wie extreme_fit.full_job)."""
+def apply(base: dict, nets: list, G: dict, b: int | None, storm: tuple | None = None) -> dict:
+    """Modelle mit Netz in jedem Zwischengebiet, Fehlerkorrektur neu (wie extreme_fit.full_job).
+    storm=(Netze, Speichergrößen): eigenes Netz für den Starkregensatz; sonst bekommt jeder Satz das Netz des Gesamtmodells."""
     models = {}
+    nets_all, G_all = nets, G
     for k, ms in base.items():
         models[k] = {}
         for v, m in ms.items():
             m2 = R.Model.from_dict(m.to_dict()); m2.beta = np.array(m.beta, float)
-            if m2.lat:
+            nets, G = storm if (storm and v.endswith("_storm")) else (nets_all, G_all)
+            if m2.lat and not (STORM_ONLY and not v.endswith("_storm")):
                 out = []
                 for lt in m2.lat:
                     lt2 = lt.with_terms(tuple(t for t in lt.terms if t != "ml") + ("ml",))
@@ -197,10 +216,24 @@ def apply(base: dict, nets: list, G: dict, b: int | None) -> dict:
         d = C._training(k, b)
         mt = C.rain_type(k)
         st = C.is_storm(k, d.peaks)
-        models[k][mt].beta = C.error_beta(models[k][mt], d)
-        for reg, sel in (("winter", ~st), ("storm", st)):
+        if not STORM_ONLY:
+            models[k][mt].beta = C.error_beta(models[k][mt], d)
+        for reg, sel in (("winter", ~st), ("storm", st))[1 if STORM_ONLY else 0:]:
             models[k][f"{mt}_{reg}"].beta = C.error_beta(models[k][f"{mt}_{reg}"], d.subset(sel)) if sel.sum() >= 4 else models[k][mt].beta
     return models
+
+
+def fit_models(base: dict, P: dict, b: int | None, tag: str, seeds: int = 2, steps: int = 300, wd: float = 1e-4, hidden: int = 16, lr: float = 5e-3,
+               wexp: float = 0.0) -> tuple[dict, dict]:
+    """Aufruf aus chain_fc.block_job: Netz zu den Grundmodellen eines Satzes anpassen. Einstellung wie im Versuch ml1 (14.11.2026)."""
+    tr, va = datasets(b, base, wexp)
+    nets, G, log = train(tr, va, P, seeds, steps, wd, hidden, lr, tag)
+    storm, info_s = None, None
+    if STORM_NET:
+        trs, vas = datasets(b, base, wexp, "storm")
+        ns, Gs, logs = train(trs, vas, G, seeds, STORM_STEPS, wd, hidden, STORM_LR, tag + " Starkregen", start=nets)
+        storm, info_s = (ns, Gs), dict(shared=Gs, log=logs)
+    return apply(base, nets, G, b, storm), dict(shared=G, log=log, seeds=seeds, steps=steps, wd=wd, hidden=hidden, storm=info_s)
 
 
 def fit_block(b: int | None, a) -> tuple[dict, dict]:
