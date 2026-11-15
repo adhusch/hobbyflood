@@ -528,3 +528,31 @@ im Median 2 h zu spät. Abklingzeiten bis 24 h sind gleich gut wie „aus“, ei
 
 Unsicherheitstabellen und Warnstatistik für `kette_vorhersage` sind neu gerechnet (`uncert.py archive --variants kette_vorhersage`, dann `tables`).
 Die Warnungen bei den 13 HQ10-Hochwassern sind praktisch gleich geblieben; Phasen ohne Hochwasser: Vorwarnung 41 statt 46, Warnung 3 statt 2.
+
+## Neuronales Netz im Starkregen-Modellsatz, ICON-RUC, Scheitel-Kachel (15.11.2026)
+
+**Netz.** `ml_fit.py` passt ein kleines Netz (11 Eingänge, 2 × 16 Knoten, gemeinsam für alle Gebiete) an, das im Regen-Abfluss-Teil den Abflussbeiwert und den schnellen Anteil verschiebt. Eingänge sind Vorfeuchte, Basisabfluss, Regen und Regen über 4, 10 und 20 mm/h, alles aus dem Stationsregen. Radar (RADKLIM, `radar.py`) wurde geprüft und bringt als Eingang keinen Gewinn; der Betrieb braucht kein Radar. Das Netz beginnt beim bisherigen Modell (letzte Schicht null) und wird am besten Stand auf einem zurückgehaltenen Zeitblock gestoppt.
+
+Vier Stände wurden kreuzvalidiert verglichen (Scheitel Vorhersage/Messung im Median, gemessener Regen als Vorhersage):
+
+| Stand | HQ10-Hochwasser (13), 24 / 12 / 6 h vorher | Starkregen-Hochwasser (148), 24 / 12 / 6 h | übrige Hochwasser (1022), 12 h | Regen ohne Hochwasser (319): mehr als 1,5-fach überschätzt |
+|---|---|---|---|---|
+| ohne Netz | 0,57 / 0,56 / 0,58 | 0,65 / 0,67 / 0,71 | 0,88 | 15 % |
+| Netz in allen Modellsätzen | 0,65 / 0,73 / 0,74 | 0,48 / 0,53 / 0,62 | 0,88 | 12 % |
+| Netz von null nur an Starkregen-Hochwassern trainiert | wie ohne Netz | 0,52 / 0,55 / 0,67 (mit Netz im Wintersatz) | 0,88 | |
+| **eigenes Starkregen-Netz (übernommen)** | 0,60 / 0,66 / 0,70 | 0,65 / 0,66 / 0,70 | 0,88 | 15 % |
+
+Übernommen ist: Gesamtmodell und Wintersatz ohne Netz; der Starkregensatz bekommt ein eigenes Netz, das vom Netz des Gesamtmodells startet und nur an den Starkregen-Hochwassern auf dem Starkregensatz nachtrainiert wird (150 Schritte; der Fehler auf dem zurückgehaltenen Block fiel am Ende noch, länger wurde nicht getestet). Gründe:
+
+- Das Netz im Wintersatz ändert die Winterhochwasser nicht, drückt aber Starkregen-Hochwasser, solange die Kette noch nicht umgeschaltet hat (sie schaltet erst, wenn der starke Regen gefallen ist).
+- Früher umschalten (schon bei vorhergesagtem Starkregen) ist schlechter, auch ohne Netz (12 h vorher 0,59 statt 0,67).
+- Die Starkregen-Hochwasser allein reichen nicht, um ein Netz von null zu trainieren.
+- Was entfällt: die geringere Überschätzung bei Regen ohne Hochwasser. Die gab es nur mit Netz im Wintersatz.
+
+Einzelne Pegel bei den Starkregen-Hochwassern, 12 h vorher: Sinspelt 0,83 (ohne Netz 0,91, 11 Ereignisse), Wiersdorf 0,83 (0,87), alle anderen innerhalb 0,01. Warnstatistik und Band sind neu gerechnet und praktisch unverändert (HQ10-Ereignisse mit perfektem Regen: Vorwarnzeiten gleich bis auf Prümzurlay 06/2018, 0 statt 1 h).
+
+Die Rechnung im Browser (`forecast_core.js`) kennt das Netz; `test_forecast_js.py` vergleicht sie mit Python. Im Betrieb wird kein JAX gebraucht, nur für die Anpassung (`requirements-train.txt`). `PRUEM_BASE=<chain_models.json ohne Netz> python chain_fc.py run` übernimmt die Grundmodelle eines früheren Laufs und rechnet nur das Netz neu.
+
+**ICON-RUC.** `live.py` holt zusätzlich ICON-D2-RUC (stündliche Läufe, kurze Reichweite) und zeichnet eine eigene gestrichelte Linie: RUC-Regen, soweit er reicht, danach ICON-D2. Die Linie geht nicht ins Band und nicht in die Warnwahrscheinlichkeit ein, der Regen bleibt ohne Angleichfaktor, weil es dafür noch keine Prüfung gibt. Der Abrufname bei Open-Meteo ist ungeprüft; `live.py` probiert drei Namen und schreibt ins Protokoll, welcher geklappt hat (`ICON-RUC: …`). Klappt keiner, fehlt nur diese Linie.
+
+**Scheitel-Kachel.** Die Kachel „Scheitel erwartet“ nannte den höchsten Wert der 48 h auch dann Scheitel, wenn er am Ende des Zeitraums lag, die Vorhersage dort also noch stieg. Jetzt heißt sie in diesem Fall „Höchststand in 48 h“ mit dem Hinweis, dass der Scheitel erst danach kommt, und nennt den Scheitel aus dem 7-Tage-Ausblick, wenn dort einer liegt.

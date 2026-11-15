@@ -90,6 +90,9 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
     }
 
 
+RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
+
+
 def fetch() -> Path:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%MZ")
     out = HERE / "data" / "live" / f"raw_{stamp}"
@@ -116,6 +119,18 @@ def fetch() -> Path:
             if k not in ("icon_eu", "icon_global"):               # ohne ICON-EU / global entfällt nur der Ausblick
                 raise
             print("  ", e)
+    # ICON-D2-RUC (stündlich neu, kurze Reichweite): Kennung bei Open-Meteo nicht dokumentiert, daher mehrere Möglichkeiten; fehlt es, entfällt nur die Linie
+    lat, lon = ",".join(f"{v:.4f}" for v in st.lat), ",".join(f"{v:.4f}" for v in st.lon)
+    for mid, ep in [(m, e) for m in RUC_MODELS for e in ("forecast", "dwd-icon")]:
+        try:
+            j = json.loads(_get(f"https://api.open-meteo.com/v1/{ep}?latitude={lat}&longitude={lon}&hourly=precipitation&models={mid}"
+                                f"&past_days=0&forecast_days=2&timezone=GMT"))
+        except RuntimeError:
+            continue
+        if isinstance(j, list) and len(j) == len(st) and any(v is not None for v in j[0].get("hourly", {}).get("precipitation", [])):
+            data["icon_ruc"], data["icon_ruc_modell"] = j, f"{mid} ({ep})"
+            break
+    print("   ICON-RUC:", data.get("icon_ruc_modell", "nicht verfügbar"))
     (out / "icon.json").write_text(json.dumps(dict(abgerufen_utc=now, stationen=st[["id", "lat", "lon"]].values.tolist(), data=data)), encoding="utf-8")
     (out / "abruf.json").write_text(json.dumps(dict(dwd=now, hvz=now, icon=now), indent=1), encoding="utf-8")
     print("Rohdaten in", out)
@@ -198,7 +213,7 @@ def read_icon(raw: Path) -> dict:
         keys = ["precipitation"] + sorted(k for k in h if k.startswith("precipitation_member"))
         eps[sid] = pd.DataFrame({k: pd.to_numeric(pd.Series(h[k]), errors="coerce").to_numpy() for k in keys}, index=idx)
     longer = {}
-    for key in ("icon_eu", "icon_global"):                        # stündlich, Stempel = Ende der Stunde wie beim Ensemble
+    for key in ("icon_eu", "icon_global", "icon_ruc"):                        # stündlich, Stempel = Ende der Stunde wie beim Ensemble
         if key in j["data"]:
             longer[key] = {}
             for sid, loc in zip(ids, j["data"][key]):
@@ -214,7 +229,8 @@ def read_icon(raw: Path) -> dict:
     last = e0["precipitation"].dropna().index.max()
     meta["eps_end"] = str(last)
     meta["d2_end"] = str(next(iter(d2.values())).dropna().index.max())
-    return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"))
+    return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"),
+                ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"))
 
 
 # ------------------------------------------------------------------ Aufbau
@@ -432,6 +448,20 @@ def build(raw: Path, out_html: Path) -> dict:
     for name, pr in runs.items():
         p_runs[name] = {k: np.where(fut, np.nan_to_num(pr[k]), np.nan_to_num(p_obs[k])) for k in C.RAINK}
     p_none = {k: np.where(fut, 0.0, np.nan_to_num(p_obs[k])) for k in C.RAINK}
+    # ICON-RUC als zusätzlicher Lauf (nicht im Band und nicht in der Warnwahrscheinlichkeit): RUC-Regen, soweit er reicht, danach ICON-D2;
+    # ohne Angleichfaktor, weil es für RUC keine Prüfung gegen die Stationen gibt
+    p_ruc, ruc_end = None, None
+    if icon.get("ruc"):
+        comb, ends = {}, []
+        for sid in d2h:
+            x = icon["ruc"][sid].reindex(hours)
+            use = x.notna() & (hours > tH)
+            comb[sid] = pd.Series(np.where(use, x, d2h[sid].reindex(hours)), index=hours)
+            if use.any():
+                ends.append(hours[use].max())
+        if ends:
+            ruc_end = round((min(ends) - t0) / pd.Timedelta(hours=1), 1)
+            p_ruc = {k: np.where(fut, np.nan_to_num(areal_fc(comb, k)), np.nan_to_num(p_obs[k])) for k in C.RAINK}
 
     # Zustand: Starkregen-Einteilung und Monat für chain_fc.is_storm
     C._S.update(pm=C.storm_index({k: dict(p=p_none[k]) for k in C.RAINK}, info), month=grid.month.to_numpy())
@@ -495,8 +525,16 @@ def build(raw: Path, out_html: Path) -> dict:
         obs_hist = Qn[dn][hist0:i0 + 1]
         mx_q = wquant(mx, w, [0.1, 0.5, 0.9])
         mx_t = wquant(am.astype(float), w, [0.1, 0.5, 0.9])
+        ruc = None
+        if p_ruc is not None:
+            sr = C.forecast(models, target, Qn, build_frames(p_ruc, Qn), np.array([i0]), "kette_vorhersage")[target][0]
+            hr = bool(UN.heavy_flags(sum(w_ * p_ruc[x] for w_, x in zip(*cw)), np.array([i0]))[1][0])
+            cr = np.maximum((np.maximum(sr[A + 1:], 0) + d) * np.exp(_interp(T_v[target]["q"][st * UN.NSUB + lev_of(sr) + UN.NB * hr])[:, 5]) - d, 0)
+            ruc = dict(q=[round(float(x), 3) for x in cr], w=wq(cr), ende_h=ruc_end, modell=icon.get("ruc_modell"),
+                       regen_mm=round(float(sum(w_ * p_ruc[x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1),
+                       regen_d2_mm=round(float(sum(w_ * p_runs["ICON-D2"][x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1))
         res[target] = dict(
-            dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
+            ruc=ruc, dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
             obs_q=[None if not np.isfinite(x) else round(float(x), 3) for x in obs_hist], obs_w=[None if not np.isfinite(x) else v for x, v in zip(obs_hist, wq(np.nan_to_num(obs_hist)))],
             band_q=[[round(float(x), 3) for x in band[:, j]] for j in range(band.shape[1])], band_w=[wq(band[:, j]) for j in range(band.shape[1])],
             band0_q=[[round(float(x), 3) for x in band0[:, j]] for j in range(band0.shape[1])], band0_w=[wq(band0[:, j]) for j in range(band0.shape[1])],

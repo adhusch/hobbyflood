@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -83,6 +84,8 @@ HOLD_RULE = True                                            # kein Scheitel am U
 HOLD_TAU_H = float(__import__("os").environ.get("PRUEM_HOLD_TAU", "inf"))   # Abklingzeit der Scheitel-Regel in h (inf: Vorhersage bleibt auf dem Höchstwert stehen)
 LAT_TERMS = ("bfa",)                                        # Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, additiv)
 RAIN_EVENTS, RAIN_EVENT_MM = True, 25.0                     # Anpassung zusätzlich an Regenereignissen ohne Hochwasser (48-h-Gebietsregen ab 25 mm)
+BASE_CACHE = os.environ.get("PRUEM_BASE")                    # Grundmodelle aus einem früheren Lauf übernehmen (siehe base_models)
+ML_NET = True                                               # lernender Abflussbeiwert (lateral "ml", ml_fit.py) nach der gemeinsamen Anpassung
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
 SAT_SPEC = dict(rs=(0.97, 0.0, 1.0), log_sev=(float(np.log(170.0)), float(np.log(10.0)), float(np.log(3000.0))), g_ev=(0.2, 0.0, 10.0),
                 log_kf=(float(np.log(2.5)), float(np.log(0.25)), float(np.log(12.0))),
@@ -512,15 +515,31 @@ def evaluate(models: dict, target: str, events: np.ndarray, variants, Qn: dict, 
     return dict(acc=acc, acc_storm=acc_st, storm=labels, peaks={v: np.stack(x) for v, x in peaks.items()} if events.size else {})
 
 
-def block_job(b: int) -> dict:
-    t = time.time()
+def base_models(b: int | None) -> tuple[dict, dict | None]:
+    """Grundmodelle eines Satzes (ohne Netz) und gemeinsame Sättigungsgrößen. Mit PRUEM_BASE=<chain_models.json eines früheren Laufs ohne Netz>
+    werden sie von dort übernommen statt neu angepasst (die Anpassung ist deterministisch; spart etwa 40 min, wenn nur das Netz neu gerechnet wird)."""
+    if BASE_CACHE:
+        doc = json.loads(Path(BASE_CACHE).read_text(encoding="utf-8"))
+        key = "alle" if b is None else str(b)
+        assert not any("ml" in lt["terms"] for ms in doc["sets"][key].values() for m in ms.values() for lt in m.get("lat") or []), "PRUEM_BASE enthält schon ein Netz"
+        return from_json(doc["sets"][key]), doc["sat"][key]
     models = fit_set(b)
     sat = None
     if REGIONAL_SAT:
         models, sat = fit_regional_sat(models, b)
+    return models, sat
+
+
+def block_job(b: int) -> dict:
+    t = time.time()
+    models, sat = base_models(b)
+    ml = None
+    if ML_NET and sat:
+        import ml_fit
+        models, ml = ml_fit.fit_models(models, sat, b, f"Block {BLOCKS[b][0]}-{BLOCKS[b][1]}")
     Q, frames = _S["Q"], _S["frames"]
     Qn = {c: Q[c].to_numpy() for c in Q.columns}
-    out = dict(block=b, models=to_json(models), eval={}, sat=sat)
+    out = dict(block=b, models=to_json(models), eval={}, sat=sat, ml=ml)
     for target in ORDER:
         ev = events_for(target, Q, frames, BLOCKS[b], need_rain=True, W=_S["W"])
         out["eval"][target] = dict(events=[str(Q.index[p])[:16] for p in ev], **evaluate(models, target, ev, VARIANTS, Qn, frames))
@@ -531,13 +550,14 @@ def block_job(b: int) -> dict:
 def global_job(_: int) -> dict:
     """Modelle aus allen Ereignissen 2004-2022; damit die großen Hochwasser vor 2004 (ohne Regen) als unabhängige Prüfung."""
     t = time.time()
-    models = fit_set(None)
-    sat = None
-    if REGIONAL_SAT:
-        models, sat = fit_regional_sat(models, None)
+    models, sat = base_models(None)
+    ml = None
+    if ML_NET and sat:
+        import ml_fit
+        models, ml = ml_fit.fit_models(models, sat, None, "alle")
     Q, frames = _S["Q"], _S["frames"]
     Qn = {c: Q[c].to_numpy() for c in Q.columns}
-    out = dict(block=None, models=to_json(models), eval={}, sat=sat)
+    out = dict(block=None, models=to_json(models), eval={}, sat=sat, ml=ml)
     for target in ORDER:
         ev = events_for(target, Q, frames, (1989, 2003), need_rain=False, W=_S["W"])
         out["eval"][target] = dict(events=[str(Q.index[p])[:16] for p in ev], **evaluate(models, target, ev, NORAIN, Qn, frames))
@@ -636,7 +656,8 @@ def run(jobs: int) -> None:
     sets = {str(r["block"]): r["models"] for r in blocks}
     sets["alle"] = glob["models"]
     sat = {str(r["block"]) if r["block"] is not None else "alle": r.get("sat") for r in res}
-    (HERE / "data" / "chain_models.json").write_text(json.dumps(dict(sets=sets, events=ev, sat=sat, hw={k: dict(**v, area_km2=info[k]["area_km2"],
+    mlinfo = {str(r["block"]) if r["block"] is not None else "alle": r.get("ml") for r in res}
+    (HERE / "data" / "chain_models.json").write_text(json.dumps(dict(sets=sets, events=ev, sat=sat, ml=mlinfo, hw={k: dict(**v, area_km2=info[k]["area_km2"],
                                                                                                         weights=info[k]["weights"]) for k, v in HW.items()},
                                                                        consts=dict(A_H=A_H, H_H=H_H, LEAD_H=LEAD_H, WET={k: [WET_REF[k], v] for k, v in wet_mq().items()},
                                                                                    TAU_API_H=RN.TAU_API_H, TAU_API_S_H=RN.TAU_API_S_H,
@@ -657,4 +678,5 @@ if __name__ == "__main__":
     ap.add_argument("cmd", choices=["run"])
     ap.add_argument("--jobs", type=int, default=2)
     a = ap.parse_args()
-    run(a.jobs)
+    import chain_fc                                   # über das Modul starten: ml_fit importiert chain_fc und braucht denselben Zustand (_S)
+    chain_fc.run(a.jobs)
