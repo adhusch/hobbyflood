@@ -344,11 +344,11 @@ function detail() {
       if (l <= 0) { const j = r.obs_q.length - 1 + l; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cv(r.obs_q[j])) }); }
       else if (l <= H) { rows.push({ col: "var(--c-full)", name: "Median", val: fmt(cv(r.band_q[MED][l - 1])) }, { col: "var(--c-full)", name: "80 % der Fälle", val: `${cm ? nf(Math.round(cv(r.band_q[LO][l - 1])), 0) : qf(r.band_q[LO][l - 1])} bis ${fmt(cv(r.band_q[HI][l - 1]))}` }, { col: "var(--c-run)", name: "ICON-D2-Hauptlauf", val: fmt(cv(r.runs_q["ICON-D2"][l - 1])) });
         if (state.none) rows.push({ col: "var(--c-none)", name: "ohne Regenvorhersage", val: fmt(cv(r.band0_q[MED][l - 1])) });
-        if (ruc) rows.push({ col: "var(--c-ruc)", name: "mit ICON-RUC", val: fmt(cv(ruc.q[l - 1])) });
+        if (ruc && ruc.q[l - 1] != null) rows.push({ col: "var(--c-ruc)", name: "mit ICON-RUC", val: fmt(cv(ruc.q[l - 1])) });
         if (scn) rows.push({ col: "var(--c-scn)", name: "Szenario", val: fmt(cv(scn.q[l - 1])) }); }
       return { t: fdt(T0 + l * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 290);
   $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="dash" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
-    (ruc ? `<span><i class="dash" style="--col:var(--c-ruc)"></i>mit ICON-RUC bis ${nf(ruc.ende_h, 0)} h (Regen dort ${nf(ruc.regen_mm, 1)} mm, ICON-D2 ${nf(ruc.regen_d2_mm, 1)} mm; ungeprüft, nicht im Band)</span>` : "") +
+    (ruc ? `<span><i class="dash" style="--col:var(--c-ruc)"></i>mit ICON-RUC, reicht ${nf(ruc.ende_h, 0)} h weit (Regen bis dahin ${nf(ruc.regen_mm, 1)} mm, ICON-D2 ${nf(ruc.regen_d2_mm, 1)} mm; ungeprüft, nicht im Band)</span>` : "") +
     (scn ? `<span><i style="--col:var(--c-scn)"></i>Szenario (${nf(scn.mm, 0)} mm)</span>` : "") +
     (state.runs ? `<span><i class="thin" style="--col:var(--c-run)"></i>Ensemble-Läufe</span>` : "") + (state.none ? `<span><i class="dash" style="--col:var(--c-none)"></i>ohne Regenvorhersage (wie bisher)</span>` : "") +
     (hvzOn && cm ? `<span><i class="dash" style="--col:var(--c-hvz)"></i>Vorhersage der HVZ (Median, 10–90 %), Stand ${fdt(parse(r.hvz.time))}</span>` : "");
