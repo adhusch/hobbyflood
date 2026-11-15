@@ -556,3 +556,39 @@ Die Rechnung im Browser (`forecast_core.js`) kennt das Netz; `test_forecast_js.p
 **ICON-RUC.** `live.py` holt zusätzlich ICON-D2-RUC (stündliche Läufe, kurze Reichweite) und zeichnet eine eigene gestrichelte Linie: RUC-Regen, soweit er reicht, danach ICON-D2. Die Linie geht nicht ins Band und nicht in die Warnwahrscheinlichkeit ein, der Regen bleibt ohne Angleichfaktor, weil es dafür noch keine Prüfung gibt. Der Abrufname bei Open-Meteo ist ungeprüft; `live.py` probiert drei Namen und schreibt ins Protokoll, welcher geklappt hat (`ICON-RUC: …`). Klappt keiner, fehlt nur diese Linie.
 
 **Scheitel-Kachel.** Die Kachel „Scheitel erwartet“ nannte den höchsten Wert der 48 h auch dann Scheitel, wenn er am Ende des Zeitraums lag, die Vorhersage dort also noch stieg. Jetzt heißt sie in diesem Fall „Höchststand in 48 h“ mit dem Hinweis, dass der Scheitel erst danach kommt, und nennt den Scheitel aus dem 7-Tage-Ausblick, wenn dort einer liegt.
+
+## Starkregen: Fehlerzerlegung, Scheitelfehler in der Anpassung, Regenschwellen, Nachbarschaft, Prüf-Seite (15.11.2026)
+
+**Fehlerzerlegung** (`storm_diag.py`, `data/storm_diag.csv`): 148 Starkregen-Hochwasser, kreuzvalidiert, gemessener Regen als Vorhersage, Ausgabe 24 h vor dem Scheitel.
+
+- Das Volumen stimmt ungefähr (Median 0,80 der Messung), der Scheitel nicht (0,65), und er kommt im Median 3 h zu spät: Die Kette reagiert bei Starkregen zu langsam und zu flach.
+- Am klarsten an den Oberläufen und bei trockenem Boden: Giesdorf Volumen 0,94, Scheitel 0,48; bei niedrigem Ausgangsabfluss (35 Ereignisse) Volumen 0,92, Scheitel 0,37.
+- Im größten Viertel je Pegel (39 Ereignisse) fehlt zusätzlich Volumen: gemessen flossen 33 % des Regens ab, im Modell 18 %.
+- Der Regen ist selten das Problem: Radar (RADKLIM) liegt im Median bei 0,83 des Stationsregens, das Verhältnis erklärt die Fehler kaum. Nur bei 6 Ereignissen zeigt das Radar deutlich mehr als die Stationen (dort Scheitel 0,44).
+
+**Scheitelfehler in der Anpassung des Starkregensatzes** (`ml_fit.py`: `peak_err`, `STORM_PEAK_W = 0.2`, `STORM_FAST`). Die Abweichung je Zeitschritt bestraft eine steile Welle doppelt, sobald sie eine Stunde daneben liegt, und zieht die Anpassung zu flachen, späten Wellen. Beim Nachtraining des Starkregen-Netzes zählt deshalb zusätzlich der Fehler des Höchstwerts je Fenster; die Speicherzeit des schnellen Wegs ist je Gebiet frei (bis 15 min).
+
+| Stand | HQ10 (13), 24 / 12 / 6 h vorher | Starkregen-Hochwasser (148) | übrige (1022), 12 h | Regen ohne Hochwasser (319): mehr als 1,5-fach überschätzt |
+|---|---|---|---|---|
+| eigenes Starkregen-Netz (vorher) | 0,60 / 0,66 / 0,70 | 0,65 / 0,66 / 0,70 | 0,88 | 14,7 % |
+| nur freie Speicherzeiten | 0,61 / 0,66 / 0,69 | 0,65 / 0,66 / 0,70 | 0,88 | 14,7 % |
+| nur Scheitelfehler (Gewicht 0,2) | 0,77 / 0,76 / 0,80 | 0,66 / 0,68 / 0,74 | 0,88 | 16,0 % |
+| **beides (übernommen)** | 0,79 / 0,77 / 0,82 | 0,66 / 0,68 / 0,74 | 0,88 | 16,0 % |
+| beides, Gewicht 0,5 | 0,83 / 0,82 / 0,84 | 0,67 / 0,69 / 0,75 | 0,88 | 17,2 % |
+
+Schneller ist der Weg dabei nicht geworden (Speicherzeiten 3,7 → rund 3 h); der Gewinn kommt daraus, dass das Netz bei starkem Regen mehr Wasser auf den schnellen Weg gibt. Die Oberläufe 12 bis 24 h vorher bleiben schwach (Giesdorf 0,53, Seffern 0,55): Dort rechnet die Kette noch mit dem Wintersatz, weil der starke Regen noch nicht gefallen ist. Früher umschalten (schon bei vorhergesagtem Starkregen) ist auch mit dem neuen Starkregensatz schlechter (Starkregen-Hochwasser 12 h vorher 0,65 statt 0,68) und bleibt verworfen.
+
+Im regulären Ablauf (Kette, Archiv, Tabellen neu gerechnet) ändert sich für Band und Warnung wenig, obwohl die Scheitel höher liegen, weil die Fehlerstatistik den alten Rückstand schon ausglich: Mit gemessenem Regen als Vorhersage 35 statt 39 Vorwarnphasen ohne HQ10 danach und 5 statt 3 solche Warnphasen; Messung im 80-%-Band bei den HQ10-Hochwassern 54 % statt 58 % (6 h) und 52 % statt 53 % (24 h); alle Fälle unverändert 78 %. Die Vorwarnzeiten der 13 HQ10-Ereignisse sind gleich, bis auf Wiersdorf im Juli 2021: Dort fällt die Wahrscheinlichkeit eine Stunde vor dem Überschreiten kurz auf 15 % (der Stausee hält die Welle zurück, die Fehlerkorrektur zieht die Vorhersage nach unten), die Auswertung zählt die Warnung deshalb nicht mehr als ununterbrochen. Eine Haltezeit für Warnungen würde das abfangen.
+
+**Regenschwellen** (`rain_thr.py`, Live-Seite „Wie viel Regen bis zur Warnung?“). Für 3, 6, 12 und 24 h: die Regenmenge, gleichmäßig im Einzugsgebiet ab jetzt, bei der die Kette beim jetzigen Zustand HW 10 mit 10 % (Vorwarnung) bzw. 50 % (Warnung) erreicht; daneben die größte vorhergesagte Summe gleicher Dauer. Prüfung (`python rain_thr.py check`, `data/rain_thr_check.csv`): 861 Ausgabezeiten 2004–2022, kreuzvalidiert, Schwelle gegen den in den 48 h danach gemessenen Regen.
+
+| Fälle | Anzahl | Regen über Vorwarnschwelle | über Warnschwelle |
+|---|---|---|---|
+| HW 10 nicht erreicht (Winter- und Starkregen-Hochwasser, Regenlagen ohne Hochwasser) | 810 | 1 | 0 |
+| HW 10 erreicht, alle Ausgabezeiten | 51 | 41 | 33 |
+
+Je HQ10-Ereignis 24 h vorher: Vorwarnschwelle bei 10 von 13 überschritten, Warnschwelle bei 8 von 13 (Juli 2021 an allen acht Pegeln; Juni 2018 in Echtershausen und Wiersdorf knapp über der Vorwarnschwelle, Prümzurlay darunter; Seffern 2016 erst 12 h vorher; Prüm 2 Januar 2021 Schneeschmelze). Die Vergleichsfälle sind eine Auswahl, nicht jede Stunde, und geprüft ist gegen den gemessenen Regen. Die Schwellen hängen kaum von der Dauer ab, weil die Kette auf Intensität zu träge reagiert. Gerechnet mit dem Stand vor dem Scheitelfehler in der Anpassung.
+
+**Nachbarschafts-Ensemble** (`live.py`). ICON-D2 zusätzlich an acht um 30 km versetzten Orten; die Seite zeigt die Spanne von Regen und Höchststand und in wie vielen Richtungen Vorwarnung oder Warnung erreicht würde. Nicht im Band und nicht in der Warnung. Der Abruf ist von der Entwicklungsumgebung aus nicht testbar; im Protokoll steht `Nachbarschaft: n von 8 Richtungen`.
+
+**Prüf-Seite** (`eval_view.py`, `eval_template.html` → `eval.html`). Vorhersagen an 76 Hochwassern 1989–2022 nachrechnen (40 mit Stundenregen): Ereignisliste mit Filter, je Pegel die Vorhersagen im Verlauf (Fächer), Kennzahlen (Scheitelhöhe 24/12/6 h vorher, Vorwarnzeit vor HW 10 oder Fehlalarm, Messung im 80-%-Band), Tabelle der Entwicklung je Ausgabezeit und eine Übersicht aller Ereignisse und Pegel. Gerechnet wird im Browser mit `forecast_core.js`, jeweils mit dem Modellsatz ohne den Zeitblock des Ereignisses. Die Seite braucht zum Bauen die LfU-Pakete und enthält gemessene Ganglinien; sie liegt deshalb nicht im Repository, sondern wird über den Ordner `seiten/` in den Container gegeben (siehe `seiten/README.md`).

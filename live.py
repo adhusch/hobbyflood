@@ -45,6 +45,7 @@ sys.path.insert(0, str(HERE))
 import chain_fc as C  # noqa: E402
 import rain as RN  # noqa: E402
 import rain_fit as RF2  # noqa: E402
+import rain_thr as RTH  # noqa: E402
 import rating as RT  # noqa: E402
 import uncert as UN  # noqa: E402
 
@@ -90,6 +91,9 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
     }
 
 
+NB_KM = 30.0                                                     # Versatz der Nachbarschaftsläufe
+_D = 0.7071
+NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -1), "SW": (-_D, -_D), "W": (-1, 0), "NW": (-_D, _D)}   # (Ost, Nord)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
 
 
@@ -131,6 +135,23 @@ def fetch() -> Path:
             data["icon_ruc"], data["icon_ruc_modell"] = j, f"{mid} ({ep})"
             break
     print("   ICON-RUC:", data.get("icon_ruc_modell", "nicht verfügbar"))
+    # Nachbarschaft: ICON-D2 an um NB_KM versetzten Punkten (Gewitterzellen liegen in der Vorhersage oft richtig, aber um einige zehn km versetzt);
+    # fehlt ein Abruf, entfällt nur diese Richtung
+    nb = {}
+    for name, (dx, dy) in NB_DIRS.items():
+        la = ",".join(f"{v + dy * NB_KM / 111.2:.4f}" for v in st.lat)
+        lo = ",".join(f"{v + dx * NB_KM / (111.2 * np.cos(np.radians(la0))):.4f}" for v, la0 in zip(st.lon, st.lat))
+        try:
+            j = json.loads(_get(f"https://api.open-meteo.com/v1/dwd-icon?latitude={la}&longitude={lo}&hourly=precipitation&models=icon_d2"
+                                f"&past_days=0&forecast_days=3&timezone=GMT", tries=2))
+        except RuntimeError as e:
+            print("  ", e)
+            continue
+        if isinstance(j, list) and len(j) == len(st):
+            nb[name] = j
+    if nb:
+        data["icon_nb"] = nb
+    print(f"   Nachbarschaft: {len(nb)} von {len(NB_DIRS)} Richtungen")
     (out / "icon.json").write_text(json.dumps(dict(abgerufen_utc=now, stationen=st[["id", "lat", "lon"]].values.tolist(), data=data)), encoding="utf-8")
     (out / "abruf.json").write_text(json.dumps(dict(dwd=now, hvz=now, icon=now), indent=1), encoding="utf-8")
     print("Rohdaten in", out)
@@ -219,6 +240,10 @@ def read_icon(raw: Path) -> dict:
             for sid, loc in zip(ids, j["data"][key]):
                 h = loc["hourly"]
                 longer[key][sid] = pd.Series(pd.to_numeric(pd.Series(h["precipitation"]), errors="coerce").to_numpy(), index=_mez(h["time"]))
+    nb = {}
+    for name, locs in (j["data"].get("icon_nb") or {}).items():
+        nb[name] = {sid: pd.Series(pd.to_numeric(pd.Series(loc["hourly"]["precipitation"]), errors="coerce").to_numpy(), index=_mez(loc["hourly"]["time"]))
+                    for sid, loc in zip(ids, locs)}
     meta = {}
     for k in ("meta_d2", "meta_d2_eps"):
         m = j["data"].get(k) or {}
@@ -230,7 +255,7 @@ def read_icon(raw: Path) -> dict:
     meta["eps_end"] = str(last)
     meta["d2_end"] = str(next(iter(d2.values())).dropna().index.max())
     return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"),
-                ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"))
+                ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"), nb=nb)
 
 
 # ------------------------------------------------------------------ Aufbau
@@ -463,6 +488,12 @@ def build(raw: Path, out_html: Path) -> dict:
             ruc_end = round((min(ends) - t0) / pd.Timedelta(hours=1), 1)
             p_ruc = {k: np.where(fut, np.nan_to_num(areal_fc(comb, k)), np.nan_to_num(p_obs[k])) for k in C.RAINK}
 
+    # Nachbarschaft: ICON-D2 an versetzten Punkten, mit denselben Angleichfaktoren; nicht im Band und nicht in der Warnwahrscheinlichkeit
+    p_nb = {}
+    for name, ser in (icon.get("nb") or {}).items():
+        h = {sid: ser[sid] * fac.get(sid, {"faktor": 1.0})["faktor"] for sid in ser}
+        p_nb[name] = {k: np.where(fut, np.nan_to_num(areal_fc(h, k)), np.nan_to_num(p_obs[k])) for k in C.RAINK}
+
     # Zustand: Starkregen-Einteilung und Monat für chain_fc.is_storm
     C._S.update(pm=C.storm_index({k: dict(p=p_none[k]) for k in C.RAINK}, info), month=grid.month.to_numpy())
     feats = {}
@@ -533,8 +564,32 @@ def build(raw: Path, out_html: Path) -> dict:
             ruc = dict(q=[round(float(x), 3) for x in cr], w=wq(cr), ende_h=ruc_end, modell=icon.get("ruc_modell"),
                        regen_mm=round(float(sum(w_ * p_ruc[x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1),
                        regen_d2_mm=round(float(sum(w_ * p_runs["ICON-D2"][x][i0 + 1:i0 + 1 + int(ruc_end * 4)].sum() for w_, x in zip(*cw)) * DT), 1))
+        # Nachbarschaft: je Richtung Höchststand (nach der Fehlerstatistik bereinigt), Regen und Wahrscheinlichkeit der Warnschwelle in 48 h
+        nb_res = None
+        if p_nb:
+            rows_nb = []
+            for name, pn in p_nb.items():
+                sn = C.forecast(models, target, Qn, build_frames(pn, Qn), np.array([i0]), "kette_vorhersage")[target][0]
+                rn = sum(w_ * pn[x] for w_, x in zip(*cw))
+                tn = _interp(T_v[target]["q"][st * UN.NSUB + lev_of(sn) + UN.NB * bool(UN.heavy_flags(rn, np.array([i0]))[1][0])])
+                cn = np.maximum((np.maximum(sn[A + 1:], 0) + d) * np.exp(tn[:, 5]) - d, 0)
+                pw = None if wt["now"] else float(UN.exceed_prob(np.maximum(sn[A + 1:], 0)[None, :], tn[None], wt["q"], d)[0][-1])
+                rows_nb.append(dict(richtung=name, regen48=round(float(rn[i0 + 1:i0 + 1 + H].sum() * DT), 1), q_max=round(float(cn.max()), 3),
+                                    w_max=wq([cn.max()])[0], p48=None if pw is None else round(pw, 3)))
+            nb_res = dict(km=NB_KM, laeufe=rows_nb)
+        # Regenschwellen: Regen in 3 bis 24 h bis zur Vorwarnung (10 %) und Warnung (50 %), dazu die größten vorhergesagten Summen
+        rs = None
+        if not wt["now"]:
+            th = RTH.thresholds(models, target, Qn, p_none, i0, info, T_v[target]["q"], st, U["mq"][target], d, wt["q"])
+            ms = {nm: RTH.max_sums(sum(w_ * p_runs[nm][x] for w_, x in zip(*cw)), i0) for nm in p_runs}
+            eps_names = [nm for nm in p_runs if nm != "ICON-D2"]
+            rs = dict(dauer_h=list(RTH.DURS_H), r10=[th[D]["r10"] and round(th[D]["r10"], 1) for D in RTH.DURS_H],
+                      r50=[th[D]["r50"] and round(th[D]["r50"], 1) for D in RTH.DURS_H], max_mm=RTH.R_GRID[-1],
+                      d2=[round(ms["ICON-D2"][D], 1) for D in RTH.DURS_H],
+                      eps=[[round(float(x), 1) for x in np.quantile([ms[nm][D] for nm in eps_names], [0.1, 0.5, 0.9])] for D in RTH.DURS_H],
+                      nb=[round(max(RTH.max_sums(sum(w_ * pn[x] for w_, x in zip(*cw)), i0)[D] for pn in p_nb.values()), 1) for D in RTH.DURS_H] if p_nb else None)
         res[target] = dict(
-            ruc=ruc, dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
+            nachbar=nb_res, regenschwellen=rs, ruc=ruc, dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
             obs_q=[None if not np.isfinite(x) else round(float(x), 3) for x in obs_hist], obs_w=[None if not np.isfinite(x) else v for x, v in zip(obs_hist, wq(np.nan_to_num(obs_hist)))],
             band_q=[[round(float(x), 3) for x in band[:, j]] for j in range(band.shape[1])], band_w=[wq(band[:, j]) for j in range(band.shape[1])],
             band0_q=[[round(float(x), 3) for x in band0[:, j]] for j in range(band0.shape[1])], band0_w=[wq(band0[:, j]) for j in range(band0.shape[1])],
