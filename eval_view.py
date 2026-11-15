@@ -58,11 +58,41 @@ def hq_class(q: float, kq: dict) -> str:
     return lab
 
 
+def event_rating(q: np.ndarray, w: np.ndarray, today: dict) -> dict | None:
+    """Beziehung Wasserstand-Abfluss, wie sie beim Ereignis galt: Mediane der Wertepaare des Fensters in 30 Abflussklassen (monoton), außerhalb des
+    gemessenen Bereichs die heutige Kurve, um den Unterschied am Rand verschoben. In Prümzurlay liegt die heutige Kurve (seit Januar 2022) 40 bis
+    55 cm tiefer als die bis 2021 gültige (HQ10: heute 399 cm, bis 2021 442 cm)."""
+    ok = np.isfinite(q) & np.isfinite(w) & (q > 0)
+    if ok.sum() < 40:
+        return None
+    q, w = q[ok], w[ok]
+    edges = np.quantile(np.log(q), np.linspace(0, 1, 31))
+    idx = np.clip(np.searchsorted(edges, np.log(q), side="right") - 1, 0, 29)
+    qs, ws = [], []
+    for j in range(30):
+        m = idx == j
+        if m.any():
+            qs.append(float(np.median(q[m])))
+            ws.append(float(np.median(w[m])))
+    qs, ws = np.array(qs), np.maximum.accumulate(np.array(ws))
+    qs[-1], ws[-1] = float(q.max()), max(float(w[np.argmax(q)]), ws[-1])               # Scheitel genau treffen
+    keep = np.r_[True, np.diff(qs) > 0]
+    qs, ws = qs[keep], ws[keep]
+    tq, tw = np.array(today["q"], float), np.array(today["w"], float)
+    wt = lambda x: float(np.interp(np.log(x), np.log(tq), tw))                           # noqa: E731
+    lo, hi = tq < qs[0] * 0.98, tq > qs[-1] * 1.02
+    qq = np.r_[tq[lo], qs, tq[hi]]
+    ww = np.r_[tw[lo] + (ws[0] - wt(qs[0])), ws, tw[hi] + (ws[-1] - wt(qs[-1]))]
+    ww = np.maximum.accumulate(ww)
+    return dict(q=[round(float(x), 4) for x in qq], w=[round(float(x), 1) for x in ww], start=today.get("start"), q_meldehoehe=today.get("q_meldehoehe"))
+
+
 def windows() -> list[dict]:
     Q, W, frames = UN._S["Q"], UN._S["W"], UN._S["frames"]
     K = UN.kennwerte()
     a0, b0 = int(96 / C.DT), int(60 / C.DT)
     r0 = a0 + C.LEAD
+    RC = json.loads((HERE / "data" / "rating_curves.json").read_text(encoding="utf-8"))["pegel"]
     out, ids = [], set()
     for ev in find_events(Q, K):
         tref, kref, _ = max(ev, key=lambda p: p[2])
@@ -89,6 +119,14 @@ def windows() -> list[dict]:
             peaks[k] = dict(i=j, q=round(float(q[j]), 2), klasse=hq_class(float(q[j]), K[C.DN[k]]["Q"]), rel=round(float(q[j] / K[C.DN[k]]["Q"]["HQ10"]), 3),
                             w_damals=None if not np.isfinite(w[j]) else int(round(float(w[j]))))
         rec["peaks"] = peaks
+        clipped = bool(R.clipped_window(W["Wiersdorf"].to_numpy()[sl][None, :], Q["Wiersdorf"].to_numpy()[sl][None, :])[0])
+        rec["rat"] = {}
+        for k in C.ORDER:
+            if k == "WI" and clipped:
+                continue
+            r = event_rating(Q[C.DN[k]].to_numpy()[sl], W[C.DN[k]].to_numpy()[sl], RC[C.DN[k]])
+            if r:
+                rec["rat"][k] = r
         rec["wi_abgeschnitten"] = bool(R.clipped_window(W["Wiersdorf"].to_numpy()[sl][None, :], Q["Wiersdorf"].to_numpy()[sl][None, :])[0])
         if rain_ok:
             rec["storm"] = {k: "".join("1" if x else "0" for x in C.is_storm(k, np.arange(ip - a0, ip + b0 + 1))) for k in C.ORDER}
