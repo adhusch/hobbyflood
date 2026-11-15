@@ -211,6 +211,8 @@ const FC = (() => {
         const P = m.lat && m.lat.length ? { [k]: rainWindow(fl, k, i, ideal) } : null;
         sim = route(m, X, P);
       }
+      const lv = fl.niveau && fl.niveau[k];             // Niveaufaktor (niveau.py): heutige Wasserstand-Abfluss-Beziehung des Pegels
+      if (lv) for (let t = 0; t < sim.length; t++) sim[t] *= lv;
       const err0 = obs[A] - sim[A], s = new Float64Array(A + H + 1);
       for (let t = 0; t <= A; t++) s[t] = obs[t];
       for (let t = 1; t <= H; t++) s[A + t] = Math.max(sim[A + t] + err0 * m.beta[t - 1], 0);

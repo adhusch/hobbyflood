@@ -341,6 +341,7 @@ def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
               p={k: [round(float(v), 4) for v in p_d2[k][r0:b + 1]] for k in C.RAINK},
               api0={k: [float(fr[k]["api"][r0 - 1]), float(fr[k]["api_s"][r0 - 1])] for k in C.RAINK},
               storm={k: "0" * C.A + ("1" if C.is_storm(k, np.array([i0]))[0] else "0") for k in C.ORDER})
+    fl["niveau"] = dict(C.LEVEL)
     return dict(consts=doc["consts"], set=doc["sets"]["alle"], fl=fl, offset={k: float(offs[k]) for k in C.ORDER})
 
 
@@ -420,6 +421,12 @@ def build(raw: Path, out_html: Path) -> dict:
     rc_all = rc
     U = json.loads((HERE / "data" / "uncert_tables.json").read_text(encoding="utf-8"))
     models = C.from_json(json.loads((HERE / "data" / "chain_models.json").read_text(encoding="utf-8"))["sets"]["alle"])
+    # Niveaufaktor je Pegel (niveau.py): Die Kette ist an den Abflüssen bis 2021 angepasst; seit dem Wechsel der Wasserstand-Abfluss-Beziehung
+    # (Prümzurlay Januar 2022, Nims) zeigt der Pegel bei gleichem Zufluss ein anderes Niveau. Der Faktor multipliziert die Simulation vor der Fehlerkorrektur.
+    nv_path = HERE / "data" / "niveau.json"
+    niveau = {k: v["faktor"] for k, v in json.loads(nv_path.read_text(encoding="utf-8"))["pegel"].items() if v.get("angewendet")} if nv_path.exists() else {}
+    C.LEVEL.clear()
+    C.LEVEL.update(niveau)
 
     # Ausgabezeit: letzter 15-min-Zeitpunkt, zu dem alle acht Pegel einen Abfluss haben
     t0 = min(hv[k]["Q"].dropna().index.max() for k in NUM)
@@ -607,7 +614,7 @@ def build(raw: Path, out_html: Path) -> dict:
     except Exception as e:                                         # noqa: BLE001  Ausblick ist Zusatz: scheitert er, bleibt die 48-h-Seite
         print("   Ausblick entfällt:", repr(e))
         aus = None
-    meta = dict(t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
+    meta = dict(niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
     data = dict(meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},

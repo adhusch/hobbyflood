@@ -1,0 +1,32 @@
+{
+ "hinweis": "Faktor auf die Simulation des Pegels vor der Fehlerkorrektur; Messung/Simulation seit dem Wechsel der Wasserstand-Abfluss-Beziehung, bezogen auf 2008-2018 (niveau.py)",
+ "pegel": {
+  "PZ": {
+   "faktor": 1.16,
+   "seit": "2022-01-01",
+   "werte": 1590,
+   "werte_ab_4_mq": 324,
+   "ab_1_5_mq": 1.185,
+   "ab_4_mq": 1.156,
+   "angewendet": true
+  },
+  "AL": {
+   "faktor": 0.76,
+   "seit": "2022-04-01",
+   "werte": 349,
+   "werte_ab_4_mq": 27,
+   "ab_1_5_mq": 0.758,
+   "ab_4_mq": 0.793,
+   "angewendet": true
+  },
+  "SE": {
+   "faktor": 1.0,
+   "seit": "2022-04-01",
+   "werte": 400,
+   "werte_ab_4_mq": 51,
+   "ab_1_5_mq": 1.033,
+   "ab_4_mq": 1.305,
+   "angewendet": false
+  }
+ }
+}

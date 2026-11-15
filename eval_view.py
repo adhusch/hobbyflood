@@ -93,6 +93,8 @@ def windows() -> list[dict]:
     a0, b0 = int(96 / C.DT), int(60 / C.DT)
     r0 = a0 + C.LEAD
     RC = json.loads((HERE / "data" / "rating_curves.json").read_text(encoding="utf-8"))["pegel"]
+    nvp = HERE / "data" / "niveau.json"
+    NIVEAU = json.loads(nvp.read_text(encoding="utf-8"))["pegel"] if nvp.exists() else {}
     out, ids = [], set()
     for ev in find_events(Q, K):
         tref, kref, _ = max(ev, key=lambda p: p[2])
@@ -119,6 +121,9 @@ def windows() -> list[dict]:
             peaks[k] = dict(i=j, q=round(float(q[j]), 2), klasse=hq_class(float(q[j]), K[C.DN[k]]["Q"]), rel=round(float(q[j] / K[C.DN[k]]["Q"]["HQ10"]), 3),
                             w_damals=None if not np.isfinite(w[j]) else int(round(float(w[j]))))
         rec["peaks"] = peaks
+        nv = {k: v["faktor"] for k, v in NIVEAU.items() if v.get("angewendet") and tref >= pd.Timestamp(v["seit"])}
+        if nv:
+            rec["niveau"] = nv                                  # Niveaufaktor (niveau.py) für Ereignisse im heutigen Zustand des Pegels
         clipped = bool(R.clipped_window(W["Wiersdorf"].to_numpy()[sl][None, :], Q["Wiersdorf"].to_numpy()[sl][None, :])[0])
         rec["rat"] = {}
         for k in C.ORDER:
