@@ -243,3 +243,6 @@ gui/*.png
 gui/archiv/
 figures/
 _routing_core.so
+
+# fertig gebaute Zusatzseiten mit Messdaten (siehe seiten/README.md)
+seiten/*.html

@@ -70,7 +70,10 @@ def lat_flow(th, a):
     d = mlp(th["net"], a["X"])
     s = jax.nn.sigmoid(logit(a["phi"]) + d[..., 0])
     q = (1.0 - s) * jax.nn.sigmoid(logit(a["q0"]) + d[..., 1])
-    kf, oref, anl = jnp.exp(th["log_kf"]), jnp.exp(th["log_oref"]), th["a_nl"]
+    lkf = th["log_kf"]
+    if "dkf" in th:                                   # schneller Weg mit eigener Speicherzeit je Gebiet (Starkregensatz)
+        lkf = jnp.clip(lkf + th["dkf"][a["name"]], np.log(KF_MIN_H), np.log(12.0))
+    kf, oref, anl = jnp.exp(lkf), jnp.exp(th["log_oref"]), th["a_nl"]
     rain = a["rain"]
     o = nl_stores((s * rain).T, a["k1"], a["k2"], oref, anl) + nl_stores((q * rain).T, kf, kf, oref, anl)
     return a["area"] / 3.6 * o.T[:, a["lead"]:]
@@ -86,9 +89,32 @@ def sse(th, areas):
     return num / den
 
 
-def loss(th, areas, wd):
+def peak_err(th, areas):
+    """Mittlerer quadratischer Fehler des Fensterhöchstwerts, bezogen auf den Ereignisscheitel. Die Abweichung je Zeitschritt (sse) bestraft eine
+    steile Welle doppelt, sobald sie eine Stunde zu früh oder zu spät kommt, und zieht die Anpassung zu flachen, späten Wellen; dieser Zusatz hält
+    dagegen (Fehlerzerlegung der Starkregen-Hochwasser, storm_diag.py: Volumen 0,80, Scheitel 0,65, 3 h zu spät)."""
+    num, n = 0.0, 0
+    for a in areas:
+        y = a["rest"] + sum(lat_flow(th, p) for p in a["lats"])
+        ym = jnp.max(jnp.where(a["mask"], y, -jnp.inf), axis=1)
+        om = jnp.max(jnp.where(a["mask"], a["Y"], -jnp.inf), axis=1)
+        num = num + jnp.sum(jnp.square((ym - om) / a["wts"]))
+        n += a["Y"].shape[0]
+    return num / n
+
+
+def loss(th, areas, wd, peak_w=0.0):
     n = th["net"]
-    return sse(th, areas) + wd * (jnp.sum(n["W1"] ** 2) + jnp.sum(n["W2"] ** 2) + jnp.sum(n["W3"] ** 2))
+    l = sse(th, areas) + wd * (jnp.sum(n["W1"] ** 2) + jnp.sum(n["W2"] ** 2) + jnp.sum(n["W3"] ** 2))
+    if peak_w:
+        l = l + peak_w * peak_err(th, areas)
+    if "dkf" in th:
+        l = l + KF_WD * sum(jnp.square(v) for v in th["dkf"].values())
+    return l
+
+
+KF_MIN_H = 0.25     # kürzeste Speicherzeit des schnellen Wegs
+KF_WD = 0.002       # Strafterm auf die Abweichung der Speicherzeit je Gebiet von der gemeinsamen (log-Skala)
 
 
 def clip_globals(th):
@@ -98,7 +124,8 @@ def clip_globals(th):
 
 # ------------------------------------------------------------------ Daten
 STORM_NET = True   # eigenes Netz für den Starkregensatz (an den Starkregenereignissen und dem Starkregen-Modellsatz angepasst)
-STORM_STEPS, STORM_LR = 150, 2e-3   # Feinanpassung des Starkregennetzes: Start beim Netz des Gesamtmodells
+STORM_PEAK_W, STORM_FAST = 0.2, True     # Scheitelfehler in der Anpassung (peak_err) und Speicherzeit des schnellen Wegs je Gebiet
+STORM_STEPS, STORM_LR = 300, 2e-3   # Feinanpassung des Starkregennetzes: Start beim Netz des Gesamtmodells
 STORM_ONLY = True  # Netz nur im Starkregensatz; Gesamtmodell und Wintersatz bleiben ohne Netz (Vergleich 15.11.2026: das Netz im Wintersatz ändert
                    # die Winterhochwasser nicht, drückt aber Starkregenhochwasser vor dem Umschalten: Scheitel 12 h vorher 0,67 -> 0,56 der Messung)
 NORAD = False     # Gegenprobe: Radargrößen durch die Stationswerte ersetzen (wie im Betrieb ohne Radar)
@@ -118,7 +145,7 @@ def pack(d: R.Data, m: R.Model, wexp: float) -> dict:
         quick = L._quick_part(r, lt, phi)
         X = L.ml_features(r, phi, quick)
         lats.append(dict(X=jnp.asarray(X), phi=jnp.asarray(phi), q0=jnp.asarray(quick / np.maximum(1.0 - phi, 1e-6)), rain=jnp.asarray(r.rain),
-                         k1=float(np.exp(lt.log_k1)), k2=float(np.exp(lt.log_k2)), area=float(lt.area_km2), lead=int(r.lead)))
+                         k1=float(np.exp(lt.log_k1)), k2=float(np.exp(lt.log_k2)), area=float(lt.area_km2), lead=int(r.lead), name=lt.name))
     rest = m.route(d.X, d.P) - sum(L.response(d.P[lt.name], lt) for lt in m.lat)
     w = (d.wts / np.median(d.wts)) ** wexp if wexp else np.ones(len(d.wts))
     return dict(Y=jnp.asarray(d.Y), rest=jnp.asarray(rest), mask=jnp.asarray(d.mask), wts=jnp.asarray(d.wts), w=jnp.asarray(w), lats=lats)
@@ -161,17 +188,22 @@ def init(seed: int, hidden: int, P: dict) -> dict:
                 a_nl=jnp.asarray(P["a_nl"]))
 
 
-def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden: int, lr: float, tag: str, start: list | None = None) -> tuple[list, dict, list]:
-    """Rückgabe: Netze (je Startwert der beste Stand auf dem Abbruch-Block), gemittelte Speichergrößen, Protokoll."""
-    grad = jax.jit(jax.value_and_grad(lambda th: loss(th, tr, wd)))       # Daten als Konstanten (lead muss fest sein)
-    val_tr = jax.jit(lambda th: sse(th, tr))
-    val = jax.jit(lambda th: sse(th, va))
+def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden: int, lr: float, tag: str, start: list | None = None,
+          peak_w: float = 0.0, fast: bool = False) -> tuple[list, dict, list]:
+    """Rückgabe: Netze (je Startwert der beste Stand auf dem Abbruch-Block), gemittelte Speichergrößen, Protokoll.
+    peak_w: Gewicht des Scheitelfehlers (peak_err) in Anpassung und Abbruch; fast: Speicherzeit des schnellen Wegs je Gebiet frei."""
+    grad = jax.jit(jax.value_and_grad(lambda th: loss(th, tr, wd, peak_w)))       # Daten als Konstanten (lead muss fest sein)
+    val_tr = jax.jit(lambda th: sse(th, tr) + peak_w * peak_err(th, tr)) if peak_w else jax.jit(lambda th: sse(th, tr))
+    val = jax.jit(lambda th: sse(th, va) + peak_w * peak_err(th, va)) if peak_w else jax.jit(lambda th: sse(th, va))
+    names = sorted({p["name"] for a in tr + va for p in a["lats"]})
     opt = optax.adam(optax.cosine_decay_schedule(lr, steps, alpha=0.1))
     nets, glob, log = [], [], []
     for sd in range(seeds):
         th = init(sd, hidden, P)
         if start is not None:                    # Feinanpassung: vom fertigen Netz des Gesamtmodells aus (start = dessen Netze je Startwert)
             th = dict(th, net={k: jnp.asarray(v) for k, v in start[sd % len(start)].items()})
+        if fast:
+            th = dict(th, dkf={n: jnp.asarray(0.0) for n in names})
         st = opt.init(th)
         v0 = float(val(th)); t0 = float(val_tr(th))
         best = (v0, th, 0)
@@ -188,9 +220,12 @@ def train(tr: list, va: list, P: dict, seeds: int, steps: int, wd: float, hidden
         log.append(dict(seed=sd, train0=t0, val0=v0, train=tb, val=best[0], step=best[2], sec=round(time.time() - t)))
         print(f"  {tag} Start {sd}: Training {t0:.4f} -> {tb:.4f}, Abbruch-Block {v0:.4f} -> {best[0]:.4f} (Schritt {best[2]}), {time.time() - t:.0f} s", flush=True)
         nets.append({k: np.asarray(v).round(5).tolist() for k, v in best[1]["net"].items()})
-        glob.append([float(best[1]["log_kf"]), float(best[1]["log_oref"]), float(best[1]["a_nl"])])
+        glob.append([float(best[1]["log_kf"]), float(best[1]["log_oref"]), float(best[1]["a_nl"])] + ([float(best[1]["dkf"][n]) for n in names] if fast else []))
     g = np.mean(glob, axis=0)
-    return nets, dict(log_kf=float(g[0]), log_oref=float(g[1]), a_nl=float(g[2])), log
+    G = dict(log_kf=float(g[0]), log_oref=float(g[1]), a_nl=float(g[2]))
+    if fast:
+        G["kf"] = {n: float(np.clip(g[0] + g[3 + i], np.log(KF_MIN_H), np.log(12.0))) for i, n in enumerate(names)}
+    return nets, G, log
 
 
 def apply(base: dict, nets: list, G: dict, b: int | None, storm: tuple | None = None) -> dict:
@@ -208,7 +243,7 @@ def apply(base: dict, nets: list, G: dict, b: int | None, storm: tuple | None = 
                 for lt in m2.lat:
                     lt2 = lt.with_terms(tuple(t for t in lt.terms if t != "ml") + ("ml",))
                     lt2.net = nets
-                    lt2.log_kf, lt2.log_oref, lt2.a_nl = G["log_kf"], G["log_oref"], G["a_nl"]
+                    lt2.log_kf, lt2.log_oref, lt2.a_nl = G.get("kf", {}).get(lt.name, G["log_kf"]), G["log_oref"], G["a_nl"]
                     out.append(lt2)
                 m2.lat = out
             models[k][v] = m2
@@ -231,7 +266,7 @@ def fit_models(base: dict, P: dict, b: int | None, tag: str, seeds: int = 2, ste
     storm, info_s = None, None
     if STORM_NET:
         trs, vas = datasets(b, base, wexp, "storm")
-        ns, Gs, logs = train(trs, vas, G, seeds, STORM_STEPS, wd, hidden, STORM_LR, tag + " Starkregen", start=nets)
+        ns, Gs, logs = train(trs, vas, G, seeds, STORM_STEPS, wd, hidden, STORM_LR, tag + " Starkregen", start=nets, peak_w=STORM_PEAK_W, fast=STORM_FAST)
         storm, info_s = (ns, Gs), dict(shared=Gs, log=logs)
     return apply(base, nets, G, b, storm), dict(shared=G, log=log, seeds=seeds, steps=steps, wd=wd, hidden=hidden, storm=info_s)
 

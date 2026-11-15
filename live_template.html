@@ -111,6 +111,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <div>
     <h1>Prüm, Enz und Nims: Vorhersage mit Wettervorhersage</h1>
     <p class="sub" id="stand"></p>
+    <p class="sub" id="nav" style="display:flex;gap:4px 14px;flex-wrap:wrap"></p>
   </div>
   <button class="btn" id="theme" type="button">Darstellung: automatisch</button>
 </header>
@@ -142,6 +143,9 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <div class="legs" id="leg-r"></div>
   <div class="chart" id="ch-r"></div>
   <p class="note" id="note-r"></p>
+  <div id="sec-rs"><h2 style="margin-top:12px">Wie viel Regen bis zur Warnung?</h2>
+  <div class="tw" id="rs"></div>
+  <p class="note" id="note-rs"></p></div>
   <div id="sec-a"><h2 style="margin-top:12px">Ausblick 7 Tage</h2>
   <div class="legs" id="leg-a"></div>
   <div class="chart" id="ch-a"></div>
@@ -495,7 +499,33 @@ function theme() {
 const m = D.meta;
 $("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> · Pegel bis ${fdt(parse(m.t0)).slice(7)} · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ, Ensemble ${m.members - 1} Läufe ICON-D2-EPS · Vorhersage 48 h`;
 if (!D.res[state.k]) state.k = "PZ";
-const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); };
+function regenschwellen() {                                // Regenmenge bis zur Vorwarnung / Warnung beim jetzigen Zustand, daneben der vorhergesagte Regen
+  const r = D.res[state.k], x = r.regenschwellen, nb = r.nachbar, sec = $("#sec-rs");
+  if (!x && !nb) { sec.style.display = "none"; return; }
+  sec.style.display = "";
+  const wn = r.warn.name;
+  if (x) {
+    const mm = v => v == null ? `über ${nf(x.max_mm, 0)}` : nf(Math.round(v), 0);
+    const hit = (v, j) => x.r50[j] != null && v >= x.r50[j] ? "background:color-mix(in srgb, var(--c-full) 55%, transparent)" : x.r10[j] != null && v >= x.r10[j] ? "background:color-mix(in srgb, var(--c-full) 22%, transparent)" : "";
+    const rows = x.dauer_h.map((h, j) => `<tr><td>${h} h</td><td>${mm(x.r10[j])}</td><td>${mm(x.r50[j])}</td>` +
+      `<td style="${hit(x.d2[j], j)}">${nf(x.d2[j], 0)}</td><td style="${hit(x.eps[j][2], j)}">${nf(x.eps[j][0], 0)}–${nf(x.eps[j][2], 0)}</td>` +
+      (x.nb ? `<td style="${hit(x.nb[j], j)}">${nf(x.nb[j], 0)}</td>` : "") + `</tr>`).join("");
+    $("#rs").innerHTML = `<table><thead><tr><th>Dauer</th><th title="ab dieser Menge mindestens 10 % für ${wn} in 48 h">Vorwarn. ab</th><th title="ab dieser Menge mindestens 50 % für ${wn} in 48 h">Warnung ab</th>` +
+      `<th title="größte Summe dieser Dauer in den nächsten 48 h">ICON-D2</th><th title="10 bis 90 % der Ensemble-Läufe">Ensemble</th>${x.nb ? `<th title="größte Summe über die ${nb ? nb.laeufe.length : ""} versetzten Läufe">Nachbarn</th>` : ""}</tr></thead><tbody>${rows}</tbody></table>`;
+  } else $("#rs").innerHTML = "";
+  let t = x ? `Alle Werte in mm. So viel Regen müsste ab jetzt gleichmäßig im ganzen Einzugsgebiet fallen, damit die Kette beim jetzigen Zustand ${wn} mit 10 % (Vorwarnung) bzw. 50 % (Warnung) Wahrscheinlichkeit erreicht; rechts die größte vorhergesagte Summe gleicher Dauer in den nächsten 48 h (ICON-D2, 10–90 % des Ensembles, höchster Nachbarschaftslauf; farbig, wenn sie die Schwelle erreicht). Gerechnet mit derselben Kette und Fehlerstatistik wie die Vorhersage oben. Die Kette reagiert auf kurze, heftige Schauer zu träge: die Werte für 3 h sind eher zu hoch.` : `${wn} ist schon überschritten.`;
+  if (nb) {
+    const L = nb.laeufe, rr = L.map(v => v.regen48), cm = state.unit === "cm", ww = { v: L.map(v => cm ? v.w_max : v.q_max), fmt: v => cm ? nf(Math.round(v), 0) + " cm" : qf(v) + " m³/s" }, n10 = L.filter(v => v.p48 != null && v.p48 >= 0.1).length, n50 = L.filter(v => v.p48 != null && v.p48 >= 0.5).length;
+    t += ` <b>Nachbarschaft:</b> ICON-D2 an ${L.length} um ${nf(nb.km, 0)} km versetzten Orten (falls die Regengebiete richtig vorhergesagt, aber verschoben sind): Regen 48 h ${nf(Math.min(...rr), 0)}–${nf(Math.max(...rr), 0)} mm, Höchststand ${ww.fmt(Math.min(...ww.v))} bis ${ww.fmt(Math.max(...ww.v))}` +
+      (L[0].p48 != null ? `; Vorwarnung in ${n10} von ${L.length}, Warnung in ${n50} von ${L.length} Richtungen` : "") + `. Diese Läufe gehen nicht ins Band und nicht in die Warnung ein.`;
+  }
+  $("#note-rs").innerHTML = t;
+}
+(function nav() {                                       // Verweise auf die anderen Seiten des Containers, soweit vorhanden
+  const links = [["eval.html", "Vorhersage-Prüfung an historischen Hochwassern"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv"]], box = $("#nav");
+  if (location.protocol.startsWith("http")) links.forEach(([u, t]) => fetch(u, { method: "HEAD" }).then(r => { if (r.ok) box.insertAdjacentHTML("beforeend", `<a href="${u}" style="color:var(--c-full)">${t}</a>`); }).catch(() => {}));
+})();
+const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); regenschwellen(); };
 szenarioInit(); theme(); cards(); detail(); how(); alter(); setInterval(alter, 300000);
 if (location.protocol.startsWith("http")) setTimeout(() => location.reload(), 900000);   // im Container: alle 15 min den neuen Stand holen
 let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(detail, 120); });

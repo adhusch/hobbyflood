@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prüm Vorhersage-Prüfung</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--wash:rgba(11,11,11,.05);
+  --c-obs:#0b0b0b;--c-full:#2a78d6;--c-run:#184f95;--c-none:#898781;--c-scn:#b4530a;--c-ruc:#0f8a72;--c-hvz:#c2358a;--c-rain:#2a78d6;--c-rainfc:#9ec5f4;--c-ok:#1baf7a;
+  --th0:#52514e;--th1:#a68a00;--th2:#d26a0c;--th3:#c81e28;--th4:#8a2d87;--th5:#5b1a59;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
+    --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-ruc:#46c7ac;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+    --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--wash:rgba(255,255,255,.06);
+  --c-obs:#f0efec;--c-full:#3987e5;--c-run:#9ec5f4;--c-none:#898781;--c-scn:#f0a04b;--c-ruc:#46c7ac;--c-hvz:#e0679f;--c-rain:#3987e5;--c-rainfc:#1c5cab;--c-ok:#199e70;
+  --th0:#c3c2b7;--th1:#e3c33a;--th2:#f0913f;--th3:#f0565e;--th4:#c77cc4;--th5:#a65ca3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;gap:12px 16px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:21px;margin:0 0 4px;font-weight:650;line-height:1.2}
+h2{font-size:15px;margin:0 0 6px;font-weight:650}
+.sub{color:var(--ink2);margin:0;font-size:13.5px;max-width:90ch}
+.btn{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;min-height:34px}
+.btn:hover{background:var(--wash)}
+.btn:focus-visible,.card:focus-visible,.seg input:focus-visible+span,.chk input:focus-visible{outline:2px solid var(--c-full);outline-offset:2px}
+.notice{border:1px solid var(--border);border-left:4px solid var(--th2);background:var(--surface);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--ink2);margin:8px 0 14px}
+.notice b{color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.card:hover{background:var(--wash)}
+.card[aria-pressed="true"]{border-color:var(--c-full);box-shadow:inset 0 0 0 1px var(--c-full)}
+.card .n{font-weight:650;font-size:14px}
+.card .r{color:var(--ink2);font-size:12px}
+.card .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:4px}
+.card .v small{font-size:12px;font-weight:500;color:var(--ink2)}
+.card .s{font-size:12.5px;color:var(--ink2);margin-top:3px;line-height:1.35}
+.card .s b{color:var(--ink);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.lage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
+.tile{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface);min-width:0}
+.tile .k{color:var(--ink2);font-size:12px}
+.tile .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .v small{font-size:12.5px;font-weight:500;color:var(--ink2)}
+.tile .s{color:var(--ink2);font-size:12.5px;line-height:1.35;margin-top:2px}
+.tile .s b{color:var(--ink);font-weight:600}
+.tile.main{border-color:var(--c-full);box-shadow:inset 0 0 0 1px var(--c-full)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--col);margin-right:6px;vertical-align:1px}
+.thr{display:inline-block;width:16px;border-top:2px dashed var(--col);vertical-align:middle;margin-right:6px}
+.tools{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:4px 0 6px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;padding:4px 10px;font-size:13px;cursor:pointer;min-height:30px;line-height:22px}
+.seg input:checked+span{background:var(--ink);color:var(--surface)}
+.chk{font-size:13px;color:var(--ink2);display:inline-flex;gap:6px;align-items:center}
+.legs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 4px;font-size:12.5px;color:var(--ink2)}
+.legs span{display:inline-flex;align-items:center;gap:6px}
+.legs i{width:16px;height:0;border-top:2px solid var(--col);display:inline-block}
+.legs i.dash{border-top-style:dashed}
+.legs i.thin{border-top-width:1px}
+.legs i.area{height:10px;border:0;background:var(--col);opacity:.3;border-radius:2px}
+.chart{position:relative;width:100%;touch-action:pan-y}
+.chart svg{display:block;max-width:100%}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.14);border-radius:8px;padding:7px 9px;font-size:12px;line-height:1.35;z-index:3;display:none;min-width:130px}
+.tip .t{color:var(--ink2);margin-bottom:2px}
+.tip .r{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.tip .r i{width:14px;border-top:2px solid var(--col);display:inline-block;margin-right:5px;vertical-align:middle}
+.tip b{font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink2);font-size:12px;vertical-align:bottom}
+td.p{text-align:center;min-width:58px}
+td.p small{display:block;color:var(--muted);font-size:11px}
+td.p.lo{color:var(--muted)}
+td.now{text-align:center;font-weight:600}
+tr.wrn td:first-child{font-weight:650}
+tr.wrn td:first-child small{display:block;font-weight:500;color:var(--ink2);font-size:11px}
+tr.grp td{color:var(--ink2);font-size:12px;font-weight:600;text-align:left;padding-top:10px;border-bottom:1px solid var(--grid)}
+tr.info td{color:var(--muted)}
+.stat{font-weight:650;color:var(--ink)}
+td small.sub{display:block;color:var(--ink2);font-size:11px;font-weight:400}
+th.txt,td.txt{text-align:left;white-space:normal;min-width:170px}
+.note{color:var(--ink2);font-size:12.5px;margin:6px 0 0}
+details.more{border-top:1px solid var(--border);margin-top:12px;padding-top:8px}
+details.more>summary{cursor:pointer;font-weight:600;font-size:14px;list-style-position:inside;padding:2px 0}
+details.more ul{margin:4px 0 0;padding-left:20px;color:var(--ink2);font-size:13px}
+details.more li{margin:3px 0}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.lage{grid-template-columns:1fr}.tile .v,.card .v{font-size:20px}}
+@media (max-width:380px){.cards{grid-template-columns:1fr}}
+.nav{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13.5px;margin:2px 0 0}
+.nav a{color:var(--c-full)}
+.evbox{max-height:250px;overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.evbox table{font-size:12.5px}
+.evbox thead th{position:sticky;top:0;background:var(--surface);z-index:1}
+.evbox tr[data-id]{cursor:pointer}
+.evbox tr[data-id]:hover td{background:var(--wash)}
+.evbox tr.sel td{background:color-mix(in srgb,var(--c-full) 16%,transparent);font-weight:600}
+.pill{display:inline-block;border-radius:999px;padding:0 7px;font-size:11.5px;line-height:18px;border:1px solid var(--border);color:var(--ink2)}
+.pill.storm{border-color:var(--th2);color:var(--th2)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
+.lage4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 10px}
+.issue-row{display:flex;gap:10px;align-items:center;margin:4px 0}
+.issue-row input[type=range]{flex:1;min-width:120px}
+tr.pick{cursor:pointer}
+tr.pick:hover td{background:var(--wash)}
+tr.cur td{background:color-mix(in srgb,var(--c-full) 16%,transparent)}
+td.h{text-align:center;min-width:46px}
+.panel{cursor:default}
+@media (max-width:900px){.lage4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.lage4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Vorhersage-Prüfung an historischen Hochwassern</h1>
+    <p class="sub">Prüm, Enz und Nims 1989–2022: Jede Vorhersage wird so nachgerechnet, wie sie zur Ausgabezeit entstanden wäre, mit einem Modell, das dieses Hochwasser nicht kennt. <span id="stand"></span></p>
+    <p class="nav" id="nav"></p>
+  </div>
+  <button class="btn" id="theme" type="button">Darstellung: automatisch</button>
+</header>
+<div class="notice"><b>Eigene Modellrechnung, keine amtliche Warnung.</b> Messwerte: Landesamt für Umwelt Rheinland-Pfalz (15-Minuten-Werte), Regen: Deutscher Wetterdienst (Stundenwerte von neun Stationen, ab 2004). Wasserstände in cm mit der heutigen Beziehung zwischen Wasserstand und Abfluss.</div>
+
+<section class="panel" aria-label="Ereignis wählen">
+  <h2>1 · Hochwasser wählen</h2>
+  <div class="tools"><span class="seg" id="seg-filter" role="radiogroup" aria-label="Auswahl"></span><span class="seg" id="seg-sort" role="radiogroup" aria-label="Reihenfolge"></span><span class="note" id="ev-count" style="margin:0"></span></div>
+  <div class="evbox" id="evbox"></div>
+</section>
+
+<div class="grid2">
+<section class="panel" aria-label="Vorhersage prüfen">
+  <h2 id="ttl">2 · Vorhersage prüfen</h2>
+  <div class="tools"><span class="seg" id="seg-gauge" role="radiogroup" aria-label="Pegel" style="flex-wrap:wrap"></span></div>
+  <div class="tools"><span class="seg" id="seg-var" role="radiogroup" aria-label="Regen nach der Ausgabezeit"></span><span class="seg" id="seg-unit" role="radiogroup" aria-label="Einheit"></span>
+    <label class="chk">Vorhersagen alle <select id="fan" style="font:inherit;padding:2px 6px"><option value="0">(aus)</option><option value="12">3 h</option><option value="24" selected>6 h</option><option value="48">12 h</option></select></label></div>
+  <p class="note" id="evinfo" style="margin:0 0 4px"></p>
+  <div class="lage4" id="kz"></div>
+  <div class="legs" id="leg"></div>
+  <div class="chart" id="ch"></div>
+  <div class="issue-row"><label for="issue" style="font-size:13px;color:var(--ink2)">Ausgabezeit</label><input type="range" id="issue" step="1" aria-label="Ausgabezeit der Vorhersage, Schritte zu 15 Minuten"><span id="issue-l" style="font-size:13px;font-variant-numeric:tabular-nums"></span></div>
+  <div class="tools" id="issue-btns" role="group" aria-label="Ausgabezeit verschieben"></div>
+  <div class="chart" id="ch-r"></div>
+  <h2 style="margin-top:12px">Wie hat sich die Vorhersage entwickelt?</h2>
+  <div class="tw" id="evo"></div>
+  <p class="note" id="evo-note"></p>
+</section>
+
+<section class="panel" aria-label="Überblick über alle Ereignisse">
+  <h2>3 · Alle Hochwasser im Überblick</h2>
+  <div class="tools"><span class="seg" id="seg-lead" role="radiogroup" aria-label="Ausgabe vor dem Scheitel"></span><button class="btn" id="mx-go" type="button">Rechnen</button><span class="note" id="mx-state" style="margin:0"></span></div>
+  <div class="tw" id="mx"></div>
+  <p class="note" id="mx-note"></p>
+  <details class="more"><summary>Kennzahlen der Kreuzvalidierung (alle Hochwasser 2004–2022)</summary><div class="tw" id="cv"></div><p class="note">Scheitel der Vorhersage im Verhältnis zum gemessenen, Median über die Ereignisse; „±20 %“: Anteil der Ereignisse, bei denen die Vorhersage höchstens 20 % danebenliegt. Hier steht die Kette ohne Abgleich mit der Fehlerstatistik; in den Ansichten oben ist die Vorhersage nach der Fehlerstatistik bereinigt (Median).</p></details>
+</section>
+</div>
+
+<section class="panel" style="margin-top:14px">
+  <h2>Hinweise</h2>
+  <ul style="margin:0;padding-left:20px;color:var(--ink2);font-size:13px">
+    <li><b>Unabhängigkeit:</b> Hochwasser 2004–2022 werden mit dem Modellsatz gerechnet, der ohne ihren Zeitblock angepasst wurde (Blöcke 2004–07, 2008–11, 2012–15, 2016–18, 2019–22); auch die Fehlerstatistik für Band und Warnung stammt dann aus den anderen Blöcken. Hochwasser vor 2004 laufen mit dem Modell aus 2004–2022.</li>
+    <li><b>Regen:</b> „Regen bis jetzt“ kennt nur den bis zur Ausgabezeit gemessenen Regen (wie ohne Wettervorhersage). „Gemessener Regen als Vorhersage“ setzt den später gemessenen Regen als perfekte Wettervorhersage ein und zeigt, was das Abflussmodell bei richtigem Regen leistet. Vor 2004 gibt es keinen Stundenregen; dort rechnet die Kette nur mit den Pegeln oberhalb.</li>
+    <li><b>Vorhersage:</b> Linie = Median nach der Fehlerstatistik, Fläche = 80 % der Fälle. Warnung ab HW 10: Vorwarnung, wenn die Wahrscheinlichkeit für HW 10 in 48 h mindestens 10 % ist, Warnung ab 50 %.</li>
+    <li><b>Ereignisse:</b> jedes Hochwasser, bei dem ein Pegel 0,7 HQ2 erreicht (Mai bis September ab 2004: 0,4 HQ2). Wiersdorf ist bei älteren Hochwassern bei 250 cm abgeschnitten; solche Ereignisse sind markiert.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+/*__FC_CORE__*/
+</script>
+<script>
+"use strict";
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nf = (v, d = 1) => v == null || !isFinite(v) ? "–" : v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+const qf = v => v == null ? "–" : nf(v, v < 10 ? 1 : 0);
+const pad2 = n => String(n).padStart(2, "0");
+const parse = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10), +s.slice(11, 13), +s.slice(14, 16));
+const fdt = ms => { const d = new Date(ms); return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}. ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`; };
+const WD = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const hmShort = (ms, ref) => { const d = new Date(ms), r = new Date(ref), same = d.getUTCDate() === r.getUTCDate() && d.getUTCMonth() === r.getUTCMonth(); return (same ? "" : WD[d.getUTCDay()] + " ") + fdt(ms).slice(7); };
+const pctTxt = p => p < 0.05 ? "< 5 %" : p > 0.95 ? "> 95 %" : nf(Math.round(p * 20) * 5, 0) + " %";
+/* Diagramme: wie plot() in routing_map_template.html (dünne Linien zusätzlich) */
+function niceTicks(lo, hi, n) {
+  const span = Math.max(hi - lo, 1e-9), raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p, a = Math.floor(lo / step + 1e-9) * step, out = [];
+  for (let v = a; v <= hi + step * 0.999; v += step) { out.push(+v.toFixed(6)); if (v >= hi - 1e-9) break; }
+  return out;
+}
+/* spec: {x:{min,max,log,ticks,fmt,label}, y:{min,max,ticks,fmt,label}, lines:[{key,name,pts:[[x,y]],col,dash}], bands:[{hi:[[x,y]],lo:[[x,y]],col}], vlines:[{x,col,label}], points:[{x,y,col}], tip:fn(x)->{t,rows:[{col,name,val}]} } */
+function plot(el, spec, H = 220) {
+  const W = Math.max(260, el.clientWidth || 360), pad = { l: 44, r: 12, t: 10, b: 36 };
+  const X = spec.x, Y = spec.y;
+  const fx = X.log ? Math.log : (v => v), x0 = fx(X.min), x1 = fx(X.max);
+  const xs = v => pad.l + (fx(v) - x0) / (x1 - x0) * (W - pad.l - pad.r), ys = v => pad.t + (1 - (v - Y.min) / (Y.max - Y.min)) * (H - pad.t - pad.b);
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  (Y.ticks || niceTicks(Y.min, Y.max, 4)).forEach(v => { s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="${v === 0 ? "var(--axis)" : "var(--grid)"}"/><text x="${pad.l - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)">${(Y.fmt || (v => nf(v, Number.isInteger(v) ? 0 : 1)))(v)}</text>`; });
+  (X.ticks).forEach(t => { const v = t.v !== undefined ? t.v : t; s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 14}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l !== undefined ? t.l : (X.fmt ? X.fmt(v) : v)}</text>`; if (t.l2) s += `<text x="${xs(v).toFixed(1)}" y="${H - pad.b + 26}" text-anchor="middle" font-size="11" fill="var(--muted)">${t.l2}</text>`; });
+  if (X.label) s += `<text x="${(pad.l + W - pad.r) / 2}" y="${H - 3}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${X.label}</text>`;
+  if (Y.label) s += `<text transform="translate(11 ${(pad.t + H - pad.b) / 2}) rotate(-90)" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${Y.label}</text>`;
+  (spec.bands || []).forEach(b => { s += `<path d="${b.hi.map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}${b.lo.slice().reverse().map(p => "L" + xs(p[0]).toFixed(1) + " " + ys(p[1]).toFixed(1)).join("")}Z" fill="${b.col}" fill-opacity="${b.op || .13}"/>`; });
+  let lastL = -1e9, lastR = -1e9, hlab = "";             // Beschriftung links; liegt sie zu nah an der vorigen, rechts (sonst weggelassen); Text über allen Linien
+  (spec.hlines || []).slice().sort((a, b) => a.y - b.y).forEach(h => { if (h.y < Y.min || h.y > Y.max) return; const y = ys(h.y); s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${h.col}" stroke-width="${h.bold ? 2.5 : 1.5}" stroke-dasharray="6 4" opacity="${h.faint ? .45 : .9}"/>`;
+    if (!h.label) return;
+    const side = Math.abs(lastL - y) >= 15 ? "l" : Math.abs(lastR - y) >= 15 ? "r" : null;
+    if (!side) return;
+    if (side === "l") lastL = y; else lastR = y;
+    hlab += `<text x="${side === "l" ? pad.l + 4 : W - pad.r - 4}" y="${(y - 4).toFixed(1)}" text-anchor="${side === "l" ? "start" : "end"}" font-size="11" fill="${h.col}" paint-order="stroke" stroke="var(--surface)" stroke-width="4" stroke-linejoin="round" font-weight="600">${esc(h.label)}</text>`; });
+  s += hlab;
+  (spec.bars || []).forEach(b => { const y0 = ys(0), y1 = ys(Math.min(Y.max, b.y)); if (b.y > 0) s += `<rect x="${xs(b.x).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(1, xs(b.x + b.w) - xs(b.x) - 1).toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${b.col}" fill-opacity=".8"/>`; });
+  (spec.vlines || []).forEach(v => { s += `<line x1="${xs(v.x).toFixed(1)}" x2="${xs(v.x).toFixed(1)}" y1="${pad.t}" y2="${H - pad.b}" stroke="${v.col || "var(--muted)"}" stroke-width="1" ${v.dash === false ? "" : 'stroke-dasharray="1 3"'}/>` + (v.label ? `<text x="${(xs(v.x) + 4).toFixed(1)}" y="${pad.t + 10}" font-size="11" fill="var(--ink2)">${v.label}</text>` : ""); });
+  (spec.lines || []).forEach(l => { if (l.hidden) return; s += `<path d="${l.pts.filter(p => p[1] != null).map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(Math.max(Y.min, Math.min(Y.max, p[1]))).toFixed(1)).join("")}" fill="none" stroke="${l.col}" stroke-width="${l.thin ? 1 : 2}" ${l.thin ? 'opacity=".55"' : ""} stroke-linejoin="round" stroke-linecap="round" ${l.dash ? 'stroke-dasharray="6 4"' : ""}/>`; });
+  (spec.errs || []).forEach(e => { const cx = xs(e.x), cy = ys(e.y), c = e.col; s += `<g stroke="${c}" stroke-width="2" stroke-linecap="round"><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${cy.toFixed(1)}" y2="${cy.toFixed(1)}"/><line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x0).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${xs(e.x1).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y0).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y1).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/></g><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="${c}"/>`; });
+  (spec.points || []).forEach(p => { s += `<circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="4" fill="${p.hollow ? "var(--surface)" : p.col}" stroke="${p.col}" stroke-width="${p.hollow ? 2 : 0}"/>`; });
+  s += `<line class="xh" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--ink2)" visibility="hidden"/><g class="cur"></g><rect class="hit" x="${pad.l}" y="${pad.t}" width="${W - pad.l - pad.r}" height="${H - pad.t - pad.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  el.innerHTML = s;
+  const svg = $("svg", el), xh = $(".xh", svg), tip = $(".tip", el);
+  const inv = px => { const f = (px - pad.l) / (W - pad.l - pad.r) * (x1 - x0) + x0; return X.log ? Math.exp(f) : f; };
+  const move = e => {
+    if (!spec.tip) return;
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width), x = Math.max(X.min, Math.min(X.max, inv(px))), info = spec.tip(x);
+    if (!info) return;
+    const xx = xs(info.x !== undefined ? info.x : x); xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="t">${info.t}</div>` + info.rows.map(r => `<div class="r"><span><i style="--col:${r.col}"></i>${esc(r.name)}</span><b>${r.val}</b></div>`).join("");
+    tip.style.display = "block"; const w = tip.offsetWidth; tip.style.left = (xx > W * 0.55 ? xx - w - 10 : xx + 10) + "px"; tip.style.top = pad.t + "px";
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+  svg.addEventListener("pointerleave", () => { xh.setAttribute("visibility", "hidden"); tip.style.display = "none"; });
+  el._plot = { xs, ys, pad, H, W, svg };
+  return el._plot;
+}
+
+/* ---------- Vorhersage-Prüfung: Ereignis, Pegel, Ausgabezeit; gerechnet wird im Browser mit FC (Kette) und UQ (Fehlerstatistik) ---------- */
+FC.setConsts(D.consts);
+UQ.setTables(D.unc);
+const A = FC.A, H = FC.H, LEAD = Math.round(D.consts.LEAD_H * 4);
+const LO = 1, MED = 5, HI = 9;
+const ORDER = ["P2", "EC", "WI", "PZ", "SI", "GI", "SE", "AL"];
+const SHORT = { P2: "Prüm 2", EC: "Echtersh.", WI: "Wiersdorf", PZ: "Prümzurlay", SI: "Sinspelt", GI: "Giesdorf", SE: "Seffern", AL: "Alsdorf-O." };
+const TH_COL = { MH: "var(--th0)", HW2: "var(--th1)", HW10: "var(--th2)", HW20: "var(--th3)", HW50: "var(--th4)", HW100: "var(--th5)" };
+const KL_COL = { HQ2: "var(--th1)", HQ10: "var(--th2)", HQ20: "var(--th3)", HQ50: "var(--th4)", HQ100: "var(--th5)" };
+const KL_RANK = { "unter HQ2": 0, HQ2: 1, HQ10: 2, HQ20: 3, HQ50: 4, HQ100: 5 };
+const fdate = ms => { const d = new Date(ms); return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
+const sg = (v, d = 0) => v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + nf(Math.abs(v), d);
+const state = { id: null, key: "PZ", variant: "perfekt", unit: "cm", fan: 24, i: null, filter: "hq10", sort: "zeit", lead: 12 };
+try { Object.assign(state, JSON.parse(localStorage.getItem("pruem-eval") || "{}")); } catch (e) {}
+const save = () => { try { localStorage.setItem("pruem-eval", JSON.stringify(state)); } catch (e) {} };
+const EV = Object.fromEntries(D.events.map(e => [e.id, e]));
+D.events.forEach(e => { e.rank = Math.max(...Object.values(e.peaks).map(p => KL_RANK[p.klasse])); e.relmax = Math.max(...Object.values(e.peaks).map(p => p.rel)); });
+const ev = () => EV[state.id];
+
+function segRadio(id, name, opts, val, on) {
+  const seg = $(id); seg.innerHTML = "";
+  opts.forEach(([v, l, t]) => { const lab = document.createElement("label"); if (t) lab.title = t; lab.innerHTML = `<input type="radio" name="${name}" value="${v}" ${String(val) === String(v) ? "checked" : ""}><span>${l}</span>`; lab.querySelector("input").onchange = () => on(v); seg.appendChild(lab); });
+}
+function thresholdsOf(key) {
+  const dn = FC.DN[key], k = D.unc.kennwerte[dn], rc = D.unc.rating[dn], out = [], wid = "HW" + ((D.unc.warn || {})[key] || { name: "HQ10" }).name.slice(2);
+  if (k.meldehoehe) out.push({ id: "MH", name: "Meldehöhe", w: k.meldehoehe, q: rc.q_meldehoehe });
+  ["2", "10", "20", "50", "100"].forEach(x => out.push({ id: "HW" + x, name: "HW " + x, w: k.W["HW" + x], q: k.Q["HQ" + x] }));
+  out.forEach(t => { t.warn = t.id === wid; });
+  return out.sort((a, b) => a.w - b.w);
+}
+const warnOf = key => thresholdsOf(key).find(t => t.warn);
+const variantOf = e => !e.rain ? "kette" : state.variant === "perfekt" ? "kette_vorhersage" : "kette_regen";
+const VNAME = { kette: "ohne Regen (nur Pegel oberhalb)", kette_regen: "Regen bis zur Ausgabezeit", kette_vorhersage: "gemessener Regen als Vorhersage" };
+
+/* Vorhersage zur Ausgabezeit i (Index im Ereignisfenster): Median, 10 %, 90 %, Wahrscheinlichkeit der Warnschwelle; mit Zwischenspeicher */
+const cache = new Map();
+function fc(e, key, i, variant) {
+  const ck = `${e.id}|${key}|${i}|${variant}`;
+  if (cache.has(ck)) return cache.get(ck);
+  let out = null;
+  const S = FC.forecast(D.sets[e.models], e, key, i, variant);
+  if (S) {
+    const s = S[key], an = UQ.analyse(e, key, i, s, A, H, variant), med = new Float64Array(H), lo = new Float64Array(H), hi = new Float64Array(H);
+    let mx = -1, amx = 0;
+    for (let L = 1; L <= H; L++) { const r = an.q[L - 1]; med[L - 1] = r[MED]; lo[L - 1] = r[LO]; hi[L - 1] = r[HI]; if (r[MED] > mx) { mx = r[MED]; amx = L; } }
+    const ex = an.exceed(warnOf(key).q);
+    out = { med, lo, hi, mx, amx, p48: ex[H - 1], storm: e.rain ? FC.isStorm(e, key, i) : null, heavy: an.heavy, state: an.state };
+  }
+  if (cache.size > 6000) cache.clear();
+  cache.set(ck, out);
+  return out;
+}
+const issueRange = e => [A, e.q[FC.DN.PZ].length - 1 - H];
+const wOf = (key, q) => UQ.wOfQ(D.unc.rating[FC.DN[key]], q);
+const status = p => { const r = Math.round(p * 20) / 20; return r >= 0.5 ? "Warnung" : r >= 0.1 ? "Vorwarnung" : "keine"; };
+
+/* ---------- 1 Ereignisliste ---------- */
+const FILTERS = [["hq10", "ab HQ10", e => e.rank >= 2], ["hq2", "ab HQ2", e => e.rank >= 1], ["storm", "Starkregen", e => e.art === "Starkregen"], ["winter", "Winter / Dauerregen", e => e.art.startsWith("Winter")],
+  ["rain", "mit Regendaten", e => e.rain], ["alle", "alle", () => true]];
+function filtered() {
+  const f = FILTERS.find(x => x[0] === state.filter) || FILTERS[0];
+  const list = D.events.filter(f[2]);
+  return state.sort === "groesse" ? list.sort((a, b) => b.relmax - a.relmax) : list.sort((a, b) => parse(b.t_peak) - parse(a.t_peak));
+}
+const klCell = p => !p ? `<td class="h">·</td>` : `<td class="h" title="${nf(p.q, p.q < 10 ? 1 : 0)} m³/s" style="${KL_COL[p.klasse] ? `color:${KL_COL[p.klasse]};font-weight:650` : "color:var(--muted)"}">${p.klasse === "unter HQ2" ? "–" : p.klasse}</td>`;
+function drawEvents() {
+  segRadio("#seg-filter", "filter", FILTERS.map(f => [f[0], f[1]]), state.filter, v => { state.filter = v; save(); drawEvents(); drawMatrix(false); });
+  segRadio("#seg-sort", "sort", [["zeit", "nach Datum"], ["groesse", "nach Größe"]], state.sort, v => { state.sort = v; save(); drawEvents(); });
+  const list = filtered();
+  if (!list.some(e => e.id === state.id)) { state.id = list.length ? list[0].id : D.events[D.events.length - 1].id; state.i = null; }
+  $("#ev-count").textContent = `${list.length} von ${D.events.length} Hochwassern`;
+  $("#evbox").innerHTML = `<table><thead><tr><th>Scheitel</th><th class="txt" style="min-width:0">Art</th><th style="text-align:left">größter Pegel</th>${ORDER.map(k => `<th class="h" title="${FC.DN[k]}">${SHORT[k]}</th>`).join("")}</tr></thead><tbody>` +
+    list.map(e => { const p = e.peaks[e.ref]; return `<tr data-id="${e.id}" class="${e.id === state.id ? "sel" : ""}"><td>${fdate(parse(e.t_peak))}</td><td class="txt" style="min-width:0"><span class="pill ${e.art === "Starkregen" ? "storm" : ""}">${esc(e.art)}</span></td>` +
+      `<td style="text-align:left">${esc(FC.DN[e.ref])}, ${p.klasse}${e.wi_abgeschnitten ? ` <span title="Wiersdorf bei 250 cm abgeschnitten">✂</span>` : ""}</td>${ORDER.map(k => klCell(e.peaks[k])).join("")}</tr>`; }).join("") + `</tbody></table>`;
+  $("#evbox").querySelectorAll("tr[data-id]").forEach(tr => tr.onclick = () => { state.id = tr.dataset.id; state.i = null; save(); drawEvents(); draw(); });
+}
+
+/* ---------- 2 Vorhersage prüfen ---------- */
+function setIssue(i) { const [a, b] = issueRange(ev()); state.i = Math.max(a, Math.min(b, i)); save(); drawMain(); }
+function draw() {
+  const e = ev();
+  if (!e.peaks[state.key]) state.key = e.ref;
+  segRadio("#seg-gauge", "gauge", ORDER.filter(k => e.peaks[k]).map(k => [k, `${SHORT[k]} <small style="opacity:.7">${e.peaks[k].klasse === "unter HQ2" ? "" : e.peaks[k].klasse}</small>`, FC.DN[k]]), state.key, v => { state.key = v; state.i = null; save(); draw(); });
+  if (e.rain) segRadio("#seg-var", "var", [["perfekt", "gemessener Regen als Vorhersage"], ["bis", "Regen bis jetzt"]], state.variant, v => { state.variant = v; save(); draw(); });
+  else $("#seg-var").innerHTML = `<label><input type="radio" checked><span>ohne Regendaten: nur Pegel oberhalb</span></label>`;
+  segRadio("#seg-unit", "unit", [["cm", "cm"], ["q", "m³/s"]], state.unit, v => { state.unit = v; save(); draw(); });
+  $("#fan").value = String(state.fan); $("#fan").onchange = x => { state.fan = +x.target.value; save(); drawMain(); };
+  const pk = e.peaks[state.key], [a, b] = issueRange(e);
+  if (state.i == null) state.i = Math.max(a, Math.min(b, pk.i - 48));
+  const il = $("#issue"); il.min = a; il.max = b; il.oninput = () => setIssue(+il.value);
+  $("#issue-btns").innerHTML = [[-24, "− 6 h"], [-4, "− 1 h"], [-1, "− 15 min"], [1, "+ 15 min"], [4, "+ 1 h"], [24, "+ 6 h"]].map(([d, l]) => `<button type="button" class="btn" data-d="${d}">${l}</button>`).join("");
+  $("#issue-btns").querySelectorAll("button").forEach(bt => bt.onclick = () => setIssue(state.i + +bt.dataset.d));
+  const dn = FC.DN[state.key], kw = D.unc.kennwerte[dn];
+  $("#ttl").textContent = `2 · Vorhersage prüfen: ${dn}, Hochwasser vom ${fdate(parse(e.t_peak))}`;
+  $("#evinfo").innerHTML = `${esc(e.art)} · Modellsatz ${e.models === "alle" ? "aus 2004–2022 (Ereignis davor, unabhängig)" : "ohne den Block " + ["2004–07", "2008–11", "2012–15", "2016–18", "2019–22"][+e.models]} · ${VNAME[variantOf(e)]}` +
+    (e.wi_abgeschnitten && ["WI", "PZ"].includes(state.key) ? ` · <b>Wiersdorf bei 250 cm abgeschnitten</b>: Messung und Vorhersage dort unvollständig` : "") + (kw.Q.MQ ? ` · MQ ${qf(kw.Q.MQ)} m³/s` : "");
+  drawKennzahlen();
+  drawMain();
+  drawEvo();
+}
+/* Vorwarnzeit: ab wann lag die Wahrscheinlichkeit ununterbrochen bis zum Überschreiten über lev (stündliche Ausgaben) */
+function warnLead(e, key, variant, ix, lev) {
+  const [a, b] = issueRange(e);
+  let lead = 0, capped = false;
+  for (let h = 1; ix - 4 * h >= a; h++) {                 // 1 h, 2 h, ... vor dem Überschreiten
+    const i = ix - 4 * h;
+    if (i > b) continue;                                  // zu nah am Fensterende: dort lässt sich keine Vorhersage rechnen
+    const f = fc(e, key, i, variant);
+    if (!f || Math.round(f.p48 * 20) / 20 < lev) break;
+    lead = h; if (ix - 4 * (h + 1) < a) capped = true;
+  }
+  return { h: lead, capped };
+}
+function drawKennzahlen() {
+  const e = ev(), key = state.key, variant = variantOf(e), dn = FC.DN[key], obs = e.q[dn], pk = e.peaks[key], [a, b] = issueRange(e), w = warnOf(key), cm = state.unit === "cm";
+  const fmt = q => cm ? nf(Math.round(wOf(key, q)), 0) + " cm" : qf(q) + " m³/s", t0 = parse(e.t_start);
+  const t1 = `<div class="tile"><div class="k">Scheitel gemessen</div><div class="v">${fmt(pk.q)}</div><div class="s">${fdt(t0 + pk.i * 900000)} · ${pk.klasse}${cm && pk.w_damals != null ? ` · damals gemessen ${pk.w_damals} cm` : ""}<br>${qf(pk.q)} m³/s, ${nf(100 * pk.rel, 0)} % von HQ10</div></div>`;
+  // Scheitel getroffen
+  const hit = [24, 12, 6, 3].map(h => { const i = pk.i - 4 * h, f = i >= a && i <= b ? fc(e, key, i, variant) : null; return f ? [h, Math.max(f.mx, obs[i]) / pk.q, wOf(key, Math.max(f.mx, obs[i])) - wOf(key, pk.q)] : [h, null, null]; });
+  const t2 = `<div class="tile main"><div class="k">Scheitelhöhe vorhergesagt</div><div class="v" style="font-size:17px">${hit.filter(x => x[1] != null).slice(0, 3).map(x => `${x[0]} h: ${nf(100 * x[1], 0)} %`).join(" · ") || "–"}</div>` +
+    `<div class="s">Höchstwert der Vorhersage im Verhältnis zum gemessenen Scheitel, Ausgabe so viele Stunden vorher${hit.some(x => x[2] != null) ? `<br>in cm: ${hit.filter(x => x[2] != null).map(x => `${x[0]} h ${sg(x[2])}`).join(" · ")}` : ""}</div></div>`;
+  // Warnung
+  let ix = -1; for (let i = 0; i < obs.length; i++) if (obs[i] != null && obs[i] >= w.q) { ix = i; break; }
+  let t3;
+  if (ix >= 0) {
+    const v10 = warnLead(e, key, variant, ix, 0.1), v50 = warnLead(e, key, variant, ix, 0.5), tx = x => x.h === 0 ? "keine" : (x.capped ? "≥ " : "") + x.h + " h";
+    t3 = `<div class="tile"><div class="k">Warnung vor ${w.name} (${nf(w.w, 0)} cm)</div><div class="v" style="font-size:17px">Vorwarnung ${tx(v10)} · Warnung ${tx(v50)}</div><div class="s">vor dem Überschreiten am ${fdt(t0 + ix * 900000)}, ununterbrochen bis dahin (stündliche Ausgaben, höchstens ${Math.floor((ix - a) / 4)} h prüfbar)</div></div>`;
+  } else {
+    let pm = 0, im = a;
+    for (let i = a; i <= Math.min(b, pk.i); i += 4) { const f = fc(e, key, i, variant); if (f && f.p48 > pm) { pm = f.p48; im = i; } }
+    const st = status(pm);
+    t3 = `<div class="tile"><div class="k">Warnung (${w.name} nicht erreicht)</div><div class="v" style="font-size:17px">${st === "keine" ? "richtig: keine Warnung" : "Fehlalarm: " + st}</div><div class="s">höchste Wahrscheinlichkeit für ${w.name} in 48 h: ${pctTxt(pm)}${pm >= 0.05 ? ` (Ausgabe ${fdt(t0 + im * 900000)})` : ""}; Scheitel bei ${nf(100 * pk.rel, 0)} % von HQ10</div></div>`;
+  }
+  // Band
+  const cov = [24, 48, 96].map(L => { let n = 0, k = 0; for (let i = Math.max(a, pk.i - 192); i <= Math.min(b, pk.i); i += 12) { const f = fc(e, key, i, variant), o = obs[i + L]; if (!f || o == null) continue; n++; if (o >= f.lo[L - 1] && o <= f.hi[L - 1]) k++; } return [L / 4, n, k]; });
+  const t4 = `<div class="tile"><div class="k">Messung im 80-%-Band</div><div class="v" style="font-size:17px">${cov.map(c => c[1] ? `${c[0]} h: ${c[2]}/${c[1]}` : "").filter(Boolean).join(" · ") || "–"}</div><div class="s">Ausgaben alle 3 h in den 48 h bis zum Scheitel; Vorlauf 6, 12 und 24 h. Bei einem verlässlichen Band liegen etwa 8 von 10 darin.</div></div>`;
+  $("#kz").innerHTML = t1 + t2 + t3 + t4;
+}
+function ticksFor(t0, pkI, xa, xb) {      // Achse in Stunden zum Scheitel, beschriftet mit Uhrzeit und Datum
+  const out = [], span = xb - xa, st = span > 96 ? 24 : 12, tP = t0 + pkI * 900000, s = st * 3600000, first = Math.ceil((tP + xa * 3600000) / s) * s;
+  for (let t = first; t <= tP + xb * 3600000 + 1; t += s) { const d = fdt(t); out.push({ v: (t - tP) / 3600000, l: d.slice(7), l2: d.slice(0, 6) }); }
+  return out;
+}
+function drawMain() {
+  const e = ev(), key = state.key, variant = variantOf(e), dn = FC.DN[key], obs = e.q[dn], pk = e.peaks[key], [a, b] = issueRange(e), cm = state.unit === "cm", t0 = parse(e.t_start), i = state.i;
+  const cv = q => q == null ? null : cm ? wOf(key, q) : q, fmt = v => v == null ? "–" : cm ? nf(Math.round(v), 0) + " cm" : qf(v) + " m³/s";
+  const X = k => (k - pk.i) / 4, n = obs.length, xa = X(Math.max(0, a - 96)), xb = X(n - 1);
+  $("#issue").value = i;
+  const f = fc(e, key, i, variant);
+  $("#issue-l").innerHTML = `${fdt(t0 + i * 900000)} <small style="color:var(--ink2)">(${sg((i - pk.i) / 4, (i - pk.i) % 4 ? 2 : 0)} h zum Scheitel)</small>` +
+    (f && f.storm != null ? ` <span class="pill ${f.storm ? "storm" : ""}" title="Modellsatz zur Ausgabezeit: Starkregensatz, wenn Mai–September und in den letzten 48 h mindestens 4 mm in einer Stunde im Gebiet gefallen sind">${f.storm ? "Starkregensatz" : "Wintersatz"}</span>` : "") + (f && f.heavy ? ` <span class="pill storm">Starkregenlage</span>` : "");
+  const lines = [], bands = [];
+  if (state.fan) for (let k = pk.i - Math.floor((pk.i - a) / state.fan) * state.fan; k <= Math.min(b, pk.i + 24); k += state.fan) {
+    if (k === i) continue;
+    const g = fc(e, key, k, variant); if (!g) continue;
+    lines.push({ pts: [[X(k), cv(obs[k])], ...Array.from(g.med, (v, L) => [X(k + L + 1), cv(v)])].filter(p => p[0] <= xb), col: "var(--c-run)", thin: true });
+  }
+  if (f) {
+    const xs = L => X(i + L + 1);
+    bands.push({ hi: Array.from(f.hi, (v, L) => [xs(L), cv(v)]).filter(p => p[0] <= xb), lo: Array.from(f.lo, (v, L) => [xs(L), cv(v)]).filter(p => p[0] <= xb), col: "var(--c-full)", op: .18 });
+    lines.push({ pts: [[X(i), cv(obs[i])], ...Array.from(f.med, (v, L) => [xs(L), cv(v)])].filter(p => p[0] <= xb), col: "var(--c-full)" });
+  }
+  const op = []; for (let k = Math.max(0, a - 96); k < n; k++) if (obs[k] != null) op.push([X(k), cv(obs[k])]);
+  lines.push({ pts: op, col: "var(--c-obs)" });
+  const ths = thresholdsOf(key).map(t => ({ ...t, y: cm ? t.w : t.q }));
+  let ymax = -1e9, ymin = 1e9; lines.forEach(l => l.pts.forEach(p => { if (p[1] != null) { ymax = Math.max(ymax, p[1]); ymin = Math.min(ymin, p[1]); } }));
+  if (f) Array.from(f.hi).forEach((v, L) => { if (X(i + L + 1) <= xb) ymax = Math.max(ymax, cv(v)); });
+  const nx = ths.find(t => t.y > ymax); if (nx && nx.y < ymax * 1.25) ymax = nx.y;
+  const yt = niceTicks(cm ? Math.max(0, ymin - 0.08 * (ymax - ymin + 10)) : 0, ymax * 1.04, 5), Y0 = yt[0], Y1 = yt[yt.length - 1];
+  const clip = l => ({ ...l, pts: l.pts.map(p => [p[0], p[1] == null ? null : Math.max(Y0, Math.min(Y1, p[1]))]) });
+  plot($("#ch"), { x: { min: xa, max: xb, ticks: ticksFor(t0, pk.i, xa, xb) }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
+    hlines: ths.map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: !t.warn, label: `${t.name} ${cm ? nf(t.w, 0) + " cm" : qf(t.q) + " m³/s"}` })),
+    bands: bands.map(bd => ({ ...bd, hi: bd.hi.map(p => [p[0], Math.min(Y1, p[1])]), lo: bd.lo.map(p => [p[0], Math.max(Y0, p[1])]) })), lines: lines.map(clip),
+    vlines: [{ x: X(i), col: "var(--c-full)", dash: false, label: "Ausgabe" }, { x: 0, label: "Scheitel" }],
+    tip: x => { const k = Math.round(x * 4) + pk.i, rows = [];
+      if (obs[k] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cv(obs[k])) });
+      if (f && k > i && k <= i + H) { const L = k - i - 1; rows.push({ col: "var(--c-full)", name: "Vorhersage", val: fmt(cv(f.med[L])) }, { col: "var(--c-full)", name: "80 %", val: `${fmt(cv(f.lo[L]))} – ${fmt(cv(f.hi[L]))}` }); }
+      return { t: fdt(t0 + k * 900000) + ` · ${sg((k - pk.i) / 4, 1)} h`, x: X(k), rows }; } }, 300);
+  $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage zur gewählten Ausgabezeit (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>80 % der Fälle</span>` +
+    (state.fan ? `<span><i class="thin" style="--col:var(--c-run)"></i>Vorhersagen alle ${state.fan / 4} h</span>` : "") + (f ? "" : `<span style="color:var(--th3)">Zu dieser Ausgabezeit fehlen Messwerte: keine Vorhersage</span>`);
+  // Regen im Einzugsgebiet (flächengewichtet über die Gebiete der Kette), Stundensummen
+  const el = $("#ch-r");
+  if (!e.rain) { el.innerHTML = `<p class="note">Für dieses Hochwasser gibt es keinen Stundenregen (vor 2004).</p>`; }
+  else {
+    const ks = FC.chain(key).filter(k => e.p[k]), at = ks.reduce((s, k) => s + D.area[k], 0), bars = [];
+    let rmax = 1;
+    for (let k = Math.ceil((Math.max(0, a - 96) + 1) / 4) * 4; k < n; k += 4) {
+      let v = 0; ks.forEach(g => { let s = 0; for (let j = k - 3; j <= k; j++) s += e.p[g][j + LEAD] || 0; v += D.area[g] / at * s / 4; });
+      bars.push({ x: X(k) - 1, w: 1, y: v, col: k <= i ? "var(--c-rain)" : "var(--c-rainfc)" }); rmax = Math.max(rmax, v);
+    }
+    const yr = niceTicks(0, rmax, 3);
+    plot(el, { x: { min: xa, max: xb, ticks: ticksFor(t0, pk.i, xa, xb) }, y: { min: 0, max: yr[yr.length - 1], ticks: yr, label: "Regen (mm/h)" }, bars, lines: [], vlines: [{ x: X(i), col: "var(--c-full)", dash: false }],
+      tip: x => { const bk = bars.find(q => x >= q.x && x < q.x + 1); return bk ? { t: fdt(t0 + (Math.round((bk.x + 1) * 4) + pk.i) * 900000), x: bk.x + 0.5, rows: [{ col: bk.col, name: "Gebietsregen", val: nf(bk.y, 1) + " mm" }] } : null; } }, 130);
+  }
+  document.querySelectorAll("#evo tr.pick").forEach(tr => tr.classList.toggle("cur", +tr.dataset.i === i));
+}
+function drawEvo() {
+  const e = ev(), key = state.key, variant = variantOf(e), dn = FC.DN[key], obs = e.q[dn], pk = e.peaks[key], [a, b] = issueRange(e), cm = state.unit === "cm", t0 = parse(e.t_start), w = warnOf(key);
+  const fmt = q => cm ? nf(Math.round(wOf(key, q)), 0) + " cm" : qf(q) + " m³/s";
+  const rows = [48, 36, 24, 18, 12, 9, 6, 3, 1, 0].map(h => {
+    const i = pk.i - 4 * h; if (i < a || i > b) return "";
+    const f = fc(e, key, i, variant);
+    if (!f) return `<tr><td>${fdt(t0 + i * 900000)}</td><td>${h} h</td><td colspan="6" style="text-align:left;color:var(--muted)">keine Vorhersage (Messwerte fehlen)</td></tr>`;
+    const mx = Math.max(f.mx, obs[i]), hiMx = Math.max(...f.hi), loMx = Math.max(Math.max(...f.lo), obs[i]), late = f.amx >= H - 4;
+    const dv = cm ? wOf(key, mx) - wOf(key, pk.q) : mx - pk.q, tErr = (i + f.amx - pk.i) / 4, st = status(f.p48), inside = pk.q >= loMx && pk.q <= hiMx;
+    return `<tr class="pick ${i === state.i ? "cur" : ""}" data-i="${i}"><td>${fdt(t0 + i * 900000)}</td><td>${h} h</td><td>${fmt(obs[i])}</td><td><b>${fmt(mx)}</b> <small class="sub">80 %: ${fmt(loMx)} – ${fmt(hiMx)}</small></td>` +
+      `<td style="${Math.abs(mx / pk.q - 1) > 0.2 ? "color:var(--th3)" : ""}">${sg(dv, cm ? 0 : 1)} ${cm ? "cm" : "m³/s"} <small class="sub">${nf(100 * mx / pk.q, 0)} % · Scheitel ${inside ? "im" : "außerhalb"} Band</small></td>` +
+      `<td>${f.mx <= obs[i] ? "–" : late ? "steigt am Ende noch" : sg(tErr, 1) + " h"}</td><td class="p" style="background:color-mix(in srgb, var(--c-full) ${Math.round(Math.min(f.p48, 1) * 55)}%, transparent)">${pctTxt(f.p48)}<small>${st === "keine" ? "" : st}</small></td>` +
+      `<td>${f.storm == null ? "–" : f.storm ? "Starkregen" : "Winter"}</td></tr>`;
+  }).join("");
+  $("#evo").innerHTML = `<table><thead><tr><th>Ausgabe</th><th>vor dem Scheitel</th><th>Stand</th><th>Höchststand vorhergesagt</th><th>gegen gemessen (${fmt(pk.q)})</th><th title="vorhergesagter Zeitpunkt des Höchststands minus gemessener Scheitel">Zeitfehler</th><th>${w.name} in 48 h</th><th>Modellsatz</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("#evo").querySelectorAll("tr.pick").forEach(tr => tr.onclick = () => setIssue(+tr.dataset.i));
+  $("#evo-note").textContent = "Zeile anklicken, um die Vorhersage dieser Ausgabezeit oben zu sehen. Rot: Höchststand mehr als 20 % neben dem gemessenen Scheitel.";
+}
+
+/* ---------- 3 Überblick: Scheitelverhältnis je Ereignis und Pegel ---------- */
+let mxRun = 0;
+function drawMatrix(run) {
+  segRadio("#seg-lead", "lead", [[24, "24 h vorher"], [12, "12 h vorher"], [6, "6 h vorher"], [3, "3 h vorher"]], state.lead, v => { state.lead = +v; save(); drawMatrix(false); });
+  const list = filtered(), my = ++mxRun;
+  $("#mx-go").onclick = () => drawMatrix(true);
+  if (!run) { $("#mx").innerHTML = ""; $("#mx-state").textContent = `${list.length} Hochwasser der Auswahl oben, ${state.variant === "perfekt" ? "gemessener Regen als Vorhersage" : "Regen bis zur Ausgabezeit"} (vor 2004 ohne Regen)`; $("#mx-note").textContent = ""; return; }
+  const res = [], cell = r => r == null ? `<td class="h" style="color:var(--muted)">·</td>` : `<td class="h" style="background:color-mix(in srgb, ${r < 1 ? "var(--th2)" : "var(--c-full)"} ${Math.round(Math.min(Math.abs(r - 1) / 0.6, 1) * 60)}%, transparent)">${nf(100 * r, 0)}</td>`;
+  const med = v => { const s = v.filter(x => x != null).sort((p, q) => p - q); return s.length ? (s[(s.length - 1) >> 1] + s[s.length >> 1]) / 2 : null; };
+  const render = () => {
+    const kl = k => res.map(r => r.v[k]).filter(x => x != null);
+    $("#mx").innerHTML = `<table><thead><tr><th>Scheitel</th><th style="text-align:left">Art</th>${ORDER.map(k => `<th class="h" title="${FC.DN[k]}">${SHORT[k]}</th>`).join("")}</tr></thead><tbody>` +
+      `<tr style="font-weight:650"><td>Median</td><td style="text-align:left">${res.length} Hochwasser</td>${ORDER.map(k => cell(med(kl(k)))).join("")}</tr>` +
+      [["Starkregen", r => r.e.art === "Starkregen"], ["Winter / Dauerregen", r => r.e.art.startsWith("Winter")], ["ohne Regendaten", r => !r.e.rain]].map(([nm, fn]) => { const x = res.filter(fn); return x.length ? `<tr style="color:var(--ink2)"><td>Median</td><td style="text-align:left">${nm} (${x.length})</td>${ORDER.map(k => cell(med(x.map(r => r.v[k])))).join("")}</tr>` : ""; }).join("") +
+      res.map(r => `<tr class="pick" data-id="${r.e.id}"><td>${fdate(parse(r.e.t_peak))}</td><td style="text-align:left"><span class="pill ${r.e.art === "Starkregen" ? "storm" : ""}">${esc(r.e.art)}</span></td>${ORDER.map(k => cell(r.v[k])).join("")}</tr>`).join("") + `</tbody></table>`;
+    $("#mx").querySelectorAll("tr.pick").forEach(tr => tr.onclick = () => { state.id = tr.dataset.id; state.i = null; save(); drawEvents(); draw(); $("#ttl").scrollIntoView({ behavior: "smooth" }); });
+  };
+  let n = 0;
+  const step = () => {
+    if (my !== mxRun) return;
+    const e = list[n++], variant = variantOf(e), [a, b] = issueRange(e), v = {};
+    ORDER.forEach(k => { const pk = e.peaks[k]; if (!pk || pk.rel < 0.15) { v[k] = null; return; } const i = pk.i - 4 * state.lead; const f = i >= a && i <= b ? fc(e, k, i, variant) : null; v[k] = f ? Math.max(f.mx, e.q[FC.DN[k]][i]) / pk.q : null; });
+    res.push({ e, v });
+    $("#mx-state").textContent = `${n} von ${list.length} gerechnet`;
+    if (n < list.length) { if (n % 4 === 0) render(); setTimeout(step, 0); }
+    else { render(); $("#mx-state").textContent = ""; $("#mx-note").textContent = `Höchstwert der Vorhersage in Prozent des gemessenen Scheitels, Ausgabe ${state.lead} h vor dem Scheitel des jeweiligen Pegels; orange = zu niedrig, blau = zu hoch. Pegel, an denen das Hochwasser unter 15 % von HQ10 blieb, sind ausgelassen. Zeile anklicken öffnet das Hochwasser.`; }
+  };
+  if (list.length) step();
+}
+function drawCv() {
+  const VN = { pers: "Persistenz (Abfluss bleibt)", kette: "Kette ohne Regen", kette_regen: "Kette, Regen bis jetzt", kette_ideal: "Kette, gemessener Regen als Vorhersage" };
+  const SN = { cv_2004_2022: "alle Hochwasser 2004–2022", cv_starkregen: "nur Starkregen-Hochwasser", alt_1989_2003: "Hochwasser 1989–2003 (ohne Regen)" };
+  let h = "";
+  Object.keys(SN).forEach(set => {
+    const rows = D.peak.filter(r => r.set === set); if (!rows.length) return;
+    h += `<table style="margin-top:8px"><thead><tr><th>${SN[set]}</th><th style="text-align:left">Variante</th>${[24, 12, 6, 3].map(x => `<th>${x} h vorher</th>`).join("")}<th>Ereignisse</th></tr></thead><tbody>`;
+    ORDER.forEach(k => Object.keys(VN).forEach(v => { const r = rows.filter(x => x.target === k && x.variant === v); if (!r.length) return;
+      h += `<tr><td>${FC.DN[k]}</td><td style="text-align:left">${VN[v]}</td>${[24, 12, 6, 3].map(b => { const x = r.find(y => y.before_h === b); return x ? `<td>${nf(100 * x.ratio_med, 0)} % <small class="sub">±20 %: ${nf(100 * x.within20, 0)} %</small></td>` : "<td>–</td>"; }).join("")}<td>${r[0].events}</td></tr>`; }));
+    h += `</tbody></table>`;
+  });
+  $("#cv").innerHTML = h;
+}
+function theme() {
+  const b = $("#theme"), order = [null, "light", "dark"], names = { null: "automatisch", light: "hell", dark: "dunkel" };
+  let c = null; try { c = localStorage.getItem("theme"); } catch (e) {}
+  if (c !== "light" && c !== "dark") c = null;
+  const apply = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; b.textContent = "Darstellung: " + names[t]; };
+  apply(c);
+  b.onclick = () => { c = order[(order.indexOf(c) + 1) % 3]; apply(c); try { if (c) localStorage.setItem("theme", c); else localStorage.removeItem("theme"); } catch (e) {} draw(); };
+}
+function nav() {                                        // Verweise auf die anderen Seiten des Containers, soweit vorhanden
+  const links = [["live.html", "Live-Vorhersage"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv der Live-Ausgaben"]], box = $("#nav");
+  if (location.protocol.startsWith("http")) links.forEach(([u, t]) => fetch(u, { method: "HEAD" }).then(r => { if (r.ok) box.insertAdjacentHTML("beforeend", `<a href="${u}">${t}</a>`); }).catch(() => {}));
+}
+$("#stand").textContent = `${D.events.length} Hochwasser, davon ${D.events.filter(e => e.rain).length} mit Stundenregen. Stand der Modelle: ${D.stand}.`;
+if (!EV[state.id]) state.id = null;
+theme(); nav(); drawEvents(); draw(); drawMatrix(false); drawCv();
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(drawMain, 150); });
+</script>
+</body>
+</html>

@@ -13,6 +13,7 @@ services:
     volumes:
       - hobbyflood_live:/app/data/live       # Rohdaten jedes Abrufs
       - hobbyflood_archiv:/app/gui/archiv    # jede Ausgabe als HTML
+      # - ./seiten:/app/seiten:ro            # optional: eval.html (Vorhersage-Prüfung) und routing_map.html aus diesem Ordner mit ausliefern
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/live.html', timeout=5)"]
       interval: 5m
