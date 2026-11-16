@@ -94,6 +94,7 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
 NB_KM = 30.0                                                     # Versatz der Nachbarschaftsläufe
 _D = 0.7071
 NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -1), "SW": (-_D, -_D), "W": (-1, 0), "NW": (-_D, _D)}   # (Ost, Nord)
+HOLD_H = 12                                                      # Haltezeit einer Vorwarnung oder Warnung in Stunden
 RUC_MAX_H = 30.0                                                 # längste glaubhafte Reichweite von ICON-D2-RUC ab jetzt (Läufe bis 27 h)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
 
@@ -411,7 +412,7 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
     return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H)
 
 
-def build(raw: Path, out_html: Path) -> dict:
+def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     t_start = time.time()
     hv = read_hvz(raw)
     obs_st, last_st = station_obs(raw)
@@ -422,6 +423,12 @@ def build(raw: Path, out_html: Path) -> dict:
     rc_all = rc
     U = json.loads((HERE / "data" / "uncert_tables.json").read_text(encoding="utf-8"))
     models = C.from_json(json.loads((HERE / "data" / "chain_models.json").read_text(encoding="utf-8"))["sets"]["alle"])
+    hold = None
+    if hold_file is not None:                                  # Warnstatus der letzten Ausgaben (nur im laufenden Betrieb, nicht beim Nachrechnen alter Rohdaten)
+        try:
+            hold = json.loads(hold_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            hold = {}
     # Niveaufaktor je Pegel (niveau.py): Die Kette ist an den Abflüssen bis 2021 angepasst; seit dem Wechsel der Wasserstand-Abfluss-Beziehung
     # (Prümzurlay Januar 2022, Nims) zeigt der Pegel bei gleichem Zufluss ein anderes Niveau. Der Faktor multipliziert die Simulation vor der Fehlerkorrektur.
     nv_path = HERE / "data" / "niveau.json"
@@ -563,6 +570,16 @@ def build(raw: Path, out_html: Path) -> dict:
         wstat = "über" if wt["now"] else "Warnung" if p48 >= UN.WARN_LEVELS[1] else "möglich" if p48 >= UN.WARN_LEVELS[0] else "keine"
         warn = dict(id=wid, name=wt["name"], w=wt["w"], q=wt["q"], status=wstat, p48=None if wt["now"] else wt["p"][3],
                     ab10=wt.get("ab10"), ab50=wt.get("ab50"))
+        # Haltezeit: Eine Vorwarnung oder Warnung bleibt HOLD_H Stunden stehen, auch wenn die Wahrscheinlichkeit zwischendurch absackt
+        # (Wiersdorf Juli 2021: eine Stunde vor dem Überschreiten 15 %, weil der Stausee die Welle zurückhielt)
+        if hold is not None:
+            rank = {"keine": 0, "möglich": 1, "Warnung": 2, "über": 3}
+            prev = [(pd.Timestamp(a), b) for a, b in hold.get(target, []) if t0 - pd.Timedelta(hours=HOLD_H) <= pd.Timestamp(a) < t0 and b in ("möglich", "Warnung")]
+            if prev and wstat in ("keine", "möglich"):
+                top = max(prev, key=lambda x: (rank[x[1]], x[0]))
+                if rank[top[1]] > rank[wstat]:
+                    warn.update(status=top[1], gehalten=dict(seit=str(top[0]), roh=wstat, stunden=HOLD_H))
+            hold[target] = [[a, b] for a, b in hold.get(target, []) if pd.Timestamp(a) >= t0 - pd.Timedelta(hours=2 * HOLD_H) and pd.Timestamp(a) != t0] + [[str(t0), wstat]]
         wq = lambda q: [round(float(x), 1) for x in RT.w_of_q(rcv, np.asarray(q))]            # noqa: E731
         hist0 = i0 - 72 * 4
         obs_hist = Qn[dn][hist0:i0 + 1]
@@ -630,6 +647,8 @@ def build(raw: Path, out_html: Path) -> dict:
     html = tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False))
     out_html.parent.mkdir(parents=True, exist_ok=True)
     out_html.write_text(html, encoding="utf-8")
+    if hold_file is not None:
+        hold_file.write_text(json.dumps(hold, ensure_ascii=False), encoding="utf-8")
     print(f"{out_html} ({out_html.stat().st_size / 1024:.0f} kB, Ausgabe {t0} MEZ, {len(p_runs)} Läufe, {time.time() - t_start:.0f} s)")
     return data
 
@@ -738,4 +757,5 @@ if __name__ == "__main__":
     if a.cmd in ("all", "fetch"):
         raw = fetch()
     if a.cmd in ("all", "build"):
-        build(Path(a.raw) if a.raw else (raw if a.cmd == "all" else latest_raw()), Path(a.out))
+        build(Path(a.raw) if a.raw else (raw if a.cmd == "all" else latest_raw()), Path(a.out),
+              hold_file=HERE / "data" / "live" / "warnstatus.json" if a.cmd == "all" else None)

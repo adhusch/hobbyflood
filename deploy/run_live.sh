@@ -18,6 +18,7 @@ while true; do
   if python live.py --out gui/live.tmp.html; then
     mv gui/live.tmp.html gui/live.html
     cp gui/live.html "gui/archiv/live_${ts}.html"
+    python live_eval.py --archiv gui/archiv --out gui/auswertung.html || echo "[$ts] Auswertung fehlgeschlagen" >&2   # archivierte Ausgaben gegen die Messung
     echo "[$ts] Lauf fertig"
   else
     echo "[$ts] Lauf fehlgeschlagen, alte Seite bleibt stehen" >&2
