@@ -672,4 +672,17 @@ Prüfung an der Kette (`day_rain_check.py`, kreuzvalidierte Modelle unverändert
 | Starkregen-Hochwasser (148), Scheitel 24 / 12 / 6 h vorher | 0,66 / 0,68 / 0,74 | 0,60 / 0,66 / 0,74 |
 | … Fehler der Scheitelzeit, 12 h vorher | 2,6 h | 4,5 h |
 
-Für Winterhochwasser ersetzt dieser Regen den Stundenregen fast ohne Verlust, für Starkregen nicht. Damit lassen sich die Winterhochwasser vor 2004 mit Regen rechnen (`PRUEM_RAIN=tag`). Mit dem Modell aus 2004–2022 und dem Ersatzregen als Vorhersage, Scheitel 24 h vorher: Januar 2003 Prümzurlay 0,98, Alsdorf-Oberecken 0,87, Seffern 1,05; Dezember 1993 Prümzurlay 0,96, Seffern 1,70; Januar 1995 Prümzurlay 0,75; Januar 1993 Prümzurlay 0,48; Dezember 1991 Prümzurlay 0,39. Die zu niedrigen Fälle 1991 und 1995 hatten Schneeschmelze (Schneehöhen in den Tageswerten); das Modell kennt keinen Schnee. Die Daten liegen nicht im Repository (`data/tag/`, mit dem Browser geladen).
+Für Winterhochwasser ersetzt dieser Regen den Stundenregen fast ohne Verlust, für Starkregen nicht. Damit lassen sich die Winterhochwasser vor 2004 mit Regen rechnen (`PRUEM_RAIN=tag`). Mit dem Modell aus 2004–2022 und dem Ersatzregen als Vorhersage, Höchstwert der Kette im Verhältnis zum gemessenen Scheitel 24 h vorher:
+
+| Pegel | Dez. 1991 | Jan. 1993 | Dez. 1993 | Jan. 1995 | Jan. 2003 |
+|---|---|---|---|---|---|
+| Prüm 2 | 0,26 | 0,62 | 0,73 | 0,68 | 0,77 |
+| Echtershausen | 0,38 | 0,53 | 0,91 | 0,72 | 0,78 |
+| Wiersdorf | 0,27 | 0,47 | 0,90 | 0,64 | 1,08 |
+| Sinspelt | 0,27 | 0,20 | 0,72 | 0,42 | 0,66 |
+| Prümzurlay | 0,39 | 0,48 | 0,96 | 0,75 | 0,98 |
+| Giesdorf | 0,36 | 0,69 | 1,07 | 0,64 | 0,91 |
+| Seffern | 0,26 | 0,40 | 1,70 | 0,74 | 1,05 |
+| Alsdorf-Oberecken | 0,40 | 0,47 | 1,40 | 0,74 | 1,30 |
+
+Dezember 1993 und Januar 2003 trifft die Kette an der Prüm gut; an der Nims liegt sie zu hoch (2003 mit Radarregen noch höher: Giesdorf 1,44, Seffern 1,55, Alsdorf-Oberecken 1,65). Dezember 1991 und Januar 1995 liegen weit zu niedrig; beide hatten Schneeschmelze (Schneehöhen in den Tageswerten: 20 bzw. 18 cm vor dem Scheitel), die das Modell nicht kennt. Januar 1993 liegt ebenfalls zu niedrig, ohne Schnee; die Ursache ist offen. Wiersdorf ist in diesen Hochwassern teils abgeschnitten oder vom Stausee geregelt. Die Daten liegen nicht im Repository (`data/tag/`, mit dem Browser geladen).
