@@ -4,8 +4,8 @@ Stand 16.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Vor dem Sturm am 17./18.11.2026
 
-- [ ] **Auswertung des Live-Tests:** Skript, das nach dem Ereignis alle archivierten Ausgaben gegen die Messung stellt, getrennt nach Kette, ICON-RUC, Nachbarschaft, Regenschwellen und Vorhersage der HVZ; dabei den Niveaufaktor in Alsdorf-Oberecken (0,76) und Prümzurlay (1,16) prüfen.
-- [ ] **Haltezeit für Warnungen:** Eine Warnung bleibt 12 h stehen, auch wenn die Wahrscheinlichkeit kurz absackt (Fall Wiersdorf Juli 2021).
+- [x] **Auswertung des Live-Tests:** `live_eval.py` stellt nach jedem Lauf alle archivierten Ausgaben gegen die Messung (`auswertung.html`): Fehler nach Vorlauf für Kette, ICON-D2-Hauptlauf, ICON-RUC, HVZ und „bleibt wie jetzt“, Messung im 80-%-Band, je Ausgabe Höchststand und Warnstatus. Nach dem Sturm ansehen, dabei den Niveaufaktor in Alsdorf-Oberecken (0,76) und Prümzurlay (1,16) prüfen.
+- [x] **Haltezeit für Warnungen:** Vorwarnung und Warnung bleiben 12 h stehen (`live.HOLD_H`). Offen: Wirkung auf die Fehlalarme in der historischen Auswertung nachrechnen.
 
 ## Modell
 

@@ -516,7 +516,7 @@ function theme() {
   b.onclick = () => { c = order[(order.indexOf(c) + 1) % 3]; apply(c); try { if (c) localStorage.setItem("theme", c); else localStorage.removeItem("theme"); } catch (e) {} draw(); };
 }
 function nav() {                                        // Verweise auf die anderen Seiten des Containers, soweit vorhanden
-  const links = [["live.html", "Live-Vorhersage"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv der Live-Ausgaben"]], box = $("#nav");
+  const links = [["live.html", "Live-Vorhersage"], ["auswertung.html", "Auswertung der Live-Vorhersagen"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv der Live-Ausgaben"]], box = $("#nav");
   if (location.protocol.startsWith("http")) links.forEach(([u, t]) => fetch(u, { method: "HEAD" }).then(r => { if (r.ok) box.insertAdjacentHTML("beforeend", `<a href="${u}">${t}</a>`); }).catch(() => {}));
 }
 $("#stand").textContent = `${D.events.length} Hochwasser, davon ${D.events.filter(e => e.rain).length} mit Stundenregen. Stand der Modelle: ${D.stand}.`;

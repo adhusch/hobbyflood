@@ -651,3 +651,9 @@ Bisher ist der Gebietsregen der abstandsgewichtete Stationswert am Gebietsmittel
 | alle Hochwasser, Scheitel 12 h | 0,86 | 0,87 |
 
 Der Verlauf passt bei Starkregen etwas besser (NSE), die Scheitel liegen aber tiefer, am deutlichsten bei den HQ10-Hochwassern. Vermutlich unterschätzt das Radar gerade die stärksten Regen (Dämpfung), und das Muster trägt diese Unterschätzung in das kombinierte Feld. Der Betrieb bleibt beim Stationsregen.
+
+## Auswertung des Live-Betriebs und Haltezeit (16.11.2026)
+
+`live_eval.py` liest alle archivierten Ausgaben (`gui/archiv/live_*.html`, jede enthält ihre Daten) und stellt sie gegen die inzwischen gemessenen Wasserstände: Fehler nach Vorlauf (3 bis 48 h) für die Kette, den ICON-D2-Hauptlauf, ICON-RUC, die Vorhersage der HVZ und „bleibt wie jetzt“, Anteil der Messungen im 80-%-Band, je Ausgabe vorhergesagter und gemessener Höchststand und Warnstatus. Der Container baut die Seite nach jedem Lauf neu (`auswertung.html`). Geprüft nur mechanisch an vervielfältigten Testausgaben; echte Zahlen gibt es erst aus dem laufenden Betrieb.
+
+Haltezeit: Eine Vorwarnung oder Warnung bleibt 12 h stehen, auch wenn die Wahrscheinlichkeit zwischendurch unter die Schwelle fällt (`live.HOLD_H`, Zustand in `data/live/warnstatus.json`). Die Trefferstatistik der Warnungen ist weiterhin ohne Haltezeit gerechnet.
