@@ -246,3 +246,6 @@ _routing_core.so
 
 # fertig gebaute Zusatzseiten mit Messdaten (siehe seiten/README.md)
 seiten/*.html
+
+# Tageswerte DWD und ERA5-Stundenwerte (mit dem Browser geladen, siehe day_rain.py)
+data/tag/

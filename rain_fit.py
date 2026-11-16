@@ -139,6 +139,8 @@ def rain_frames(Qindex: pd.DatetimeIndex, shift_h: float = 1.0, extra: dict | No
             h = r.where(r.notna(), hs)
             both = r.notna() | hs.notna()
             info[k]["radar_share"] = round(float(r.notna()[both].mean()), 4)
+        if source == "tag":                                  # Tagessummen der Stationen mit Stundenverlauf aus ERA5 (day_rain.py), ganzer Zeitraum
+            h = pd.read_csv(HERE / "data" / "tag" / "areal_tagera.csv", index_col=0, parse_dates=True)[k]
         if source == "merge":                                # Menge von den Stationen, Muster vom Radar (grid_rain.py); wo es fehlt, der Stationsregen
             mg = _merge()[k]
             idx = pd.date_range(min(h.index.min(), mg.index.min()), max(h.index.max(), mg.index.max()), freq="1h")

@@ -657,3 +657,19 @@ Der Verlauf passt bei Starkregen etwas besser (NSE), die Scheitel liegen aber ti
 `live_eval.py` liest alle archivierten Ausgaben (`gui/archiv/live_*.html`, jede enthält ihre Daten) und stellt sie gegen die inzwischen gemessenen Wasserstände: Fehler nach Vorlauf (3 bis 48 h) für die Kette, den ICON-D2-Hauptlauf, ICON-RUC, die Vorhersage der HVZ und „bleibt wie jetzt“, Anteil der Messungen im 80-%-Band, je Ausgabe vorhergesagter und gemessener Höchststand und Warnstatus. Der Container baut die Seite nach jedem Lauf neu (`auswertung.html`). Geprüft nur mechanisch an vervielfältigten Testausgaben; echte Zahlen gibt es erst aus dem laufenden Betrieb.
 
 Haltezeit: Eine Vorwarnung oder Warnung bleibt 12 h stehen, auch wenn die Wahrscheinlichkeit zwischendurch unter die Schwelle fällt (`live.HOLD_H`, Zustand in `data/live/warnstatus.json`). Die Trefferstatistik der Warnungen ist weiterhin ohne Haltezeit gerechnet.
+
+## Stundenregen aus Tagessummen und ERA5 für die Jahre vor 2004 (16.11.2026)
+
+`day_rain.py` baut für 1988–2022 einen Stundenregen je Teilgebiet: die Menge aus den Tageswerten von 24 DWD-Stationen im und um das Gebiet (abstandsgewichtet am Gebietsmittelpunkt), der Stundenverlauf aus der Reanalyse ERA5 (Open-Meteo-Archiv, 0,25°). Die Zuordnung der Tageswerte (Datum D = 07 Uhr MEZ an D bis 07 Uhr am Folgetag) ist an den Stundenstationen nachgeprüft (Korrelation 1,00). Gegen den gemessenen Stundenregen 2004–2022: Summen +0,5 bis +4 %, Korrelation stündlich 0,51–0,58, über 6 h 0,82–0,85, über 24 h 0,95–0,96; über 3 h im Winter 0,84–0,87, im Sommer 0,63–0,68.
+
+Prüfung an der Kette (`day_rain_check.py`, kreuzvalidierte Modelle unverändert, einmal mit gemessenem Stundenregen, einmal mit dem Ersatzregen als bekannte Vorhersage):
+
+| | gemessener Stundenregen | Tagessummen + ERA5 |
+|---|---|---|
+| Winterhochwasser (1022), Scheitel 24 / 12 / 6 h vorher | 0,80 / 0,88 / 0,94 | 0,80 / 0,87 / 0,94 |
+| … innerhalb ±20 %, 12 h vorher | 64 % | 63 % |
+| … Fehler der Scheitelzeit (Median des Betrags), 12 h vorher | 2,25 h | 2,75 h |
+| Starkregen-Hochwasser (148), Scheitel 24 / 12 / 6 h vorher | 0,66 / 0,68 / 0,74 | 0,60 / 0,66 / 0,74 |
+| … Fehler der Scheitelzeit, 12 h vorher | 2,6 h | 4,5 h |
+
+Für Winterhochwasser ersetzt dieser Regen den Stundenregen fast ohne Verlust, für Starkregen nicht. Damit lassen sich die Winterhochwasser vor 2004 mit Regen rechnen (`PRUEM_RAIN=tag`). Mit dem Modell aus 2004–2022 und dem Ersatzregen als Vorhersage, Scheitel 24 h vorher: Januar 2003 Prümzurlay 0,98, Alsdorf-Oberecken 0,87, Seffern 1,05; Dezember 1993 Prümzurlay 0,96, Seffern 1,70; Januar 1995 Prümzurlay 0,75; Januar 1993 Prümzurlay 0,48; Dezember 1991 Prümzurlay 0,39. Die zu niedrigen Fälle 1991 und 1995 hatten Schneeschmelze (Schneehöhen in den Tageswerten); das Modell kennt keinen Schnee. Die Daten liegen nicht im Repository (`data/tag/`, mit dem Browser geladen).
