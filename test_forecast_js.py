@@ -94,11 +94,12 @@ def main() -> None:
                     cases.append(dict(f=fl["id"], target=target, i=i, v=v))
                     if fl is floods[-1] and target in ("PZ", "AL"):                 # dasselbe mit Niveaufaktor (niveau.py)
                         cases.append(dict(f=fl["id"], target=target, i=i, v=v, nv={"PZ": 1.16, "AL": 0.76}))
+                        cases.append(dict(f=fl["id"], target=target, i=i, v=v, cf={"PZ": {"WI": 0.7, "SI": 1.3}, "AL": {"SE": 1.6}}))
     js = r"""
 const fs = require("fs"), FC = require(process.argv[1]);
 const M = JSON.parse(fs.readFileSync(process.argv[2])), FL = JSON.parse(fs.readFileSync(process.argv[3])), cases = JSON.parse(fs.readFileSync(0));
 FC.setConsts(M.consts);
-const out = cases.map(c => { const fl = FL.find(x => x.id === c.f); fl.niveau = c.nv || null; const S = FC.forecast(M.sets[fl.models], fl, c.target, c.i, c.v);
+const out = cases.map(c => { const fl = FL.find(x => x.id === c.f); fl.niveau = c.nv || null; fl.celer = c.cf || null; const S = FC.forecast(M.sets[fl.models], fl, c.target, c.i, c.v);
   return S ? Object.fromEntries(Object.entries(S).map(([k, a]) => [k, Array.from(a)])) : null; });
 process.stdout.write(JSON.stringify(out));
 """
@@ -111,8 +112,11 @@ process.stdout.write(JSON.stringify(out));
         fl = next(x for x in floods if x["id"] == c["f"])
         C.LEVEL.clear()
         C.LEVEL.update(c.get("nv") or {})
+        C.CELER.clear()
+        C.CELER.update(c.get("cf") or {})
         py = py_forecast(fl, sets[fl["models"]], c["target"], c["i"], c["v"])
         C.LEVEL.clear()
+        C.CELER.clear()
         ok_py = all(np.isfinite(v[:C.A + 1]).all() for v in py.values())
         if j is None:
             assert not ok_py, ("JS ohne Ergebnis, Python mit", c)
@@ -121,6 +125,16 @@ process.stdout.write(JSON.stringify(out));
             d = np.max(np.abs(np.array(a) - py[k]) / np.maximum(1.0, np.abs(py[k])))
             worst = max(worst, float(d))
             n += 1
+    # Faktor 1 muss exakt dasselbe ergeben wie kein Faktor
+    fl = floods[-1]
+    for v in ("kette", "kette_regen"):
+        if v not in C.NORAIN and not fl["rain"]:
+            continue
+        a = py_forecast(fl, sets[fl["models"]], "PZ", fl["i_peak"], v)
+        C.CELER.update({"PZ": {"WI": 1.0, "SI": 1.0}, "AL": {"SE": 1.0}})
+        b = py_forecast(fl, sets[fl["models"]], "PZ", fl["i_peak"], v)
+        C.CELER.clear()
+        assert all(np.array_equal(a[k], b[k], equal_nan=True) for k in a), "Faktor 1 ändert die Vorhersage"
     print(f"{len(cases)} Fälle, {n} Pegelreihen verglichen, größte relative Abweichung {worst:.2e}")
     assert worst < 1e-6, worst
     print("JavaScript-Vorhersage stimmt mit Python überein")

@@ -703,3 +703,11 @@ Die Messstellen sind ungeprüfte Rohdaten der Betreiber und weniger ausfallsiche
 - **Holsthum Prüm:** rund 100 m oberhalb der Enzmündung. Die Enz ist kleiner, Rückstau ist möglich, wenn die Enz viel früher und stärker steigt als die Prüm (Gewitter über der Enz). Im Oktober nicht zu sehen: Während die Enz stieg, blieb Holsthum Prüm bei 33 cm und sprang erst mit der Prümwelle.
 
 Alle anderen liegen mindestens 2,5 km oberhalb der nächsten nennenswerten Mündung, bei Rückstaulängen von grob 200 bis 600 m. Niedermehlen (Mehlenbach) liegt 3,3 km, Habscheid (Alfbach) 6,6 km und Enzen 7,3 km vor der Mündung. Örtlich können Brücken stauen (Bettingen, Neurath/Arzfeld und Nimsreuland sind Pegellatten an Brücken); das verfälscht die Höhe eher als den Zeitpunkt. Die Nims-Messstellen haben nur Ortskoordinaten, ihre Lage ist unsicherer.
+
+### Faktor auf die Wellengeschwindigkeit (vorbereitet, derzeit 1)
+
+Die Laufzeit im Routing ist L / c(Q) je Strecke. Eine physikalische Wellenlaufzeit hat nur Wiersdorf → Prümzurlay (24,3 km, 20 Speicher, c 1,4–1,5 m/s, 4,6–4,8 h); bei Prüm 2 → Echtershausen, Giesdorf → Seffern und Seffern → Alsdorf-Oberecken (1–2 Speicher, Verstärkung bis 5) ist c eher ein Formparameter, Sinspelt → Prümzurlay ist mit 2,9–4 m/s zu schnell für eine Welle, Echtershausen → Wiersdorf ist der Stausee.
+
+`chain_fc.CELER` (`{Unterlieger: {Oberlieger: f}}`, in der Seite `fl.celer`) multipliziert c(Q) einer Strecke mit f (Grenzen 0,5 bis 2). Leer oder 1 rechnet exakt wie bisher (im Test geprüft); die Laufzeit des gerouteten Anteils skaliert mit 1/f (Juli 2021, Wiersdorf-Anteil in Prümzurlay: 4,25 h bei f = 1, 6,25 h bei 0,7, 3,25 h bei 1,3). Gedacht ist f für die im Ereignis gemessene Laufzeit des Scheitels über die kommunalen Pegel (Wiersdorf → Brecht → Bettingen → Holsthum Prüm); noch nirgends gesetzt. Der Scheitel in Prümzurlay verschiebt sich dabei nicht einfach um dieselbe Zeit, weil Enz und Zwischengebiet mitwirken.
+
+`kommunal_lage.py` schreibt außerdem `data/kommunal_strecken.csv`: Fließstrecke jeder kommunalen Messstelle zu den Landespegeln flussab und Flächenanteil (zum Beispiel Kinzenburg → Echtershausen 20 km bei 80 %, Mauel → Echtershausen 11 km bei 92 %, Rittersdorf → Alsdorf-Oberecken 21,5 km bei 70 %).

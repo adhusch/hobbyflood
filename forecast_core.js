@@ -129,11 +129,15 @@ const FC = (() => {
     return out;
   }
 
-  function route(m, X, P) {
+  const UPC = Object.fromEntries(Object.entries(DN).map(([k, v]) => [v, k]));
+  const CELER_MIN = 0.5, CELER_MAX = 2.0;
+  function route(m, X, P, cf) {                          // cf: Faktor auf c(Q) je Oberlieger (Kürzel), wie chain_fc.CELER; fehlt = 1
     const T = (Object.values(X)[0] || P[m.lat[0].name].p).length - (Object.keys(X).length ? 0 : P[m.lat[0].name].lead);
     const y = new Float64Array(T).fill(m.c0);
     m.links.forEach(lk => {
-      const lq = lk.nodes_q.map(Math.log), c = cascade(X[lk.up], lk.n, lk.length_km, lq, lk.lc);
+      const f = Math.min(Math.max((cf && cf[UPC[lk.up]]) ?? 1, CELER_MIN), CELER_MAX);
+      const lc = f === 1 ? lk.lc : lk.lc.map(v => v + Math.log(f));
+      const lq = lk.nodes_q.map(Math.log), c = cascade(X[lk.up], lk.n, lk.length_km, lq, lc);
       for (let t = 0; t < T; t++) y[t] += lk.a * c[t];
     });
     if (P) (m.lat || []).forEach(lt => { const q = lateral(P[lt.name], lt); for (let t = 0; t < T; t++) y[t] += q[t]; });
@@ -209,7 +213,7 @@ const FC = (() => {
         });
         m = set[k][((NORAIN.has(variant) || k === "WI") ? "route_full" : "rain_full") + suffix];
         const P = m.lat && m.lat.length ? { [k]: rainWindow(fl, k, i, ideal) } : null;
-        sim = route(m, X, P);
+        sim = route(m, X, P, fl.celer && fl.celer[k]);
       }
       const lv = fl.niveau && fl.niveau[k];             // Niveaufaktor (niveau.py): heutige Wasserstand-Abfluss-Beziehung des Pegels
       if (lv) for (let t = 0; t < sim.length; t++) sim[t] *= lv;
