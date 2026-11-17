@@ -99,10 +99,10 @@ KOMMUNAL = [
     ("1034232050", "Habscheid", "Alfbach", "Nebenbach, mündet bei Pronsfeld"), ("1034232060", "Kinzenburg", "Prüm", "zwischen Prüm 2 und Echtershausen"),
     ("1034232070", "Mauel", "Prüm", "zwischen Prüm 2 und Echtershausen"), ("1034232080", "Merkeshausen", "Prüm", "kurz oberhalb Echtershausen"),
     ("1034232090", "Brecht", "Prüm", "unterhalb Wiersdorf"), ("1034232100", "Bettingen", "Prüm", "zwischen Wiersdorf und Prümzurlay"),
-    ("1034232110", "Holsthum Prüm", "Prüm", "oberhalb Prümzurlay, vor der Enzmündung"),
+    ("1034232110", "Holsthum Prüm", "Prüm", "rund 100 m oberhalb der Enzmündung; bei hoher Enz Rückstau möglich"),
     ("1034232120", "Neurath / Arzfeld", "Enz", "Oberlauf, oberhalb Sinspelt"), ("1034232130", "Neuerburg", "Enz", "oberhalb Sinspelt"),
     ("1034232140", "Sinspelt Gemeindehaus", "Enz", "bei Sinspelt"), ("1034232150", "Enzen", "Enz", "unterhalb Sinspelt"),
-    ("1034232160", "Holsthum Schloss", "Enz", "vor der Mündung in die Prüm"),
+    ("1034232160", "Holsthum Schloss", "Enz", "wenige Meter vor der Mündung; bei Hochwasser im Rückstau der Prüm, zeigt dann den Prümstand"),
     ("1034232240", "Rommersheim", "Nims", "oberhalb Giesdorf"), ("1034232250", "Nimsreuland", "Nims", "zwischen Giesdorf und Seffern"),
     ("1034232260", "Rittersdorf", "Nims", "zwischen Seffern und Alsdorf-Oberecken"), ("1034232270", "Dockendorf", "Nims", "oberhalb Alsdorf-Oberecken"),
 ]
