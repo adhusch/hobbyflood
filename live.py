@@ -57,11 +57,11 @@ UA = "pruem-hochwasser-live/1.0 (privat, Forschung)"
 
 
 # ------------------------------------------------------------------ Abruf
-def _get(url: str, tries: int = 3) -> bytes:
+def _get(url: str, tries: int = 3, timeout: float = 60) -> bytes:
     for k in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
         except Exception as e:                                    # noqa: BLE001
             if k == tries - 1:
@@ -91,12 +91,50 @@ def icon_urls(st: pd.DataFrame) -> dict[str, str]:
     }
 
 
+# Kommunale Messstellen im Einzugsgebiet (hochwasser.rlp.de, Typ "municipal"): nur Wasserstand, ungeprüfte Rohdaten der Betreiber, ohne Archiv.
+# Reihenfolge flussabwärts; lage = Einordnung zu den Landespegeln. Dazu der Seestand des Stausees Bitburg (Landesmessstelle).
+KOMMUNAL = [
+    ("1034232010", "Hermespand", "Prüm", "oberhalb Prüm 2"), ("1034232020", "Niederprüm", "Prüm", "unterhalb Prüm 2"),
+    ("1034232030", "Niedermehlen", "Mehlenbach", "Nebenbach, mündet unterhalb Prüm 2"), ("1034232040", "Pittenbach", "Prüm", "zwischen Prüm 2 und Echtershausen"),
+    ("1034232050", "Habscheid", "Alfbach", "Nebenbach, mündet bei Pronsfeld"), ("1034232060", "Kinzenburg", "Prüm", "zwischen Prüm 2 und Echtershausen"),
+    ("1034232070", "Mauel", "Prüm", "zwischen Prüm 2 und Echtershausen"), ("1034232080", "Merkeshausen", "Prüm", "kurz oberhalb Echtershausen"),
+    ("1034232090", "Brecht", "Prüm", "unterhalb Wiersdorf"), ("1034232100", "Bettingen", "Prüm", "zwischen Wiersdorf und Prümzurlay"),
+    ("1034232110", "Holsthum Prüm", "Prüm", "oberhalb Prümzurlay, vor der Enzmündung"),
+    ("1034232120", "Neurath / Arzfeld", "Enz", "Oberlauf, oberhalb Sinspelt"), ("1034232130", "Neuerburg", "Enz", "oberhalb Sinspelt"),
+    ("1034232140", "Sinspelt Gemeindehaus", "Enz", "bei Sinspelt"), ("1034232150", "Enzen", "Enz", "unterhalb Sinspelt"),
+    ("1034232160", "Holsthum Schloss", "Enz", "vor der Mündung in die Prüm"),
+    ("1034232240", "Rommersheim", "Nims", "oberhalb Giesdorf"), ("1034232250", "Nimsreuland", "Nims", "zwischen Giesdorf und Seffern"),
+    ("1034232260", "Rittersdorf", "Nims", "zwischen Seffern und Alsdorf-Oberecken"), ("1034232270", "Dockendorf", "Nims", "oberhalb Alsdorf-Oberecken"),
+]
+STAUSEE = "26280366"
 NB_KM = 30.0                                                     # Versatz der Nachbarschaftsläufe
 _D = 0.7071
 NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -1), "SW": (-_D, -_D), "W": (-1, 0), "NW": (-_D, _D)}   # (Ost, Nord)
 HOLD_H = 12                                                      # Haltezeit einer Vorwarnung oder Warnung in Stunden
 RUC_MAX_H = 30.0                                                 # längste glaubhafte Reichweite von ICON-D2-RUC ab jetzt (Läufe bis 27 h)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
+
+
+KOM_BUDGET_S = 90                                                 # höchstens so lange für alle kommunalen Messstellen zusammen
+
+
+def fetch_kommunal() -> dict:
+    """Kommunale Messstellen und Stausee: rein zusätzlich. Jeder Fehler (Netz, Zeitüberschreitung, kaputtes JSON) lässt nur die
+    betroffene Messstelle weg; nach KOM_BUDGET_S Sekunden wird abgebrochen, damit der Vorhersagelauf nie wartet."""
+    kom, t_start = {}, time.monotonic()
+    try:
+        for n in [x[0] for x in KOMMUNAL] + [STAUSEE]:
+            if time.monotonic() - t_start > KOM_BUDGET_S:
+                print("   kommunale Messstellen: Zeitbudget aufgebraucht, Rest übersprungen")
+                break
+            try:
+                kom[n] = json.loads(_get(f"https://www.hochwasser.rlp.de/api/v1/measurement-site/{n}", tries=1, timeout=10))
+            except Exception as e:                                # noqa: BLE001
+                print(f"   kommunal {n} fehlt: {e}")
+    except Exception as e:                                        # noqa: BLE001
+        print("   kommunale Messstellen übersprungen:", e)
+    print(f"   kommunale Messstellen und Stausee: {len(kom)} von {len(KOMMUNAL) + 1}")
+    return kom
 
 
 def fetch() -> Path:
@@ -107,6 +145,8 @@ def fetch() -> Path:
     hvz = dict(abgerufen_utc=now, quelle="https://www.hochwasser.rlp.de/api/v1/measurement-site/<nummer>", pegel={})
     for k, n in NUM.items():
         hvz["pegel"][n] = json.loads(_get(f"https://www.hochwasser.rlp.de/api/v1/measurement-site/{n}"))
+    (out / "hvz.json").write_text(json.dumps(hvz), encoding="utf-8")         # Landespegel sichern, bevor Zusatzdaten kommen
+    hvz["kommunal"] = fetch_kommunal()
     (out / "hvz.json").write_text(json.dumps(hvz), encoding="utf-8")
     st = station_table()
     base = "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/"
@@ -184,6 +224,55 @@ def read_hvz(raw: Path) -> dict:
                     rec[var + "_pred_time"] = str(_mez([pr["time"]])[0])
         out[k] = rec
     return out
+
+
+def read_kommunal(raw: Path, t0: pd.Timestamp) -> dict | None:
+    """Wie _read_kommunal, aber jeder Fehler ergibt None: die Seite entsteht immer, notfalls ohne kommunale Pegel."""
+    try:
+        return _read_kommunal(raw, t0)
+    except Exception as e:                                        # noqa: BLE001
+        print("   kommunale Messstellen nicht lesbar:", e)
+        return None
+
+
+def _read_kommunal(raw: Path, t0: pd.Timestamp) -> dict | None:
+    """Kommunale Messstellen und Seestand: Wasserstand jetzt, Änderung in 1, 3 und 24 h, Höchstwert der letzten 5 Tage, Stundenwerte der letzten 72 h."""
+    j = json.loads((raw / "hvz.json").read_text(encoding="utf-8")).get("kommunal")
+    if not isinstance(j, dict) or not j:
+        return None
+
+    def rec(n):
+        try:
+            return _rec(n)
+        except Exception as e:                                    # noqa: BLE001  eine kaputte Messstelle fällt einzeln weg
+            print(f"   kommunal {n} unbrauchbar: {e}")
+            return None
+
+    def _rec(n):
+        site = j.get(n) or {}
+        m = (site.get("W") or {}).get("measurements") or []
+        if not m:
+            return None
+        s = pd.Series([x["y"] for x in m], index=_mez([x["x"] for x in m]), dtype=float).sort_index().dropna()
+        s = s[s.index <= t0 + pd.Timedelta(minutes=30)]
+        s = s[(s > -1000) & (s < 100000)]                         # offensichtliche Fehlwerte
+        if not len(s) or s.index[-1] < t0 - pd.Timedelta(hours=3):
+            return None
+        last, tl = float(s.iloc[-1]), s.index[-1]
+
+        def ago(h):
+            x = s[s.index <= tl - pd.Timedelta(hours=h)]
+            return None if not len(x) or x.index[-1] < tl - pd.Timedelta(hours=h + 1) else round(last - float(x.iloc[-1]), 2)
+
+        hr = s[s.index >= tl - pd.Timedelta(hours=72)].resample("1h").last().dropna()
+        return dict(w=last, zeit=str(tl), d1=ago(1), d3=ago(3), d24=ago(24), max5=float(s.max()), min5=float(s.min()), reihe=[round(float(v), 2) for v in hr])
+
+    out = dict(pegel=[], stausee=rec(STAUSEE))
+    for n, name, river, lage in KOMMUNAL:
+        r = rec(n)
+        if r:
+            out["pegel"].append(dict(nr=n, name=name, gewaesser=river, lage=lage, **r))
+    return out if out["pegel"] or out["stausee"] else None
 
 
 def read_dwd_10min_now(path: Path) -> pd.Series:
@@ -640,7 +729,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     meta = dict(niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
-    data = dict(meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
+    data = dict(kommunal=read_kommunal(raw, t0), meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
                 verif=_verif_summary(), check=_check_summary(), warncheck=_warn_check())
     tpl = (HERE / "live_template.html").read_text(encoding="utf-8")
     tpl = tpl.replace("/*__FC_CORE__*/", (HERE / "forecast_core.js").read_text(encoding="utf-8"))

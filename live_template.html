@@ -156,6 +156,11 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   <details class="more" id="dt-wc"><summary>Wie hätte diese Warnung bei früheren Hochwassern abgeschnitten?</summary><div id="wc"></div></details>
   <details class="more" id="dt-how"><summary>Wie wird gerechnet, und wie verlässlich ist das?</summary><div id="how"></div></details>
 </section>
+<section class="panel" id="sec-kom" style="margin-top:14px" aria-label="Kommunale Pegel und Stausee">
+  <h2>Kommunale Pegel und Stausee Bitburg</h2>
+  <div class="tw" id="kom"></div>
+  <p class="note" id="note-kom"></p>
+</section>
 </div>
 <script>
 /*__FC_CORE__*/
@@ -531,7 +536,23 @@ function regenschwellen() {                                // Regenmenge bis zur
   const links = [["eval.html", "Vorhersage-Prüfung an historischen Hochwassern"], ["auswertung.html", "Auswertung der Live-Vorhersagen"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv"]], box = $("#nav");
   if (location.protocol.startsWith("http")) links.forEach(([u, t]) => fetch(u, { method: "HEAD" }).then(r => { if (r.ok) box.insertAdjacentHTML("beforeend", `<a href="${u}" style="color:var(--c-full)">${t}</a>`); }).catch(() => {}));
 })();
+function kommunal() {                                     // kommunale Messstellen: Wasserstand und Anstieg, als Frühzeichen an Oberläufen und Nebenbächen
+  const K = D.kommunal, sec = $("#sec-kom");
+  if (!K) { sec.style.display = "none"; return; }
+  const spark = (v, col) => { if (!v || v.length < 2) return ""; const lo = Math.min(...v), hi = Math.max(...v), W = 110, H = 22, sp = Math.max(hi - lo, 1e-6);
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf 72 h"><polyline fill="none" stroke="${col}" stroke-width="1.5" points="${v.map((y, i) => `${(i / (v.length - 1) * (W - 2) + 1).toFixed(1)},${(H - 2 - (y - lo) / sp * (H - 4)).toFixed(1)}`).join(" ")}"/></svg>`; };
+  const dd = (v, f = 1, d = 0) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + nf(Math.abs(v * f), d);
+  const hot = p => (p.d1 != null && p.d1 >= 5) || (p.d3 != null && p.d3 >= 10);
+  let h = `<table><thead><tr><th style="text-align:left">Messstelle</th><th style="text-align:left">Gewässer</th><th style="text-align:left">Lage</th><th>Wasserstand</th><th>1 h</th><th>3 h</th><th>24 h</th><th>Höchstwert 5 Tage</th><th>72 h</th></tr></thead><tbody>`;
+  K.pegel.forEach(p => { h += `<tr style="${hot(p) ? "font-weight:650" : ""}"><td style="text-align:left">${esc(p.name)}</td><td style="text-align:left">${esc(p.gewaesser)}</td><td style="text-align:left;color:var(--ink2)">${esc(p.lage)}</td><td>${nf(p.w, 0)} cm</td>` +
+    `<td style="${p.d1 >= 5 ? "color:var(--th3)" : ""}">${dd(p.d1)}</td><td style="${p.d3 >= 10 ? "color:var(--th3)" : ""}">${dd(p.d3)}</td><td>${dd(p.d24)}</td><td>${nf(p.max5, 0)} cm</td><td>${spark(p.reihe, hot(p) ? "var(--th3)" : "var(--c-full)")}</td></tr>`; });
+  const s = K.stausee;
+  if (s) h += `<tr><td style="text-align:left"><b>Stausee Bitburg</b></td><td style="text-align:left">Prüm</td><td style="text-align:left;color:var(--ink2)">Seestand, zwischen Echtershausen und Wiersdorf</td><td>${nf(s.w, 2)} m</td><td>${dd(s.d1, 100)}</td><td>${dd(s.d3, 100)}</td><td>${dd(s.d24, 100)}</td><td>${nf(s.max5, 2)} m</td><td>${spark(s.reihe, "var(--c-none)")}</td></tr>`;
+  $("#kom").innerHTML = h + `</tbody></table>`;
+  $("#note-kom").innerHTML = `Änderungen in cm. Fett und rot: Anstieg von mindestens 5 cm in einer Stunde oder 10 cm in drei Stunden. Die kommunalen Messstellen werden von den Gemeinden betrieben und liefern nur Wasserstände als ungeprüfte Rohdaten (Quelle: hochwasser.rlp.de); sie gehen bisher nicht in die Vorhersage ein, zeigen aber an Oberläufen und Nebenbächen früher als die Landespegel, dass etwas kommt. Der Seestand zeigt, ob der Stausee gerade Wasser zurückhält oder abgibt.`;
+}
 const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); regenschwellen(); };
+try { kommunal(); } catch (e) { console.error("kommunale Pegel:", e); $("#sec-kom").style.display = "none"; }   // Zusatzdaten dürfen die Seite nie stören
 szenarioInit(); theme(); cards(); detail(); how(); alter(); setInterval(alter, 300000);
 if (location.protocol.startsWith("http")) setTimeout(() => location.reload(), 900000);   // im Container: alle 15 min den neuen Stand holen
 let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(detail, 120); });
