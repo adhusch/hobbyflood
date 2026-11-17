@@ -85,6 +85,10 @@ HOLD_TAU_H = float(__import__("os").environ.get("PRUEM_HOLD_TAU", "inf"))   # Ab
 LAT_TERMS = ("bfa",)                                        # Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, additiv)
 RAIN_EVENTS, RAIN_EVENT_MM = True, 25.0                     # Anpassung zusätzlich an Regenereignissen ohne Hochwasser (48-h-Gebietsregen ab 25 mm)
 BASE_CACHE = os.environ.get("PRUEM_BASE")                    # Grundmodelle aus einem früheren Lauf übernehmen (siehe base_models)
+# Faktor auf die Wellengeschwindigkeit c(Q) je Routing-Strecke: {Unterlieger: {Oberlieger: f}}, z. B. {"PZ": {"WI": 0.8}}. Leer oder 1 = wie
+# angepasst. Gedacht für die im Ereignis gemessene Laufzeit des Scheitels (kommunale Pegel); derzeit nirgends gesetzt. Grenzen CELER_MIN..MAX.
+CELER: dict[str, dict[str, float]] = {}
+CELER_MIN, CELER_MAX = 0.5, 2.0
 LEVEL: dict[str, float] = {}                                # Niveaufaktor je Pegel auf die Simulation (leer = aus; der Live-Betrieb setzt ihn aus data/niveau.json)
 ML_NET = True                                               # lernender Abflussbeiwert (lateral "ml", ml_fit.py) nach der gemeinsamen Anpassung
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
@@ -428,6 +432,21 @@ def hold_after_max(fc: np.ndarray, q0: np.ndarray) -> np.ndarray:
     return np.where(mask, np.maximum(fc, floor), fc)
 
 
+def celer_model(m, k: str):
+    """Modell m des Unterliegers k mit den Faktoren aus CELER auf c(Q) (log c + log f an allen Stützstellen); ohne Faktor unverändert."""
+    f = CELER.get(k) or {}
+    up_code = {v: kk for kk, v in DN.items()}
+    fac = {i: min(max(float(f.get(up_code.get(lk.up, ""), 1.0)), CELER_MIN), CELER_MAX) for i, lk in enumerate(m.links)}
+    if all(v == 1.0 for v in fac.values()):
+        return m
+    import copy
+    m2 = copy.copy(m)
+    m2.links = [copy.copy(lk) for lk in m.links]
+    for i, lk in enumerate(m2.links):
+        lk.lc = np.asarray(lk.lc, float) + np.log(fac[i])
+    return m2
+
+
 def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray, variant: str, suffix: str) -> dict[str, np.ndarray]:
     idx = t0[:, None] + np.arange(-A, H + 1)[None, :]
     S = {}
@@ -448,7 +467,7 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
                     X[DN[u]] = v
             else:
                 X = {DN[u]: S[u] for u in UPS[k]}
-            m = models[k][("route_full" if (variant in NORAIN or k == "WI") else "rain_full") + suffix]
+            m = celer_model(models[k][("route_full" if (variant in NORAIN or k == "WI") else "rain_full") + suffix], k)
             P = {k: rain_window(frames[k], t0, variant in FUTURE_RAIN)} if m.lat else None
             sim = m.route(X, P)
         if k in LEVEL:                                         # Niveaufaktor (niveau.py): heutige Wasserstand-Abfluss-Beziehung des Pegels

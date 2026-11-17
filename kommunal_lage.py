@@ -41,7 +41,7 @@ def main(paths):
     dxr = tr.a * np.pi / 180 * C.R_EARTH * 1000 * np.cos(np.radians(lat_r))
     accf = acc.ravel()
     par = np.asarray(parent).ravel()
-    rows = []
+    rows, cells = [], {}
     for _, r in N[N.art.isin(["kommunal", "LfU"])].iterrows():
         if r.art == "LfU":                                         # Landespegel zum Vergleich: amtliche Fläche ±15 %
             UPPER[r["name"]] = float(r.catchment_km2) * 1.15
@@ -67,6 +67,7 @@ def main(paths):
             continue
         a0, i, j, d0 = best
         k = i * W + j
+        cells[name] = (k, r.art, a0)
         dist, first_trib, mouth = 0.0, None, None
         z0, z2k = fz[k], None
         while dist < 15000:
@@ -94,6 +95,28 @@ def main(paths):
                          rueckstau_m=round(2.0 / z2k) if z2k else None))   # grob: 2 m Hochwassertiefe / Gefälle
     df = pd.DataFrame(rows)
     df.to_csv(C.HERE / "data" / "kommunal_lage.csv", index=False)
+    # Fließstrecke von jeder kommunalen Messstelle zu den Landespegeln flussab
+    lfu = {k: n for n, (k, art, _) in cells.items() if art == "LfU"}
+    strecken = []
+    for name, (k, art, a0) in cells.items():
+        if art != "kommunal":
+            continue
+        dist = 0.0
+        while dist < 80000:
+            p = par[k]
+            if p < 0 or p == k:
+                break
+            pi, pj = divmod(p, W)
+            ci, cj = divmod(k, W)
+            dist += np.hypot((pi - ci) * dy, (pj - cj) * dxr[ci])
+            k = p
+            if k in lfu:
+                g = lfu[k]
+                strecken.append(dict(messstelle=name, landespegel=g, km=round(dist / 1000, 1), flaeche_km2=round(a0, 1),
+                                     anteil=round(a0 / cells[g][2], 2)))
+    S = pd.DataFrame(strecken)
+    S.to_csv(C.HERE / "data" / "kommunal_strecken.csv", index=False)
+    print(S.to_string(index=False))
     pd.set_option("display.width", 200)
     print(df.to_string(index=False))
 

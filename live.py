@@ -433,6 +433,7 @@ def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
               api0={k: [float(fr[k]["api"][r0 - 1]), float(fr[k]["api_s"][r0 - 1])] for k in C.RAINK},
               storm={k: "0" * C.A + ("1" if C.is_storm(k, np.array([i0]))[0] else "0") for k in C.ORDER})
     fl["niveau"] = dict(C.LEVEL)
+    fl["celer"] = {k: dict(v) for k, v in C.CELER.items()}      # Faktor auf die Wellengeschwindigkeit, derzeit leer (= 1)
     return dict(consts=doc["consts"], set=doc["sets"]["alle"], fl=fl, offset={k: float(offs[k]) for k in C.ORDER})
 
 
