@@ -15,7 +15,8 @@ mkdir -p gui/archiv data/live
 # der LfU-Pakete brauchen (python eval_view.py, python routing_map.py). Liegen sie in /app/seiten (im Image oder als Volume), stellt der
 # Container sie neben der Live-Seite bereit.
 cp seiten/*.html gui/ 2>/dev/null || true
-python -m http.server "$PORT" --directory gui &
+# Webserver mit Download (/download, siehe deploy/server.py); scheitert er, der einfache Server ohne Download
+(python deploy/server.py "$PORT" || python -m http.server "$PORT" --directory gui) &
 while true; do
   ts="$(date -u +%Y%m%dT%H%MZ)"
   if python live.py --out gui/live.tmp.html; then
