@@ -38,6 +38,8 @@ Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Betrieb und Seiten
 
+- [ ] Band im 7-Tage-Ausblick: im Protokoll prüfen, welche Ensemble-Kennung greift („ICON-Ensemble 7 Tage: …“) und wie lange das Band auf dem ARM-Rechner braucht; nach einigen Wochen Archiv die Abdeckung des Bands für Tag 3 bis 7 auswerten.
+
 - [ ] **Umstellung bei Open-Meteo zum 30.11.2026:** vorher prüfen, ob die Abrufe (ICON-D2, Ensemble, EU, global, RUC, Nachbarschaft) weiterlaufen.
 - [ ] **Nachbarschafts-Ensemble mit echten Daten prüfen** (Protokollzeile `Nachbarschaft: n von 8 Richtungen`); ICON-RUC läuft (16.11.: 26 h Reichweite).
 - [ ] **Regenschwellen** mit dem heutigen Starkregensatz neu prüfen (`rain_thr.py check`).

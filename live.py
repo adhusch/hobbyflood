@@ -113,6 +113,8 @@ NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -
 HOLD_H = 12                                                      # Haltezeit einer Vorwarnung oder Warnung in Stunden
 RUC_MAX_H = 30.0                                                 # längste glaubhafte Reichweite von ICON-D2-RUC ab jetzt (Läufe bis 27 h)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
+# Ensemble für das Band im 7-Tage-Ausblick (ICON-EU-EPS bis 5 Tage, danach ICON-EPS global, je 40 Läufe); Kennung bei Open-Meteo nicht eindeutig
+EPS7_MODELS = ("icon_seamless_eps", "dwd_icon_seamless_eps", "icon_seamless", "icon_global_eps", "dwd_icon_eps")
 
 
 KOM_BUDGET_S = 90                                                 # höchstens so lange für alle kommunalen Messstellen zusammen
@@ -177,6 +179,17 @@ def fetch() -> Path:
             data["icon_ruc"], data["icon_ruc_modell"] = j, f"{mid} ({ep})"
             break
     print("   ICON-RUC:", data.get("icon_ruc_modell", "nicht verfügbar"))
+    # Ensemble über 7 Tage (nur für das Band im Ausblick); fehlt es, bleibt der Ausblick eine einzelne Linie
+    for mid in EPS7_MODELS:
+        try:
+            j = json.loads(_get(f"https://ensemble-api.open-meteo.com/v1/ensemble?latitude={lat}&longitude={lon}&hourly=precipitation&models={mid}"
+                                f"&past_days=1&forecast_days=8&timezone=GMT", tries=2))
+        except Exception:                                          # noqa: BLE001
+            continue
+        if isinstance(j, list) and len(j) == len(st) and sum(k.startswith("precipitation_member") for k in j[0].get("hourly", {})) >= 10:
+            data["icon_eps7"], data["icon_eps7_modell"] = j, mid
+            break
+    print("   ICON-Ensemble 7 Tage:", data.get("icon_eps7_modell", "nicht verfügbar"))
     # Nachbarschaft: ICON-D2 an um NB_KM versetzten Punkten (Gewitterzellen liegen in der Vorhersage oft richtig, aber um einige zehn km versetzt);
     # fehlt ein Abruf, entfällt nur diese Richtung
     nb = {}
@@ -333,6 +346,17 @@ def read_icon(raw: Path) -> dict:
             for sid, loc in zip(ids, j["data"][key]):
                 h = loc["hourly"]
                 longer[key][sid] = pd.Series(pd.to_numeric(pd.Series(h["precipitation"]), errors="coerce").to_numpy(), index=_mez(h["time"]))
+    eps7 = None
+    try:                                                          # Ensemble 7 Tage: Zusatz, jeder Fehler lässt nur das Band weg
+        if j["data"].get("icon_eps7"):
+            eps7 = {}
+            for sid, loc in zip(ids, j["data"]["icon_eps7"]):
+                h = loc["hourly"]
+                keys = ["precipitation"] * ("precipitation" in h) + sorted(k for k in h if k.startswith("precipitation_member"))
+                eps7[sid] = pd.DataFrame({k: pd.to_numeric(pd.Series(h[k]), errors="coerce").to_numpy() for k in keys}, index=_mez(h["time"]))
+    except Exception as e:                                        # noqa: BLE001
+        print("   ICON-Ensemble 7 Tage nicht lesbar:", e)
+        eps7 = None
     nb = {}
     for name, locs in (j["data"].get("icon_nb") or {}).items():
         nb[name] = {sid: pd.Series(pd.to_numeric(pd.Series(loc["hourly"]["precipitation"]), errors="coerce").to_numpy(), index=_mez(loc["hourly"]["time"]))
@@ -348,7 +372,8 @@ def read_icon(raw: Path) -> dict:
     meta["eps_end"] = str(last)
     meta["d2_end"] = str(next(iter(d2.values())).dropna().index.max())
     return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"),
-                ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"), nb=nb)
+                ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"), nb=nb,
+                eps7=eps7, eps7_modell=j["data"].get("icon_eps7_modell"))
 
 
 # ------------------------------------------------------------------ Aufbau
@@ -442,12 +467,19 @@ def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
 OUTLOOK_H = 168                                                  # Ausblick in Stunden
 
 
+EPS7_MIN_H = 96                                                  # Ensemble nur nutzen, wenn es mindestens so weit reicht
+
+
 def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: dict, d2h: dict, icon: dict, info: dict, corr48: dict,
-            offs: dict, rc: dict) -> dict | None:
+            offs: dict, rc: dict, band48: dict | None = None, U: dict | None = None) -> dict | None:
     """Ausblick über 7 Tage, eine Linie je Pegel ohne Unsicherheitsband: dieselbe Kette (kette_vorhersage), Regen je Station aus ICON-D2, nach
     dessen Ende aus ICON-EU, danach aus ICON global (jeweils das nächste Modell der ICON-Kette; EU und global ohne Angleichfaktor, dafür gibt es
     keine Prüfung). Die Fehlerkorrektur (beta) klingt nach 48 h weiter ab; bis 48 h gilt der Median-Abgleich des ICON-D2-Laufs (corr48), danach
-    bleibt dessen letzter Faktor stehen. Nicht geprüft: Für Vorläufe über 48 h gibt es keine Rückrechnung."""
+    bleibt dessen letzter Faktor stehen. Nicht geprüft: Für Vorläufe über 48 h gibt es keine Rückrechnung.
+
+    Band (wenn das ICON-Ensemble über 7 Tage da ist, band48 = res je Pegel, U = Fehlertabellen): Bis 48 h das Band der Hauptgrafik (Fehlerstatistik,
+    ICON-D2-EPS). Danach rechnet die Kette jeden Ensemblelauf (Regen des Laufs ab jetzt) und mischt die Läufe wie in der Hauptgrafik, mit den
+    Fehlerquantilen bei 48 h (siehe _outlook_band); dazu die Spannweite der bereinigten Läufe. Fehlt etwas, kein Band."""
     if not icon.get("eu"):
         return None
     H0, H7 = C.H, int(OUTLOOK_H / DT)
@@ -498,10 +530,69 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
             day = pd.Series(pa[i0 + 1:] * DT, index=grid[i0 + 1:]).resample("1D").sum()
             out[target] = dict(q=[round(float(x), 3) for x in q], w=[round(float(x), 1) for x in RT.w_of_q(rc[dn], q)],
                                regen_tag=[[str(t)[:10], round(float(v), 1)] for t, v in day.items()])
+        band_info = None
+        try:
+            band_info = _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7)
+        except Exception as e:                                    # noqa: BLE001  Band ist Zusatz zum Zusatz
+            print("   Band im Ausblick entfällt:", repr(e))
     finally:
         C.H = H0
         C._S.update(**keep)
-    return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H)
+    return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H, band=band_info)
+
+
+def _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7) -> dict | None:
+    """Band des Ausblicks, siehe outlook(). Schreibt je Pegel out[k]["band"] und gibt Angaben zum Ensemble zurück (oder None).
+    Wie das 48-h-Band: Mischung über die Läufe, jeder mit den Fehlerquantilen seiner Klasse (Zustand, Abflussstufe, Starkregenlage); die Quantile
+    gelten je Vorlauf bis 48 h und bleiben danach auf dem Stand bei 48 h (_interp hält den letzten gespeicherten Vorlauf, C.H steht auf H7)."""
+    e7 = icon.get("eps7")
+    if not e7 or not band48 or U is None:
+        return None
+    e0 = next(iter(e7.values()))
+    reach = (e0.dropna(how="all").index.max() - t0) / pd.Timedelta(hours=1)
+    if not np.isfinite(reach) or reach < EPS7_MIN_H:
+        print(f"   Ensemble 7 Tage reicht nur {reach:.0f} h, kein Band")
+        return None
+    members = list(e0.columns)
+    sims = {k: [] for k in out}
+    heavy = {k: [] for k in out}
+    t_run = time.time()
+    for mem in members:
+        st_m = {}
+        for sid in next(iter(w_live.values())):
+            x = e7[sid][mem].reindex(hours) if sid in e7 else pd.Series(np.nan, index=hours)
+            sm = pd.Series(np.nan, index=hours)
+            sm[hours > tH] = x[hours > tH]
+            sm[hours <= tH] = obs_filled[sid].reindex(hours)[hours <= tH]
+            st_m[sid] = sm.fillna(0.0)
+        p = {k: np.nan_to_num(hourly_to_grid(RN.areal_series(st_m, w_live[k]), grid)) for k in C.RAINK}
+        fr = build_frames(p, Qn)
+        for target in out:
+            sims[target].append(np.maximum(C.forecast(m7, target, Qn, fr, np.array([i0]), "kette_vorhersage")[target][0][C.A + 1:], 0))
+            cw = _chain_weights(target, info)
+            heavy[target].append(bool(UN.heavy_flags(sum(w * p[x] for w, x in zip(*cw)), np.array([i0]))[1][0]))
+    T_v = U["vorhersage"]["alle"]
+    for target in out:
+        dn, d, mq = C.DN[target], U["offset"][target], U["mq"][target]
+        st = int(band48[target]["state"])
+        wet = int(Qn[dn][i0] >= UN.WET_EDGE * mq)
+        tabs = []
+        for r_, hv_ in zip(sims[target], heavy[target]):
+            lev = int(np.digitize(max(Qn[dn][i0], float(r_.max())) / mq, UN.LEVEL_EDGES)) * 2 + wet
+            tabs.append(_interp(T_v[target]["q"][st * UN.NSUB + lev + UN.NB * hv_])[H0:])      # ab 48 h: Stand bei 48 h
+        mem_ = [r_[H0:] for r_ in sims[target]]
+        bl = mixture(mem_, tabs, d)[3::4]                                            # [stündlich ab 49 h, Stufen]
+        corr = np.stack([np.maximum((m + d) * np.exp(t[:, 5]) - d, 0) for m, t in zip(mem_, tabs)])[:, 3::4]
+        b = np.asarray(band48[target]["band_q"], float)                              # [Stufen, 192]: Band der Hauptgrafik
+        runs48 = np.stack([np.asarray(v, float) for v in band48[target]["runs_q"].values()])
+        n = len(out[target]["q"])
+        lo = np.concatenate([b[1, 3::4], bl[:, 1]])[:n]; hi = np.concatenate([b[9, 3::4], bl[:, 9]])[:n]          # UN.LEV: 10 % und 90 %
+        elo = np.concatenate([runs48.min(0)[3::4], corr.min(0)])[:n]; ehi = np.concatenate([runs48.max(0)[3::4], corr.max(0)])[:n]
+        rcv = rc[dn]
+        pack = lambda f: {nm: [round(float(x), f[1]) for x in f[0](v)] for nm, v in dict(lo=lo, hi=hi, elo=elo, ehi=ehi).items()}   # noqa: E731
+        out[target]["band"] = dict(q=pack((lambda v: v, 3)), w=pack((lambda v: RT.w_of_q(rcv, v), 1)))
+    print(f"   Band im Ausblick: {len(members)} Läufe, {time.time() - t_run:.0f} s")
+    return dict(laeufe=len(members), modell=icon.get("eps7_modell"), reicht_h=round(float(reach), 0))
 
 
 def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
@@ -725,7 +816,8 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
         if "W_pred" in hvz:
             res[target]["hvz"] = dict(time=hvz["W_pred_time"], **{p: [[str(t), float(v)] for t, v in s.items()] for p, s in hvz["W_pred"].items()})
     try:
-        aus = outlook(models, hv, t0, filled, w_live, d2h, icon, info, {k: res[k]["runs_q"]["ICON-D2"] for k in res}, U["offset"], rc_all)
+        aus = outlook(models, hv, t0, filled, w_live, d2h, icon, info, {k: res[k]["runs_q"]["ICON-D2"] for k in res}, U["offset"], rc_all,
+                      band48=res, U=U)
     except Exception as e:                                         # noqa: BLE001  Ausblick ist Zusatz: scheitert er, bleibt die 48-h-Seite
         print("   Ausblick entfällt:", repr(e))
         aus = None
