@@ -582,8 +582,16 @@ function kommunal() {                                     // kommunale Messstell
   const s = K.stausee;
   if (s) h += `<tr>${name("Stausee Bitburg", "Seestand in m, Änderung in cm")}<td>${nf(s.w, 2)}</td><td>${dd(s.d1, 100)}</td><td>${dd(s.d3, 100)}</td><td class="kw">${dd(s.d24, 100)}</td><td class="kw">${nf(s.max5, 2)}</td><td>${spark(s.reihe, "var(--c-none)")}</td></tr>`;
   $("#kom").innerHTML = h + `</tbody></table>`;
+  const cel = D.meta.celer, nfh = x => nf(x, 1);
+  let celTxt = "";
+  if (cel) {
+    const st = (cel.strecken || []).map(x => `${esc(x.von)} → ${esc(x.bis)} ${x.laufzeit_h != null ? nfh(x.laufzeit_h) + " h" : "–"}${x.r != null ? ` (r ${nf(x.r, 2)}${x.gilt ? "" : ", nicht verwendet"})` : ""}`).join(", ");
+    celTxt = cel.angewendet
+      ? `<b>Wellenlaufzeit Wiersdorf → Prümzurlay:</b> aus den kommunalen Pegeln gemessen ${nfh(cel.laufzeit_gemessen_h)} h, im Modell ${nfh(cel.laufzeit_modell_h)} h; die Vorhersage für Prümzurlay rechnet deshalb mit dem Faktor ${nf(cel.f, 2)} auf die Wellengeschwindigkeit (gedämpft, ungedämpft ${nf(cel.f_roh, 2)}). Teilstrecken: ${st}. `
+      : `<b>Wellenlaufzeit Wiersdorf → Prümzurlay:</b> derzeit nicht messbar (${esc(cel.grund || "")}), die Vorhersage rechnet mit der Laufzeit des Modells. `;
+  }
   const fehlt = (K.fehlt || []).length ? ` Derzeit ohne aktuelle Daten: ${K.fehlt.map(esc).join(", ")}.` : "";
-  $("#note-kom").innerHTML = `Stand und Änderungen in cm. Fett und rot: Anstieg von mindestens 5 cm in einer Stunde oder 10 cm in drei Stunden.${fehlt} Die kommunalen Messstellen werden von den Gemeinden betrieben und liefern nur Wasserstände als ungeprüfte Rohdaten (Quelle: hochwasser.rlp.de); sie gehen bisher nicht in die Vorhersage ein, zeigen aber an Oberläufen und Nebenbächen früher als die Landespegel, dass etwas kommt. Der Seestand zeigt, ob der Stausee gerade Wasser zurückhält oder abgibt.`;
+  $("#note-kom").innerHTML = celTxt + `Stand und Änderungen in cm. Fett und rot: Anstieg von mindestens 5 cm in einer Stunde oder 10 cm in drei Stunden.${fehlt} Die kommunalen Messstellen werden von den Gemeinden betrieben und liefern nur Wasserstände als ungeprüfte Rohdaten (Quelle: hochwasser.rlp.de); in die Vorhersage gehen sie bisher nur über die gemessene Wellenlaufzeit für Prümzurlay ein, zeigen aber an Oberläufen und Nebenbächen früher als die Landespegel, dass etwas kommt. Der Seestand zeigt, ob der Stausee gerade Wasser zurückhält oder abgibt.`;
 }
 const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); regenschwellen(); };
 try { kommunal(); } catch (e) { console.error("kommunale Pegel:", e); $("#sec-kom").style.display = "none"; }   // Zusatzdaten dürfen die Seite nie stören
