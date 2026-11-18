@@ -306,13 +306,30 @@ def read_dwd_10min_now(path: Path) -> pd.Series:
     return h
 
 
+def _hist_cached(f: Path) -> pd.Series:
+    """Historische DWD-Stundenwerte (ändern sich nicht): einmal gelesen als Pickle neben der Zip-Datei, erneut gelesen, wenn die Zip-Datei
+    neuer ist. Schreiben darf scheitern (dann wird jedes Mal gelesen)."""
+    c = f.with_suffix(".pkl")
+    try:
+        if c.exists() and c.stat().st_mtime >= f.stat().st_mtime:
+            return pd.read_pickle(c)
+    except Exception:                                             # noqa: BLE001
+        pass
+    s = RN.read_dwd_hourly(str(f), shift_h=1.0)
+    try:
+        s.to_pickle(c)
+    except Exception:                                             # noqa: BLE001
+        pass
+    return s
+
+
 def station_obs(raw: Path) -> tuple[dict[str, pd.Series], dict[str, str]]:
     """Stundenwerte je Station in MEZ (Stempel = Ende der Stunde): historisch (data/dwd_rr), recent und now aus dem Rohdatenordner.
     Rückgabe auch die letzte Meldung je Station."""
     import glob
     out = {}
     for f in sorted(glob.glob(str(HERE / "data" / "dwd_rr" / "stundenwerte_RR_*_hist.zip"))):
-        out[Path(f).name.split("_")[2]] = RN.read_dwd_hourly(f, shift_h=1.0)
+        out[Path(f).name.split("_")[2]] = _hist_cached(Path(f))
     for f in sorted((raw / "dwd").glob("stundenwerte_RR_*_akt.zip")):
         k = f.name.split("_")[2]
         s = RN.read_dwd_hourly(f, shift_h=1.0)
@@ -581,12 +598,12 @@ def _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0
             lev = int(np.digitize(max(Qn[dn][i0], float(r_.max())) / mq, UN.LEVEL_EDGES)) * 2 + wet
             tabs.append(_interp(T_v[target]["q"][st * UN.NSUB + lev + UN.NB * hv_])[H0:])      # ab 48 h: Stand bei 48 h
         mem_ = [r_[H0:] for r_ in sims[target]]
-        bl = mixture(mem_, tabs, d)[3::4]                                            # [stündlich ab 49 h, Stufen]
+        bl = mixture(mem_, tabs, d, levels=UN.LEV[[1, 9]])[3::4]                    # [stündlich ab 49 h, (10 %, 90 %)]: nur die gebrauchten Stufen
         corr = np.stack([np.maximum((m + d) * np.exp(t[:, 5]) - d, 0) for m, t in zip(mem_, tabs)])[:, 3::4]
         b = np.asarray(band48[target]["band_q"], float)                              # [Stufen, 192]: Band der Hauptgrafik
         runs48 = np.stack([np.asarray(v, float) for v in band48[target]["runs_q"].values()])
         n = len(out[target]["q"])
-        lo = np.concatenate([b[1, 3::4], bl[:, 1]])[:n]; hi = np.concatenate([b[9, 3::4], bl[:, 9]])[:n]          # UN.LEV: 10 % und 90 %
+        lo = np.concatenate([b[1, 3::4], bl[:, 0]])[:n]; hi = np.concatenate([b[9, 3::4], bl[:, 1]])[:n]          # UN.LEV: 10 % und 90 %
         elo = np.concatenate([runs48.min(0)[3::4], corr.min(0)])[:n]; ehi = np.concatenate([runs48.max(0)[3::4], corr.max(0)])[:n]
         rcv = rc[dn]
         pack = lambda f: {nm: [round(float(x), f[1]) for x in f[0](v)] for nm, v in dict(lo=lo, hi=hi, elo=elo, ehi=ehi).items()}   # noqa: E731

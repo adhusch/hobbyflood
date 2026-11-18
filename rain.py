@@ -76,6 +76,13 @@ def areal_series(series: dict[str, pd.Series], weights: dict[str, float]) -> pd.
 def api_series(p_mm_h: np.ndarray, dt_h: float = 0.25, tau_h: float = TAU_API_H) -> np.ndarray:
     """Vorregenindex in mm aus Intensität (mm/h) auf gleichmäßigem Raster; fehlende Werte zählen als 0 (Lücken werden vom Aufrufer über p maskiert)."""
     k = math.exp(-dt_h / tau_h)
+    import routing                                          # Rechenkern in C, falls übersetzt (spät importiert)
+    lib = routing._load_lib()
+    if lib:
+        x = np.ascontiguousarray(p_mm_h, dtype=np.float64)
+        out = np.empty_like(x)
+        lib.api_series(x, out, len(x), k, float(dt_h))
+        return out
     out = np.empty(len(p_mm_h))
     acc = 0.0
     for i, v in enumerate(np.nan_to_num(p_mm_h)):

@@ -249,3 +249,6 @@ seiten/*.html
 
 # Tageswerte DWD und ERA5-Stundenwerte (mit dem Browser geladen, siehe day_rain.py)
 data/tag/
+
+# Zwischenspeicher der historischen DWD-Stundenwerte (live.py)
+data/dwd_rr/*.pkl

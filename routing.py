@@ -44,6 +44,13 @@ def _load_lib():
         P = np.ctypeslib.ndpointer(dtype=np.float64, flags="C_CONTIGUOUS")
         lib.cascade.argtypes = [P, P, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int, P, P]
         lib.cascade.restype = None
+        D, I = ctypes.c_double, ctypes.c_int
+        lib.nl_stores.argtypes = [P, P, I, I, D, D, D, D, D]
+        lib.nl_stores.restype = None
+        lib.two_stores.argtypes = [P, P, I, I, D, D, D]
+        lib.two_stores.restype = None
+        lib.api_series.argtypes = [P, P, I, D, D]
+        lib.api_series.restype = None
         _lib = lib
     except Exception:
         _lib = False
