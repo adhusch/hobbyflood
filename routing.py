@@ -214,6 +214,7 @@ def make_data(Q: pd.DataFrame, W: pd.DataFrame | None, dn: str, ups: list[str], 
             r, ap = df["p"].to_numpy()[idx], df["api"].to_numpy()[idx]
             aps = df["api_s"].to_numpy()[idx] if "api_s" in df else None
             bf = df["bf"].to_numpy()[idx[:, lead]] if "bf" in df else None
+            sm = df["sm"].to_numpy()[idx[:, lead]] if "sm" in df else None
             xc = [c for c in ("xr", "x4", "x10", "x20") if c in df]
             ex = np.stack([df[c].to_numpy(dtype="float32")[idx] for c in xc], axis=-1) if xc else None
             keep &= inside & np.isfinite(r).all(axis=1) & np.isfinite(ap).all(axis=1)
@@ -221,8 +222,10 @@ def make_data(Q: pd.DataFrame, W: pd.DataFrame | None, dn: str, ups: list[str], 
                 keep &= np.isfinite(aps).all(axis=1)
             if bf is not None:
                 keep &= np.isfinite(bf)
+            if sm is not None:
+                keep &= np.isfinite(sm)
             P[k] = Rain(np.nan_to_num(r), np.nan_to_num(ap), lead, None if aps is None else np.nan_to_num(aps), None if bf is None else np.nan_to_num(bf),
-                        None if ex is None else np.nan_to_num(ex))
+                        None if ex is None else np.nan_to_num(ex), None if sm is None else np.nan_to_num(sm))
     d = Data(peaks, X, Y, mask, wts, Q.index.to_numpy()[peaks], P)
     return d.subset(keep) if not keep.all() else d
 

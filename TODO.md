@@ -41,6 +41,8 @@ Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Betrieb und Seiten
 
+- [ ] **Kurzfristkorrektur aus kommunalen Pegeln** (`kommunal_nowcast.py`) nach den nächsten Hochwassern prüfen: Paare, Vorlauf H, Abklingzeit 6 h, ob der Zuschlag gedämpft werden sollte (bisher nur Sturm November 2026).
+
 - [ ] Band im 7-Tage-Ausblick: im Protokoll prüfen, welche Ensemble-Kennung greift („ICON-Ensemble 7 Tage: …“) und wie lange das Band auf dem ARM-Rechner braucht; nach einigen Wochen Archiv die Abdeckung des Bands für Tag 3 bis 7 auswerten.
 
 - [ ] **Umstellung bei Open-Meteo zum 30.11.2026:** vorher prüfen, ob die Abrufe (ICON-D2, Ensemble, EU, global, RUC, Nachbarschaft) weiterlaufen.
@@ -49,3 +51,4 @@ Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 - [ ] **Routing-Karte:** alte Hochwasser mit der damals gültigen Wasserstand-Abfluss-Beziehung zeigen (wie die Prüf-Seite).
 - [ ] **Laufzeit des Seitenaufbaus** auf dem ARM-Rechner messen (im Test rund 50 s).
 - [ ] **Download-Ordner:** versteckte Zwischendateien der Browser-Downloads (rund 100 MB) löschen, braucht Freigabe.
+- [ ] **Bodenfeuchte:** nach dem nächsten Winterhochwasser prüfen, ob der Faktor die Unterschätzung bei nassem Boden und niedrigem Grundabfluss verringert; Abruf im Protokoll prüfen (`Bodenfeuchte: bis …`).

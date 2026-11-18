@@ -82,7 +82,10 @@ FUTURE_RAIN = ("kette_ideal", "kette_vorhersage")            # Regen nach t0 aus
 P_STORM, STORM_MONTHS, STORM_WIN_H, W_PRIOR = 4.0, (5, 9), 48.0, 1.0
 HOLD_RULE = True                                            # kein Scheitel am Unterlieger ohne gemessenen Scheitel an den Oberliegern
 HOLD_TAU_H = float(__import__("os").environ.get("PRUEM_HOLD_TAU", "inf"))   # Abklingzeit der Scheitel-Regel in h (inf: Vorhersage bleibt auf dem Höchstwert stehen)
-LAT_TERMS = ("bfa",)                                        # Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, additiv)
+# Abflussbeiwert mit Gebietsfeuchte aus dem Abfluss (lateral.py, "bfa", additiv) und seit 18.11.2026 mit der Bodenfeuchte als Faktor ("smf");
+# PRUEM_SM=0 schaltet sie ab. Additiv ("sma") setzte die Anpassung das Gewicht stets auf 0; als Faktor (Schwelle 86-103 % nFK, steil) wurde die
+# Güte der Oberläufe in allen 5 Prüfblöcken besser (NSE z. B. Giesdorf 0,02 -> 0,15, Sinspelt 0,35 -> 0,40 im Block 2004-07).
+LAT_TERMS = ("bfa", "smf") if os.environ.get("PRUEM_SM", "1") == "1" else ("bfa",)
 RAIN_EVENTS, RAIN_EVENT_MM = True, 25.0                     # Anpassung zusätzlich an Regenereignissen ohne Hochwasser (48-h-Gebietsregen ab 25 mm)
 BASE_CACHE = os.environ.get("PRUEM_BASE")                    # Grundmodelle aus einem früheren Lauf übernehmen (siehe base_models)
 # Faktor auf die Wellengeschwindigkeit c(Q) je Routing-Strecke: {Unterlieger: {Oberlieger: f}}, z. B. {"PZ": {"WI": 0.8}}. Leer oder 1 = wie
@@ -195,15 +198,40 @@ def wet_mq() -> dict[str, float]:
     return {k: float(kw[dn]["Q"]["MQ"]) for k, dn in WET_REF.items()}
 
 
-def add_wetness(frames: dict, Q) -> dict:
-    """Spalte bf (Gebietsfeuchte = Abfluss am Bezugspegel / MQ) je Regengebiet; Q: DataFrame oder dict Pegelname -> Reihe auf demselben Raster."""
+SM_FILE = HERE / "data" / "bodenfeuchte" / "bf_0-60.csv"
+SM_FALLBACK = 100.0                                         # % nFK, falls ein Wert fehlt (etwa Mittel 2001-2026); Rain.sm
+SM_CURRENT: dict | None = None                              # Bodenfeuchte des laufenden Live-Rasters (live.build setzt sie; Regenfenster ohne Index)
+
+
+def soil_moisture(index: pd.DatetimeIndex, table: pd.DataFrame | None = None) -> dict[str, np.ndarray] | None:
+    """Bodenfeuchte je Regengebiet auf dem Raster index (MEZ): Tageswert des Vortags (live am Morgen verfügbar), höchstens 3 Tage fortgeschrieben."""
+    if table is None:
+        if not SM_FILE.exists():
+            return None
+        table = pd.read_csv(SM_FILE, index_col=0, parse_dates=True)
+    day = pd.DatetimeIndex(index).normalize() - pd.Timedelta(days=1)
+    t = table.reindex(pd.date_range(table.index.min(), max(table.index.max(), day.max()), freq="1D")).ffill(limit=3)
+    return {k: t[k].reindex(day).to_numpy(float) for k in RAINK if k in t}
+
+
+def add_wetness(frames: dict, Q, sm_table: pd.DataFrame | None = None, sm: dict | None = None) -> dict:
+    """Spalten bf (Gebietsfeuchte = Abfluss am Bezugspegel / MQ) und sm (Bodenfeuchte, soil_moisture) je Regengebiet; Q: DataFrame oder dict
+    Pegelname -> Reihe auf demselben Raster; sm: fertige Reihen je Gebiet auf dem Raster (Live-Betrieb), sonst aus der Tabelle über Q.index."""
     mq = wet_mq()
+    if sm is None and isinstance(Q, pd.DataFrame):
+        sm = soil_moisture(Q.index, sm_table)
+    elif sm is None and SM_CURRENT:                         # Live: Raster beginnen alle gleich, Länge wie die Abflussreihen
+        n = len(np.asarray(next(iter(Q.values()))))
+        sm = {k: v[:n] for k, v in SM_CURRENT.items()}
     for k in RAINK:
         q = np.asarray(Q[WET_REF[k]], float)
+        extra = dict(bf=q / mq[k])
+        if sm is not None and k in sm:
+            extra["sm"] = sm[k]
         if isinstance(frames[k], pd.DataFrame):
-            frames[k] = frames[k].assign(bf=q / mq[k])
+            frames[k] = frames[k].assign(**extra)
         else:
-            frames[k] = dict(frames[k], bf=q / mq[k])
+            frames[k] = dict(frames[k], **extra)
     return frames
 
 
@@ -371,7 +399,9 @@ def rain_window(frame: pd.DataFrame | dict, t0: np.ndarray, ideal: bool) -> L.Ra
         ap[:, j + 1:] = ap[:, j:j + 1] * np.exp(-k / RN.TAU_API_H)[None, :]
         aps[:, j + 1:] = aps[:, j:j + 1] * np.exp(-k / RN.TAU_API_S_H)[None, :]
     bf = np.nan_to_num(np.asarray(frame["bf"])[ridx[:, LEAD]]) if "bf" in frame else None   # Gebietsfeuchte zu Beginn des Abflussfensters (t0 - A)
-    return L.Rain(np.nan_to_num(r), np.nan_to_num(ap), LEAD, np.nan_to_num(aps), bf, ex)
+    # Bodenfeuchte, Vortag des Fensteranfangs; fehlt sie ganz, der Ersatzwert (nie ein Abbruch im Betrieb)
+    sm = (np.nan_to_num(np.asarray(frame["sm"])[ridx[:, LEAD]], nan=SM_FALLBACK) if "sm" in frame else np.full(len(t0), SM_FALLBACK))
+    return L.Rain(np.nan_to_num(r), np.nan_to_num(ap), LEAD, np.nan_to_num(aps), bf, ex, sm)
 
 
 def to_json(models: dict) -> dict:
@@ -447,6 +477,30 @@ def celer_model(m, k: str):
     return m2
 
 
+# Verhältniskorrektur (Versuch 18.11.2026, Sturm: Sinspelt stieg 3-4-mal stärker als das Modell): Anstieg gemessen / Anstieg Modell über den
+# niedrigsten Stand der letzten RATIO_WIN_H; der künftige Anstieg des Modells wird mit diesem Faktor (gedämpft, begrenzt) multipliziert, die
+# übliche Fehlerkorrektur gilt danach für den Rest. Nur wenn beide deutlich gestiegen sind.
+RATIO_UPDATE = os.environ.get("PRUEM_RATIO", "0") == "1"
+RATIO_KEYS = tuple(os.environ.get("PRUEM_RATIO_KEYS", "P2,SI,GI").split(","))
+RATIO_WIN_H, RATIO_MIN_MQ, RATIO_LO, RATIO_HI, RATIO_W = 24.0, 0.3, 0.5, 4.0, float(os.environ.get("PRUEM_RATIO_W", "0.7"))
+
+
+def ratio_update(obs: np.ndarray, sim: np.ndarray, k: str) -> tuple[np.ndarray, np.ndarray]:
+    mq = _S.get("mq_ratio", {}).get(k)
+    if mq is None:
+        mq = float(np.nanmean(_S["Q"][DN[k]])) if "Q" in _S else 1.0
+        _S.setdefault("mq_ratio", {})[k] = mq
+    w = int(RATIO_WIN_H / DT)
+    base = np.nanmin(obs[:, A - w:A + 1], axis=1)
+    ro, rs = obs[:, A] - base, sim[:, A] - base
+    ok = (ro >= RATIO_MIN_MQ * mq) & (rs >= 0.1 * mq)
+    f = np.where(ok, np.clip(ro / np.maximum(rs, 1e-6), RATIO_LO, RATIO_HI), 1.0)
+    f = 1.0 + RATIO_W * (f - 1.0)
+    sim2 = sim.copy()
+    sim2[:, A:] = base[:, None] + f[:, None] * (sim[:, A:] - base[:, None])
+    return sim2, obs[:, A] - sim2[:, A]
+
+
 def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray, variant: str, suffix: str) -> dict[str, np.ndarray]:
     idx = t0[:, None] + np.arange(-A, H + 1)[None, :]
     S = {}
@@ -481,6 +535,8 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             shift = np.maximum(np.minimum(err0, 0.0), -max(m.c0, 0.0))
             sim = sim + shift[:, None]
             err0 = err0 - shift
+        if RATIO_UPDATE and k in RATIO_KEYS and variant not in NORAIN:
+            sim, err0 = ratio_update(obs, sim, k)
         fc = np.maximum(sim[:, A + 1:] + err0[:, None] * m.beta[None, :], 0.0)
         if HOLD_RULE and variant not in FUTURE_RAIN and k in UPS:      # nur ohne Regenvorhersage (hold_test.py, 14.11.2026)
             passed = np.ones(len(t0), bool)
@@ -639,6 +695,8 @@ def flood_windows(Q: pd.DataFrame, W: pd.DataFrame, frames: dict, sets: dict) ->
             rec["rain_start"] = str(Q.index[ip - r0])
             rec["p"] = {k: [round(float(v), 4) for v in frames[k]["p"].to_numpy()[ip - r0:ip + b0 + 1]] for k in RAINK}
             rec["api0"] = {k: [float(frames[k]["api"].to_numpy()[ip - r0 - 1]), float(frames[k]["api_s"].to_numpy()[ip - r0 - 1])] for k in RAINK}
+            if all("sm" in frames[k] for k in RAINK):              # Bodenfeuchte auf dem Abflussraster (Wert am Fensteranfang i - A)
+                rec["sm"] = {k: [round(float(np.nan_to_num(v, nan=SM_FALLBACK)), 2) for v in np.asarray(frames[k]["sm"])[ip - a0:ip + b0 + 1]] for k in RAINK}
         out.append(rec)
     return out
 

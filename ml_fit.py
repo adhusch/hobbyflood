@@ -134,7 +134,7 @@ NORAD = False     # Gegenprobe: Radargrößen durch die Stationswerte ersetzen (
 def no_radar(r: L.Rain) -> L.Rain:
     import rain_fit as RF2
     ex = np.stack([r.rain] + [np.maximum(r.rain - f, 0.0) for f in RF2.EXCESS_F], axis=-1).astype("float32")
-    return L.Rain(r.rain, r.api, r.lead, r.api_s, r.bf, ex)
+    return L.Rain(r.rain, r.api, r.lead, r.api_s, r.bf, ex, r.sm)
 
 
 def pack(d: R.Data, m: R.Model, wexp: float) -> dict:

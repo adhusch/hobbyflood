@@ -31,6 +31,10 @@ def py_forecast(fl: dict, models: dict, target: str, i: int, variant: str) -> di
         for k, (ref, mq) in C_CONSTS["WET"].items():                  # Gebietsfeuchte wie in der Karte: Abfluss des Bezugspegels im Fenster / MQ
             if k in frames:
                 frames[k]["bf"] = Qn[ref] / mq
+    if fl["rain"] and fl.get("sm"):                                    # Bodenfeuchte wie die Abflussreihen vorn um LEAD aufgefüllt
+        for k, v in fl["sm"].items():
+            if k in frames:
+                frames[k]["sm"] = np.concatenate([pad, np.array(v, float)])
     storm = np.array([fl.get("storm", {}).get(target, "0" * (i + 1))[i] == "1"])
     S = C.forecast(models, target, Qn, frames, np.array([i + C.LEAD]), variant, storm=storm)
     return {k: v[0] for k, v in S.items()}
@@ -50,11 +54,11 @@ def check_lateral_terms() -> None:
     aps = np.convolve(p, np.exp(-np.arange(96) / 96.0), mode="full")[:T] * 0.25
     cases = []
     for terms in [(), ("bfa",), ("int",), ("acc",), ("bfa", "acc"), ("bfa", "fast"), ("bfa", "acc", "fast"), ("fast",), ("bfa", "sat"),
-                  ("bfa", "fast", "sat"), ("bfa", "nlr"), ("bfa", "satx", "nlrx")]:
+                  ("bfa", "fast", "sat"), ("bfa", "nlr"), ("bfa", "satx", "nlrx"), ("bfa", "sma"), ("bfa", "sma", "satx", "nlrx"), ("bfa", "smf"), ("bfa", "smf", "satx", "nlrx"), ("bf", "smf", "int")]:
         lt = L.Lateral("X", 87.0, 0.6, float(np.log(150.0)), float(np.log(2.5)), float(np.log(14.0)), tuple(terms), 0.45, float(np.log(12.0)), 2.0,
                        w_bf=120.0, log_kf=float(np.log(0.8)), rs=0.7, log_sev=float(np.log(60.0)), g_ev=1.3, lam=0.35,
-                       log_oref=float(np.log(0.4)), a_nl=0.8)
-        py = L.response(L.Rain(p[None, :], api[None, :], lead, aps[None, :], np.array([0.7])), lt)[0]
+                       log_oref=float(np.log(0.4)), a_nl=0.8, w_sm=85.0, log_s50=float(np.log(0.93)), log_gs=float(np.log(14.0)))
+        py = L.response(L.Rain(p[None, :], api[None, :], lead, aps[None, :], np.array([0.7]), None, np.array([118.0])), lt)[0]
         cases.append(dict(lt=lt.to_dict(), py=py.tolist()))
     nets = [dict(W1=rng.normal(0, 0.4, (L.ML_NF, 16)).tolist(), b1=rng.normal(0, 0.2, 16).tolist(), W2=rng.normal(0, 0.3, (16, 16)).tolist(),
                  b2=rng.normal(0, 0.2, 16).tolist(), W3=rng.normal(0, 0.6, (16, 2)).tolist(), b3=[0.4, -0.3]) for _ in range(2)]
@@ -66,7 +70,7 @@ def check_lateral_terms() -> None:
         cases.append(dict(lt=lt.to_dict(), py=py.tolist()))
     js = r"""
 const M = require(process.argv[1]), cases = JSON.parse(require("fs").readFileSync(0)), p = JSON.parse(process.argv[2]);
-const r = { p: Float64Array.from(p.p), api: Float64Array.from(p.api), aps: Float64Array.from(p.aps), lead: p.lead, bf: 0.7 };
+const r = { p: Float64Array.from(p.p), api: Float64Array.from(p.api), aps: Float64Array.from(p.aps), lead: p.lead, bf: 0.7, sm: 118.0 };
 process.stdout.write(JSON.stringify(cases.map(c => Array.from(M.lateral(r, c.lt)))));
 """
     arg = json.dumps(dict(p=p.tolist(), api=api.tolist(), aps=aps.tolist(), lead=lead))

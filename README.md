@@ -743,3 +743,53 @@ Wasserstand-Abfluss-Beziehung: Bei allen acht Pegeln gibt die HVZ heute denselbe
 Für die Oberläufe (Echtershausen, Sinspelt, Seffern, Alsdorf-Oberecken) taugt das nicht: Dort steigt jede Messstelle vor allem durch ihr eigenes Zwischengebiet (im Sturm r 0,33–0,51 und unplausible Geschwindigkeiten, z. B. 4,7 m/s zwischen Mauel und Merkeshausen), und im Modell gibt es dort keine echte Wellenlaufzeit. Uhren der kommunalen Messstellen geprüft: Sinspelt Gemeindehaus gegen Landespegel Sinspelt (300 m) 4 Minuten.
 
 Am Sturm 16.–18.11.2026 nachgespielt (Rohordner, kommunale Daten ab 17.11. mittags): gemessen 4,6–5,9 h, Modell 4,0–4,9 h, Faktor 0,92–1,00, zum Schluss 0,99; Median in Prümzurlay höchstens 0,15 m³/s anders. Der Sturm lief also mit der Modelllaufzeit; nützen soll der Faktor bei großen Hochwassern, wenn das Vorland mitfließt (Juni 2018: 7,1 h statt 4,6 h).
+
+## Kurzfristkorrektur aus kommunalen Pegeln flussauf (18.11.2026)
+
+`kommunal_nowcast.py`: Steigt eine kommunale Messstelle flussauf, hebt die Kette die ersten Stunden am Landespegel an, ohne historische
+Trainingsdaten. Im laufenden Ereignis wird aus den letzten 24 h gelernt, wie stark eine Änderung an der Messstelle über H Stunden die Änderung
+am Landespegel in den H Stunden danach bestimmt (Regression ohne Achsenabschnitt, Faktor 0–3). Liegt die Modelllinie zur Zeit t0 + H unter
+`W(t0) + Faktor × Anstieg der Messstelle`, wird sie bis dahin linear angehoben, danach klingt der Zuschlag mit 6 h ab. Gerechnet in Wasserstand,
+über die Abflusskurve auf alle Läufe angewendet; die untere Bandhälfte bleibt beim Band ohne Anhebung (die Zusatzinformation ist unsicher).
+Nur nach oben, nur bei steigender Messstelle (mindestens 1 cm), Korrelation der Änderungen im Fenster mindestens 0,5, deutlicher Anstieg
+(3 cm) im Lernfenster, letzter Wert höchstens 45 min alt. Fehlen die kommunalen Daten oder passt etwas nicht, bleibt die Vorhersage unverändert.
+
+Paare: Sinspelt ← Neuerburg (2 h), Prüm 2 ← Hermespand (2 h), Seffern ← Nimsreuland (2 h), Giesdorf ← Rommersheim (1 h),
+Echtershausen ← Kinzenburg (3 h). Prüfung gegen die 71 im Sturm 16.–18.11.2026 ausgegebenen Vorhersagen (mittlerer Fehler in cm, in Klammern
+bei Anstieg um mindestens 3 cm):
+
+| Pegel | 1 h | 2 h | 4 h | 12 h |
+|---|---|---|---|---|
+| Sinspelt | 0,8 (3,0) → 0,6 (0,8) | 1,5 (4,2) → 1,2 (3,0) | 2,8 (6,4) → 2,3 (5,0) | 7,9 → 7,7 |
+| Prüm 2 | 0,9 (2,3) → 0,8 (1,2) | 1,7 (3,2) → 1,7 (2,6) | 3,0 (5,2) → 2,8 (4,0) | 6,4 → 6,4 |
+| Seffern | 0,9 (1,9) → 0,9 (1,5) | 1,2 (2,0) → 1,1 (1,2) | 1,9 (2,8) → 1,8 (2,5) | 5,4 → 5,4 |
+| Giesdorf | 2,6 (5,5) → 2,4 (3,2) | 3,9 (5,5) → 3,8 (4,7) | 6,7 (9,9) → 6,8 (9,4) | 11,2 → 11,2 |
+| Echtershausen | 1,4 (1,6) → 1,4 (1,4) | 2,3 (2,2) → 2,3 (2,0) | 3,3 (3,7) → 3,2 (3,5) | 4,4 → 4,5 |
+
+Die Wurzel des mittleren quadratischen Fehlers sinkt an allen fünf Pegeln oder bleibt gleich. Größter Fehlgriff: 18.11., 11:15 Uhr, Neuerburg
+stieg in 2 h um 12 cm und blieb dann stehen; erwartet +14 cm in Sinspelt, gekommen +3 cm (Lokalregen hatte Sinspelt schon vorher steigen
+lassen). Halbierter Zuschlag hätte solche Fälle auf höchstens 4 cm begrenzt, aber die Anstiege deutlich schlechter getroffen; ein zweiter
+Prädiktor (bisheriger Anstieg am Landespegel) brachte wenig. Nicht verwendet: Prümzurlay, Wiersdorf, Alsdorf-Oberecken (Modell in den ersten
+Stunden schon so gut oder besser). Der Zug nach unten bei 12–24 h an der Enz bleibt; er kommt aus der unterschätzten Gebietsfeuchte.
+Eine einzelne Prüfung an einem Ereignis: nach den nächsten Hochwassern neu bewerten.
+
+## Bodenfeuchte im Abflussbeiwert (18.11.2026)
+
+Anlass: Im Sturm 16.–18.11.2026 lag die Kette 24 h vorher deutlich zu tief (Sinspelt rund halb so hoch). Der Regen aus ICON-D2 passte
+(100–112 % des gemessenen), aber das Modell schätzte die Gebietsfeuchte aus dem Grundabfluss: Nach dem trockenen Sommer war der Grundabfluss
+niedrig (0,2 MQ), die Böden nach dem nassen Oktober aber schon gesättigt. Diesen Zustand kennt das Training 2004–2022 kaum.
+
+Daten: DWD-Bodenfeuchte AMBAV 2.0 (Deutscher Wetterdienst, Open Data, `grids_germany/daily/soil_moisture`), 1 km, täglich seit 1991,
+nutzbare Feldkapazität (% nFK) 0–60 cm unter Gras. `bodenfeuchte.py` mittelt die Zellen je Regengebiet (Flächenanteile aus
+`data/radar/catchments.geojson`, gespeichert in `data/bodenfeuchte/gewichte.json`) zu `data/bodenfeuchte/bf_0-60.csv` (2001 bis heute).
+Live holt `bodenfeuchte_live.py` die letzten 14 Tage aus der aktuellen Jahresdatei über HTTP-Teilabrufe (rund 8 MB statt 125 MB, `h5py`);
+fehlt der Abruf, wird der letzte Wert höchstens 3 Tage fortgeschrieben, danach gilt der Ersatzwert
+100 % nFK (feuchter Normalzustand im Winter).
+
+Modell: Faktor auf den Abflussbeiwert des Zwischengebiets, `phi · S^g / (S^g + S50^g)` mit S = Bodenfeuchte des Vortags / 100
+(`lateral`, Erweiterung `smf`, zusätzlich zu `bfa`). Ein additiver Zuschlag (`sma`) bekam in der Anpassung das Gewicht 0; Bodenfeuchte statt
+Grundabfluss war überall schlechter. Angepasst: S50 meist 0,9–1,05, Steilheit g 8–40 (an Prümzurlay flach). Kreuzvalidierung 2004–2022
+(Nash-Sutcliffe, Kette mit gemessenem Regen, Mittel über die acht Pegel, neu minus alt): 6 h +0,002, 12 h +0,006, 24 h +0,04, 48 h +0,10; im
+Starkregensatz 6 h +0,011, 12 h +0,022, 24 h +0,075, 48 h +0,22. Einzeln etwas schlechter: Sinspelt 12 h (0,369 statt 0,389). Scheitel
+unverändert (Median des Scheitelverhältnisses ±0,02). Übernommen, dazu Unsicherheitstabellen neu. Den Sturm erklärt das nur teilweise:
+gesättigte Böden bei leerem Grundwasser kamen 2004–2022 kaum vor.
