@@ -10,8 +10,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-# Rechenkern (routing_core.c) einmal übersetzen
-RUN python -c "import routing" \
+# Rechenkern (routing_core.c: Routing, Speicher des Zwischengebiets, Vorregenindex) einmal übersetzen; ohne ihn rechnet Python, 10-mal langsamer
+RUN python -c "import routing; assert routing._load_lib(), 'C-Rechenkern nicht übersetzt'" \
     && useradd --create-home app && mkdir -p gui/archiv data/live && chown -R app:app /app
 USER app
 

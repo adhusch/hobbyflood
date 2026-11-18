@@ -285,7 +285,22 @@ def _nl_stores(peff: np.ndarray, k1: float, k2: float, dt_h: float, oref: float,
     return out
 
 
+def _core():
+    """Rechenkern in C (routing_core.c, über routing._load_lib); False ohne Compiler. Spät importiert, weil routing dieses Modul importiert."""
+    import routing
+    return routing._load_lib()
+
+
 def _two_stores(peff: np.ndarray, k1: float, k2: float, dt_h: float, nl: tuple | None = None) -> np.ndarray:
+    lib = _core()
+    if lib:                                                # dieselbe Rechnung in C (Raspberry Pi: Python-Schleife war 2/3 der Laufzeit)
+        x = np.ascontiguousarray(peff, dtype=np.float64)
+        out = np.empty_like(x)
+        if nl is not None:
+            lib.nl_stores(x, out, x.shape[0], x.shape[1], float(k1), float(k2), float(dt_h), float(nl[0]), float(nl[1]))
+        else:
+            lib.two_stores(x, out, x.shape[0], x.shape[1], float(k1), float(k2), float(dt_h))
+        return out
     if nl is not None:
         return _nl_stores(peff, k1, k2, dt_h, nl[0], nl[1])
     a1, a2 = np.exp(-dt_h / k1), np.exp(-dt_h / k2)

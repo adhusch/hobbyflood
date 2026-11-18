@@ -57,3 +57,57 @@ void cascade(const double *in, double *out, int E, int T, int n, double length_k
         }
     }
 }
+
+/* Zwei nichtlineare Speicher in Reihe (lateral._nl_stores, gleiche Rechnung): Speicherzeit K(S) = K / (1 + S / (K oref))^a, Zufluss im Schritt
+ * konstant, Abfluss aus der Bilanz. peff, out: E Reihen der Länge T. */
+void nl_stores(const double *peff, double *out, int E, int T, double k1, double k2, double dt_h, double oref, double a)
+{
+    for (int e = 0; e < E; e++) {
+        const double *p = peff + (long)e * T;
+        double *y = out + (long)e * T;
+        double s1 = k1 * p[0], s2 = k2 * p[0];
+        y[0] = p[0];
+        for (int t = 1; t < T; t++) {
+            double kt1 = k1 / pow(1.0 + s1 / (k1 * oref), a);
+            double e1 = exp(-dt_h / kt1);
+            double s1n = s1 * e1 + p[t] * kt1 * (1.0 - e1);
+            double i2 = p[t] - (s1n - s1) / dt_h;
+            s1 = s1n;
+            double kt2 = k2 / pow(1.0 + s2 / (k2 * oref), a);
+            double e2 = exp(-dt_h / kt2);
+            double s2n = s2 * e2 + i2 * kt2 * (1.0 - e2);
+            y[t] = i2 - (s2n - s2) / dt_h;
+            s2 = s2n;
+        }
+    }
+}
+
+/* Zwei lineare Speicher in Reihe (lateral._two_stores ohne nl, gleiche Rechnung). */
+void two_stores(const double *peff, double *out, int E, int T, double k1, double k2, double dt_h)
+{
+    double a1 = exp(-dt_h / k1), a2 = exp(-dt_h / k2), w2 = 1.0 - k2 * (1.0 - a2) / dt_h;
+    for (int e = 0; e < E; e++) {
+        const double *p = peff + (long)e * T;
+        double *y = out + (long)e * T;
+        double o1 = p[0], o2 = p[0];
+        y[0] = p[0];
+        for (int t = 1; t < T; t++) {
+            double o1n = a1 * o1 + (1.0 - a1) * p[t];
+            o2 = a2 * o2 + (1.0 - a2) * o1 + (o1n - o1) * w2;
+            o1 = o1n;
+            y[t] = o2;
+        }
+    }
+}
+
+/* Vorregenindex (rain.api_series): acc = acc * k + p * dt, fehlende Werte (NaN) zählen als 0. */
+void api_series(const double *p, double *out, int T, double k, double dt_h)
+{
+    double acc = 0.0;
+    for (int t = 0; t < T; t++) {
+        double v = p[t];
+        if (v != v) v = 0.0;
+        acc = acc * k + v * dt_h;
+        out[t] = acc;
+    }
+}
