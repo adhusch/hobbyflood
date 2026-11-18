@@ -4,6 +4,9 @@
 # Die Quellen (hochwasser.rlp.de, DWD Open Data, Open-Meteo) sind frei zugänglich; Abrufe sparsam halten (Standard: stündlich).
 set -u
 INTERVAL_MIN="${INTERVAL_MIN:-60}"
+# Feste Uhrzeiten statt Pause nach jedem Lauf (sonst wandert der Takt um die Rechenzeit): Läufe um OFFSET_MIN nach jedem Vielfachen von
+# INTERVAL_MIN, Standard 7 Minuten, damit die Viertelstundenwerte der Pegel (kommen mit einigen Minuten Verzug) schon da sind.
+OFFSET_MIN="${OFFSET_MIN:-7}"
 PORT="${PORT:-8080}"
 mkdir -p gui/archiv data/live
 [ -f gui/index.html ] || printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=live.html"><a href="live.html">Live-Vorhersage</a> · <a href="archiv/">Archiv</a>\n' > gui/index.html
@@ -23,5 +26,7 @@ while true; do
   else
     echo "[$ts] Lauf fehlgeschlagen, alte Seite bleibt stehen" >&2
   fi
-  sleep "$((INTERVAL_MIN * 60))"
+  now=$(date +%s); per=$((INTERVAL_MIN * 60)); off=$((OFFSET_MIN * 60))
+  next=$(( ((now - off) / per + 1) * per + off ))
+  sleep "$((next - now))"
 done

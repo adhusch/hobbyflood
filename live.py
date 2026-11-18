@@ -177,6 +177,12 @@ def fetch() -> Path:
             continue
         if isinstance(j, list) and len(j) == len(st) and any(v is not None for v in j[0].get("hourly", {}).get("precipitation", [])):
             data["icon_ruc"], data["icon_ruc_modell"] = j, f"{mid} ({ep})"
+            for mm in dict.fromkeys([mid, mid if mid.startswith("dwd_") else "dwd_" + mid]):   # Startzeit des Laufs, falls Open-Meteo sie nennt
+                try:
+                    data["meta_ruc"] = json.loads(_get(f"https://api.open-meteo.com/data/{mm}/static/meta.json", tries=1, timeout=15))
+                    break
+                except Exception:                                  # noqa: BLE001
+                    pass
             break
     print("   ICON-RUC:", data.get("icon_ruc_modell", "nicht verfügbar"))
     # Ensemble über 7 Tage (nur für das Band im Ausblick); fehlt es, bleibt der Ausblick eine einzelne Linie
@@ -379,7 +385,7 @@ def read_icon(raw: Path) -> dict:
         nb[name] = {sid: pd.Series(pd.to_numeric(pd.Series(loc["hourly"]["precipitation"]), errors="coerce").to_numpy(), index=_mez(loc["hourly"]["time"]))
                     for sid, loc in zip(ids, locs)}
     meta = {}
-    for k in ("meta_d2", "meta_d2_eps"):
+    for k in ("meta_d2", "meta_d2_eps", "meta_ruc"):
         m = j["data"].get(k) or {}
         if "last_run_initialisation_time" in m:
             meta[k] = str(pd.Timestamp(m["last_run_initialisation_time"], unit="s") + MEZ)
@@ -387,6 +393,10 @@ def read_icon(raw: Path) -> dict:
     e0 = next(iter(eps.values()))
     last = e0["precipitation"].dropna().index.max()
     meta["eps_end"] = str(last)
+    try:
+        meta["abgerufen"] = str(pd.Timestamp(j["abgerufen_utc"]).tz_convert(None) + MEZ)        # Zeit des Abrufs = Zeit der Rechnung
+    except Exception:                                             # noqa: BLE001
+        pass
     meta["d2_end"] = str(next(iter(d2.values())).dropna().index.max())
     return dict(d2=d2, eps=eps, ids=ids, meta=meta, abgerufen=j["abgerufen_utc"], eu=longer.get("icon_eu"), glob=longer.get("icon_global"),
                 ruc=longer.get("icon_ruc"), ruc_modell=j["data"].get("icon_ruc_modell"), nb=nb,
