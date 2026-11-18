@@ -573,8 +573,8 @@ def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH,
     """Band des Ausblicks, siehe outlook(). Schreibt je Pegel out[k]["band"] und gibt Angaben zum Ensemble zurück (oder None).
 
     Um die Linie des Ausblicks gelegt und bei 48 h stetig: In log(Q + d) ist die halbe Breite nach oben bei 48 h die des Bands der Hauptgrafik
-    (u48, enthält Regenstreuung der ersten 48 h und Modellfehler). Danach kommt nur hinzu, was die Ensembleläufe an Streuung über ihren Stand bei
-    48 h hinaus aufbauen: u(t) = sqrt(u48² + max(0, a(t)² - a48²)), a = 90-%-Quantil der Abweichung der Läufe von ihrem Median (Abweichung je Lauf
+    (u48, enthält Regenstreuung der ersten 48 h und Modellfehler); sie wächst danach wie sqrt(Vorlauf / 48 h), und hinzu kommt, was die
+    Ensembleläufe an Streuung über ihren Stand bei 48 h hinaus aufbauen: u(t) = sqrt(u48² t/48 + max(0, a(t)² - a48²)), a = 90-%-Quantil der Abweichung der Läufe von ihrem Median (Abweichung je Lauf
     gegen die Rohrechnung der Linie). Unten ebenso mit 10 %, die Spannweite (nur Regenstreuung wie in der Hauptgrafik, kann schmaler sein als das Band) mit dem höchsten und niedrigsten Lauf. Erste Fassung (18.11.2026,
     verworfen): Läufe mit den Fehlerquantilen bei 48 h gemischt; das sprang bei 48 h (anderes Ensemble, andere Korrektur als die Linie), und die
     Linie lag teils außerhalb."""
@@ -616,7 +616,8 @@ def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH,
         pos = lambda x: max(float(x), 0.0)                                           # noqa: E731
         u48, l48 = pos(np.log(b[9, -1] + d) - L[j48]), pos(L[j48] - np.log(b[1, -1] + d))
         eu48, el48 = pos(np.log(runs48.max(0)[-1] + d) - L[j48]), pos(L[j48] - np.log(runs48.min(0)[-1] + d))   # nur Regenstreuung, wie oben
-        grow = lambda w48, a: np.sqrt(w48 ** 2 + np.maximum(a ** 2 - a[j48] ** 2, 0.0))   # noqa: E731
+        tl = np.maximum((np.arange(n) + 1) / (j48 + 1), 1.0)                         # Vorlauf / 48 h, ab 48 h
+        grow = lambda w48, a: np.sqrt(w48 ** 2 * tl + np.maximum(a ** 2 - a[j48] ** 2, 0.0))   # noqa: E731  Modellfehler wächst wie sqrt(Vorlauf)
         u, l = grow(u48, a_hi), grow(l48, a_lo)
         eu, el = grow(eu48, e_hi), grow(el48, e_lo)
         later = np.arange(n) > j48
@@ -626,8 +627,27 @@ def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH,
         ehi = np.where(later, np.exp(L + eu) - d, np.r_[runs48.max(0)[3::4], np.zeros(n)][:n])
         lo, elo = np.maximum(lo, 0), np.maximum(elo, 0)
         rcv = rc[dn]
-        pack = lambda f: {nm: [round(float(x), f[1]) for x in f[0](v)] for nm, v in dict(lo=lo, hi=hi, elo=elo, ehi=ehi).items()}   # noqa: E731
-        out[target]["band"] = dict(q=pack((lambda v: v, 3)), w=pack((lambda v: RT.w_of_q(rcv, v), 1)))
+
+        def widen(ln, lo_, hi_, elo_):
+            """Ab 48 h wird das Band in der angezeigten Einheit nie schmaler: Abstand zur Linie nach oben und unten je als laufendes Maximum
+            (kommt der Scheitel später als gerechnet, kann der Stand Tage danach noch so hoch sein). Unten nicht tiefer als das Band in der
+            relativen Rechnung oder der niedrigste Lauf, je nachdem was tiefer liegt (Rezession ohne Regen)."""
+            ln, lo_, hi_, elo_ = (np.asarray(x, float) for x in (ln, lo_, hi_, elo_))
+            from48 = np.arange(len(ln)) >= j48                                        # laufendes Maximum ab dem Wert bei 48 h
+            up = np.where(later, np.maximum.accumulate(np.where(from48, hi_ - ln, 0.0)), 0.0)
+            dn_ = np.where(later, np.maximum.accumulate(np.where(from48, ln - lo_, 0.0)), 0.0)
+            hi2 = np.where(later, np.maximum(hi_, ln + up), hi_)
+            lo2 = np.where(later, np.maximum(ln - dn_, np.minimum(lo_, elo_)), lo_)
+            wmax = np.maximum.accumulate(np.where(from48, hi2 - lo2, 0.0))             # Gesamtbreite ebenso nie kleiner: was die Untergrenze an
+            hi2 = np.where(later, np.maximum(hi2, lo2 + wmax), hi2)                   # der Rezession abgibt, kommt oben dazu
+            return lo2, hi2
+
+        lo_q, hi_q = widen(line, lo, hi, elo)
+        lw = np.asarray(out[target]["w"], float)                                    # Linie in cm genau wie angezeigt
+        lo_w, hi_w = widen(lw, np.asarray(RT.w_of_q(rcv, lo), float), np.asarray(RT.w_of_q(rcv, hi), float), np.asarray(RT.w_of_q(rcv, elo), float))
+        rd = lambda v, k: [round(float(x), k) for x in v]                           # noqa: E731
+        out[target]["band"] = dict(q=dict(lo=rd(lo_q, 3), hi=rd(hi_q, 3), elo=rd(elo, 3), ehi=rd(ehi, 3)),
+                                   w=dict(lo=rd(lo_w, 1), hi=rd(hi_w, 1), elo=rd(RT.w_of_q(rcv, elo), 1), ehi=rd(RT.w_of_q(rcv, ehi), 1)))
     print(f"   Band im Ausblick: {len(members)} Läufe, {time.time() - t_run:.0f} s")
     return dict(laeufe=len(members), modell=icon.get("eps7_modell"), reicht_h=round(float(reach), 0))
 
