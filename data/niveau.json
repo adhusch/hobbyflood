@@ -20,13 +20,14 @@
    "angewendet": true
   },
   "SE": {
-   "faktor": 1.0,
+   "faktor": 1.3,
    "seit": "2022-04-01",
    "werte": 400,
    "werte_ab_4_mq": 51,
    "ab_1_5_mq": 1.033,
    "ab_4_mq": 1.305,
-   "angewendet": false
+   "angewendet": true,
+   "begruendung": "fest geschätzt (18.11.2026): Verhältnis Seffern zu Giesdorf in den Wasserportal-Tagesmitteln 2023-2026 gegen 2008-2018 bei 0,5-2 MQ 1,19 (505 Tage), über 2 MQ 1,37 (183 Tage); LfU 2022 ab 4 MQ 1,31 (51 Werte); Giesdorf unverändert. Für den Hochwasserbereich 1,3."
   }
  }
 }

@@ -24,7 +24,11 @@ import uncert as UN
 HERE = Path(__file__).parent
 SEIT = {"PZ": "2022-01-01", "AL": "2022-04-01", "SE": "2022-04-01"}       # Beginn des heutigen Zustands. Alsdorf-Oberecken hängt an Seffern, und
                                                                            # Seffern lag von Juli 2021 bis März 2022 vorübergehend höher: daher ab April 2022
-OHNE = ("SE",)        # kein Faktor: Seffern seit April 2022 bei kleinem Abfluss 0,99, ab 4 MQ 1,31 (51 Werte aus einem Ereignis) - zu widersprüchlich
+OHNE = ()
+# Fest gesetzt statt aus der Simulation (die LfU-Reihen reichen nur bis 2022): Seffern seit April 2022 bei kleinem Abfluss 0,99, ab 4 MQ 1,31
+# (51 Werte aus einem Ereignis); die Wasserportal-Tagesmittel 2023-2026 zeigen Seffern gegenüber Giesdorf (unverändert) um 19 % (0,5-2 MQ) bzw.
+# 37 % (über 2 MQ) höher als 2008-2018. Für den Hochwasserbereich 1,3 (18.11.2026, Sturm: Seffern lag 24 h vorher deutlich zu tief).
+FEST = {"SE": 1.3}
 BEZUG = (2008, 2018)                                                       # Bezugsjahre (vor den Wechseln ab 2019 an der Nims)
 MIN_MQ = 1.5                                                               # nur Zeiten mit Abfluss ab 1,5 MQ (dort zählt die Vorhersage)
 STEP = 12                                                                  # Ausgabe alle 3 h
@@ -87,7 +91,7 @@ def main() -> None:
         hoch = None if len(hi) < 20 else float(hi.r.median() / d[(d.t.dt.year >= BEZUG[0]) & (d.t.dt.year <= BEZUG[1]) & (d.q_mq >= 4)].r.median())
         # Faktor aus dem Hochwasserbereich (ab 4 MQ), wenn dort mindestens 100 Werte liegen, sonst aus allen Werten ab 1,5 MQ
         f = hoch if hoch is not None and len(hi) >= 100 else alle
-        fac[k] = dict(faktor=1.0 if k in OHNE else round(f, 2), seit=SEIT[k], werte=int(len(new)), werte_ab_4_mq=int(len(hi)),
+        fac[k] = dict(faktor=1.0 if k in OHNE else FEST.get(k, round(f, 2)), seit=SEIT[k], werte=int(len(new)), werte_ab_4_mq=int(len(hi)),
                       ab_1_5_mq=round(alle, 3), ab_4_mq=None if hoch is None else round(hoch, 3), angewendet=k not in OHNE)
     pd.DataFrame(out).to_csv(HERE / "data" / "niveau_jahre.csv", index=False)
     (HERE / "data" / "niveau.json").write_text(json.dumps(dict(
