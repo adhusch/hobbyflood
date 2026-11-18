@@ -79,6 +79,13 @@ h2{font-size:15px;margin:0 0 6px;font-weight:650}
 .tip .r i{width:14px;border-top:2px solid var(--col);display:inline-block;margin-right:5px;vertical-align:middle}
 .tip b{font-variant-numeric:tabular-nums}
 .tw{overflow-x:auto}
+.ktab td,.ktab th{padding:5px 6px;white-space:nowrap}
+.ktab .kn{text-align:left;white-space:normal;min-width:120px}
+.ktab .kname{display:block}
+.ktab .ksub{display:block;font-size:12px;color:var(--ink2);font-weight:400;line-height:1.25}
+.ktab .khot .kname{font-weight:650}
+.ktab .spark{width:110px;height:22px;display:block}
+@media (max-width:640px){.ktab .kw{display:none}.ktab .spark{width:64px}.ktab td,.ktab th{padding:5px 4px}.ktab .kn{min-width:0}}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;font-variant-numeric:tabular-nums}
 th:first-child,td:first-child{text-align:left}
@@ -540,16 +547,18 @@ function kommunal() {                                     // kommunale Messstell
   const K = D.kommunal, sec = $("#sec-kom");
   if (!K) { sec.style.display = "none"; return; }
   const spark = (v, col) => { if (!v || v.length < 2) return ""; const lo = Math.min(...v), hi = Math.max(...v), W = 110, H = 22, sp = Math.max(hi - lo, 1e-6);
-    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf 72 h"><polyline fill="none" stroke="${col}" stroke-width="1.5" points="${v.map((y, i) => `${(i / (v.length - 1) * (W - 2) + 1).toFixed(1)},${(H - 2 - (y - lo) / sp * (H - 4)).toFixed(1)}`).join(" ")}"/></svg>`; };
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Verlauf 72 h"><polyline fill="none" stroke="${col}" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${v.map((y, i) => `${(i / (v.length - 1) * (W - 2) + 1).toFixed(1)},${(H - 2 - (y - lo) / sp * (H - 4)).toFixed(1)}`).join(" ")}"/></svg>`; };
   const dd = (v, f = 1, d = 0) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + nf(Math.abs(v * f), d);
   const hot = p => (p.d1 != null && p.d1 >= 5) || (p.d3 != null && p.d3 >= 10);
-  let h = `<table><thead><tr><th style="text-align:left">Messstelle</th><th style="text-align:left">Gewässer</th><th style="text-align:left">Lage</th><th>Wasserstand</th><th>1 h</th><th>3 h</th><th>24 h</th><th>Höchstwert 5 Tage</th><th>72 h</th></tr></thead><tbody>`;
-  K.pegel.forEach(p => { h += `<tr style="${hot(p) ? "font-weight:650" : ""}"><td style="text-align:left">${esc(p.name)}</td><td style="text-align:left">${esc(p.gewaesser)}</td><td style="text-align:left;color:var(--ink2)">${esc(p.lage)}</td><td>${nf(p.w, 0)} cm</td>` +
-    `<td style="${p.d1 >= 5 ? "color:var(--th3)" : ""}">${dd(p.d1)}</td><td style="${p.d3 >= 10 ? "color:var(--th3)" : ""}">${dd(p.d3)}</td><td>${dd(p.d24)}</td><td>${nf(p.max5, 0)} cm</td><td>${spark(p.reihe, hot(p) ? "var(--th3)" : "var(--c-full)")}</td></tr>`; });
+  const name = (n, sub) => `<td class="kn"><span class="kname">${n}</span><span class="ksub">${sub}</span></td>`;
+  let h = `<table class="ktab"><thead><tr><th style="text-align:left">Messstelle</th><th>Stand</th><th>1 h</th><th>3 h</th><th class="kw">24 h</th><th class="kw">Max 5 T</th><th>72 h</th></tr></thead><tbody>`;
+  K.pegel.forEach(p => { h += `<tr class="${hot(p) ? "khot" : ""}">${name(esc(p.name), esc(p.gewaesser) + " · " + esc(p.lage))}<td>${nf(p.w, 0)}</td>` +
+    `<td style="${p.d1 >= 5 ? "color:var(--th3)" : ""}">${dd(p.d1)}</td><td style="${p.d3 >= 10 ? "color:var(--th3)" : ""}">${dd(p.d3)}</td><td class="kw">${dd(p.d24)}</td><td class="kw">${nf(p.max5, 0)}</td><td>${spark(p.reihe, hot(p) ? "var(--th3)" : "var(--c-full)")}</td></tr>`; });
   const s = K.stausee;
-  if (s) h += `<tr><td style="text-align:left"><b>Stausee Bitburg</b></td><td style="text-align:left">Prüm</td><td style="text-align:left;color:var(--ink2)">Seestand, zwischen Echtershausen und Wiersdorf</td><td>${nf(s.w, 2)} m</td><td>${dd(s.d1, 100)}</td><td>${dd(s.d3, 100)}</td><td>${dd(s.d24, 100)}</td><td>${nf(s.max5, 2)} m</td><td>${spark(s.reihe, "var(--c-none)")}</td></tr>`;
+  if (s) h += `<tr>${name("Stausee Bitburg", "Seestand in m, Änderung in cm")}<td>${nf(s.w, 2)}</td><td>${dd(s.d1, 100)}</td><td>${dd(s.d3, 100)}</td><td class="kw">${dd(s.d24, 100)}</td><td class="kw">${nf(s.max5, 2)}</td><td>${spark(s.reihe, "var(--c-none)")}</td></tr>`;
   $("#kom").innerHTML = h + `</tbody></table>`;
-  $("#note-kom").innerHTML = `Änderungen in cm. Fett und rot: Anstieg von mindestens 5 cm in einer Stunde oder 10 cm in drei Stunden. Die kommunalen Messstellen werden von den Gemeinden betrieben und liefern nur Wasserstände als ungeprüfte Rohdaten (Quelle: hochwasser.rlp.de); sie gehen bisher nicht in die Vorhersage ein, zeigen aber an Oberläufen und Nebenbächen früher als die Landespegel, dass etwas kommt. Der Seestand zeigt, ob der Stausee gerade Wasser zurückhält oder abgibt.`;
+  const fehlt = (K.fehlt || []).length ? ` Derzeit ohne aktuelle Daten: ${K.fehlt.map(esc).join(", ")}.` : "";
+  $("#note-kom").innerHTML = `Stand und Änderungen in cm. Fett und rot: Anstieg von mindestens 5 cm in einer Stunde oder 10 cm in drei Stunden.${fehlt} Die kommunalen Messstellen werden von den Gemeinden betrieben und liefern nur Wasserstände als ungeprüfte Rohdaten (Quelle: hochwasser.rlp.de); sie gehen bisher nicht in die Vorhersage ein, zeigen aber an Oberläufen und Nebenbächen früher als die Landespegel, dass etwas kommt. Der Seestand zeigt, ob der Stausee gerade Wasser zurückhält oder abgibt.`;
 }
 const detail0 = detail; detail = () => { detail0(); ausblick(); szenarioText(); regenschwellen(); };
 try { kommunal(); } catch (e) { console.error("kommunale Pegel:", e); $("#sec-kom").style.display = "none"; }   // Zusatzdaten dürfen die Seite nie stören
