@@ -552,6 +552,22 @@ function regenschwellen() {                                // Regenmenge bis zur
   const links = [["eval.html", "Vorhersage-Prüfung an historischen Hochwassern"], ["auswertung.html", "Auswertung der Live-Vorhersagen"], ["routing_map.html", "Karte und Routing-Modell"], ["archiv/", "Archiv"]], box = $("#nav");
   if (location.protocol.startsWith("http")) links.forEach(([u, t]) => fetch(u, { method: "HEAD" }).then(r => { if (r.ok) box.insertAdjacentHTML("beforeend", `<a href="${u}" style="color:var(--c-full)">${t}</a>`); }).catch(() => {}));
 })();
+(function download() {                                  // Download von Rohdaten und Seiten über den Container-Server (deploy/server.py)
+  if (!location.protocol.startsWith("http")) return;
+  fetch("/download/info", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(I => {
+    if (!I) return;
+    const per = [["24", "letzte 24 h"], ["72", "letzte 3 Tage"], ["168", "letzte 7 Tage"], ["0", "alles"]];
+    const mb = x => x < 1 ? "unter 1 MB" : `${nf(x, 0)} MB`;
+    const row = ([h, t]) => { const i = I[h]; if (!i) return "";
+      const a = (w, txt) => `<a href="/download?stunden=${h}&was=${w}" style="color:var(--c-full)">${txt}</a>`;
+      return `<tr><td class="kn"><span class="kname">${t}</span><span class="ksub">${i.laeufe} Läufe</span></td><td class="kn">${a("alles", "alles")} · ${a("roh", "nur Rohdaten")} <span class="ksub" style="display:inline">(${mb(i.mb_roh)})</span> · ${a("seiten", "nur Seiten")} <span class="ksub" style="display:inline">(${mb(i.mb_seiten)})</span></td></tr>`; };
+    const sec = document.createElement("section"); sec.className = "panel"; sec.id = "sec-dl"; sec.style.marginTop = "14px";
+    sec.innerHTML = `<h2>Daten herunterladen</h2><div class="tw"><table class="ktab"><thead><tr><th style="text-align:left">Zeitraum</th><th style="text-align:left">Zip herunterladen (Größe ungepackt)</th></tr></thead><tbody>${per.map(row).join("")}</tbody></table></div>` +
+      `<p class="note">Rohdaten = alles, was jeder Lauf abgerufen hat (Pegel, kommunale Messstellen, DWD-Stationsregen, ICON), Seiten = jede archivierte Ausgabe dieser Seite und die Auswertung. Das Zip wird beim Klick gepackt, gepackt etwa ein Fünftel bis ein Zehntel der Größe; bei langen Zeiträumen kann das auf dem Raspberry Pi eine Weile dauern.</p>`;
+    const after = $("#sec-kom") || document.querySelector("main section:last-of-type");
+    (after && after.parentNode ? after.parentNode : document.body).insertBefore(sec, after ? after.nextSibling : null);
+  }).catch(() => {});
+})();
 function kommunal() {                                     // kommunale Messstellen: Wasserstand und Anstieg, als Frühzeichen an Oberläufen und Nebenbächen
   const K = D.kommunal, sec = $("#sec-kom");
   if (!K) { sec.style.display = "none"; return; }

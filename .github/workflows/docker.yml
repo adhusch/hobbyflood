@@ -57,6 +57,7 @@ jobs:
           docker run --rm hobbyflood:test python -c "import routing; assert routing._load_lib(); print('C-Rechenkern ok')"
           docker run --rm hobbyflood:test python test_rain.py
           docker run --rm hobbyflood:test sh -n deploy/run_live.sh
+          docker run --rm hobbyflood:test python -m py_compile deploy/server.py
 
       - name: Anmelden bei ghcr.io
         if: github.event_name != 'pull_request' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/tags/v'))
