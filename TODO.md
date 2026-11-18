@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
+Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Vor dem Sturm am 17./18.11.2026
 
@@ -10,7 +10,14 @@ Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Modell
 
-- [ ] **Bodenfeuchte mit langem Gedächtnis** (Sturm 18.11.2026: nasser Oktober, Grundwasser leer, Modell setzte 3–4-mal zu wenig Regen in Abfluss um, weil die Gebietsfeuchte fast nur am Anfangsabfluss hängt): DWD-Raster Bodenfeuchte (AMBAV 2.0, 1 km, täglich seit 1991, laufendes Jahr täglich aktualisiert, NetCDF je Jahr und Schicht, opendata.dwd.de/climate_environment/CDC/grids_germany/daily/soil_moisture/) für die Teilgebiete ausschneiden; als zusätzliches Feuchtemaß neben dem Anfangsabfluss in den Winterteil, neu anpassen (CV), prüfen an Herbsten nach trockenen Sommern und an Oktober und November 2026 (beide Live-Ereignisse müssen stimmen). Alternative: AMBAV-Stationswerte (derived_germany/soil/daily). ERA5-Land verworfen (zu grob).
+- [x] **Bodenfeuchte im Abflussbeiwert** (18.11.2026): DWD AMBAV 0–60 cm je Teilgebiet, Faktor `smf` zusätzlich zum Grundabfluss, in der Kreuzvalidierung leicht besser (vor allem lange Vorläufe und Starkregen), live über HTTP-Teilabrufe. Folgepunkte:
+  - [ ] **Zustand „Boden nass, Grundwasser leer“** (Herbst 2026) kam 2004–2022 kaum vor; das Modell lernt ihn deshalb nicht. Ideen: Bodenfeuchte und Grundabfluss nicht nur multiplizieren, sondern die Schwelle des Abflussbeiwerts an der Bodenfeuchte festmachen; Sturm November 2026 ins Training, sobald die LfU-Reihen vorliegen.
+  - [ ] **Andere Schichten** prüfen (0–10 cm für schnelle Reaktion, tiefere Schicht oder Sickerwasser für das Grundwasser); der DWD bietet weitere Tiefen und Größen.
+  - [ ] **Anpassung an der Grenze:** Steilheit g an mehreren Pegeln bei 40 (fast eine Stufe, Sinspelt und Prümzurlay Winter), an Prümzurlay S50 bei 1,5 und g 2; Grenzen und Glättung prüfen.
+  - [ ] **Bodenfeuchte in den Zustandsklassen der Unsicherheit:** Im Sturm lag die Messung am oberen Rand des Bands; das Band unterscheidet nur nass/trocken nach Abfluss.
+  - [ ] **Jahreswechsel:** Die neue DWD-Jahresdatei gibt es erst nach einigen Tagen (`bodenfeuchte_live.py` liest in der ersten Januarwoche beide Jahre); Anfang Januar 2027 im Protokoll prüfen.
+- [ ] **Ereignisbezogene Korrektur des Abflussbeiwerts:** Ein Faktor auf die Vorhersage aus dem Verhältnis gemessen/modelliert im laufenden Ereignis (`chain_fc.RATIO_UPDATE`, Umgebungsvariable `PRUEM_RATIO`, aus) brachte gemischte Ergebnisse (Sinspelt besser, Giesdorf 6 h deutlich schlechter) und ist nicht eingeschaltet. Besser: statt eines Faktors auf den Ausgang den Feuchtezustand im Ereignis nachführen (Zustandsschätzung aus dem bisherigen Anstieg), oder aus dem Archiv der Live-Läufe lernen, wie stark das Modell im Ereignis danebenliegt.
+- [ ] **Scheitel bei extremem Hochwasser zu spät** (Juli 2021: Prümzurlay 1,75 h nach Wiersdorf, Modell 4,25 h): Überlagerung mit Enz und Zwischengebiet und c(Q) oberhalb des Anpassungsbereichs. Ein schnellerer Faktor auf c(Q) trifft die Zeit 3 h vorher besser, senkt aber den Scheitel um 10–15 %; c(Q) für sehr große Abflüsse und die Überlagerung getrennt ansehen.
 - [ ] Seffern: Faktor 1,3 nach einigen Ereignissen prüfen; besser abflussabhängig (1,19 um MQ, 1,37 darüber), wenn Daten nach 2022 in 15 min vorliegen (Wasserportal-Export oder LfU).
 
 - [ ] **Zwischenzuflüsse als Teilgebiete:** Zwischengebiete und Oberläufe an den Mündungen der Nebenbäche teilen (Höhenmodell), je Teil Laufzeit bis zum Pegel und größenabhängige Reaktionszeit, Regen je Teil aus dem Raster (Menge von den Stationen, Verteilung vom Radar). Test zuerst an Echtershausen. Hintergrund: Fehlerzerlegung der Starkregen-Hochwasser (Volumen 0,80, Scheitel 0,65, 3 h zu spät).
@@ -38,14 +45,22 @@ Stand 17.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 - [ ] **Anfrage an den Betreiber des Stausees Bitburg:** Betriebsregeln bei Hochwasser (Vorabsenkung, Rückhalteraum, Abgabegrenzen) und Zeitreihen von Seestand und Abgabe.
 - [ ] **Regen vor 2001:** beim DWD (oder Kachelmannwetter) nach Radar- und Stundendaten der 1990er fragen.
 - [ ] **RADKLIM 2023–2025** liegt vor, nützt erst mit Pegeldaten dieser Jahre.
+- [ ] **Pegelreihen 2023–2026 in 15 min** (LfU oder Wasserportal): für den abflussabhängigen Seffern-Faktor, die Niveaufaktoren und um die Herbst-Ereignisse 2026 (Oktober, Sturm November) ins Training zu nehmen.
 
 ## Betrieb und Seiten
+
+- [ ] **Kurzfristkorrektur aus kommunalen Pegeln** (`kommunal_nowcast.py`) nach den nächsten Hochwassern prüfen: Paare, Vorlauf H, Abklingzeit 6 h, ob der Zuschlag gedämpft werden sollte (bisher nur Sturm November 2026). Dazu:
+  - [ ] **Ersatzabfluss der Messstellen** ((W − W0)^(5/3), W0 = Tiefststand minus 20 cm) nach einem Hochwasser mit hohen Ständen prüfen; besser eine grobe Abflusskurve je Messstelle aus dem Vergleich mit den Landespegeln (Volumenbilanz der Welle), sobald einige Ereignisse archiviert sind. Ausuferung an der Messstelle ist bisher nicht abgebildet.
+  - [ ] **Weitergabe flussab** (`kommunal_nowcast.CHAIN_PASS`, eingebaut, aus): Sinspelt → Prümzurlay machte Prümzurlay im Sturm schlechter (5 Ausgaben). Nach weiteren Ereignissen erneut prüfen; vielleicht nur den Teil weitergeben, der über die übliche Unterschätzung hinausgeht.
+  - [ ] **Weitere Paare** neu bewerten: Alsdorf-Oberecken ← Dockendorf (1 h, im Sturm bei Anstiegen besser, sonst neutral), Prümzurlay ← Holsthum Prüm / Brecht (Modell dort schon gut).
+  - [ ] **Im Szenario der Live-Seite** (Rechnung im Browser) fehlt die Korrektur; dort nur Hinweis oder nachbauen.
 
 - [ ] Band im 7-Tage-Ausblick: im Protokoll prüfen, welche Ensemble-Kennung greift („ICON-Ensemble 7 Tage: …“) und wie lange das Band auf dem ARM-Rechner braucht; nach einigen Wochen Archiv die Abdeckung des Bands für Tag 3 bis 7 auswerten.
 
 - [ ] **Umstellung bei Open-Meteo zum 30.11.2026:** vorher prüfen, ob die Abrufe (ICON-D2, Ensemble, EU, global, RUC, Nachbarschaft) weiterlaufen.
 - [ ] **Nachbarschafts-Ensemble mit echten Daten prüfen** (Protokollzeile `Nachbarschaft: n von 8 Richtungen`); ICON-RUC läuft (16.11.: 26 h Reichweite).
-- [ ] **Regenschwellen** mit dem heutigen Starkregensatz neu prüfen (`rain_thr.py check`).
+- [ ] **Regenschwellen** mit dem heutigen Starkregensatz und den Modellen mit Bodenfeuchte neu prüfen (`rain_thr.py check`).
 - [ ] **Routing-Karte:** alte Hochwasser mit der damals gültigen Wasserstand-Abfluss-Beziehung zeigen (wie die Prüf-Seite).
 - [ ] **Laufzeit des Seitenaufbaus** auf dem ARM-Rechner messen (im Test rund 50 s).
-- [ ] **Download-Ordner:** versteckte Zwischendateien der Browser-Downloads (rund 100 MB) löschen, braucht Freigabe.
+- [ ] **Download-Ordner auf dem Mac aufräumen** (von Hand, Löschen durch Claude wurde nicht freigegeben): 26 Bodenfeuchte-Jahresdateien `grids_germany_daily_soil_moisture_grass_*_0-60_v1.nc` (je rund 120–140 MB) und vier Dubletten `_doppelt_*`; die Daten stecken in `data/bodenfeuchte/bf_0-60.csv`.
+- [ ] **Bodenfeuchte:** nach dem nächsten Winterhochwasser prüfen, ob der Faktor die Unterschätzung bei nassem Boden und niedrigem Grundabfluss verringert; Abruf im Protokoll prüfen (`Bodenfeuchte: bis …`).

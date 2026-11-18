@@ -15,6 +15,13 @@ Optionale Erweiterungen des Abflussbeiwerts (`terms`), damit große Ereignisse m
          geteilt durch MQ (je Fenster ein Wert, Rain.bf). Nach Trockenphasen (B klein) fließt viel weniger ab, als der 7-Tage-Vorregen allein sagt:
          Im Oktober 2026 gaben 65-70 mm Regen nach dem trockenen Sommer nur 7-10 mm Abfluss (Prüm 2 vorher bei 6 % von MQ). Im Ereignis wächst
          x weiter mit dem gefallenen Regen (API7), der Boden kann also nass werden. Genutzt in chain_fc.py (LAT_TERMS).
+  "sma"  Bodenfeuchte (DWD AMBAV 2.0, 0-60 cm unter Gras, % nFK, Tagesmittel des Teilgebiets vom Vortag des Fensteranfangs, Rain.sm),
+         additiv im Anfeuchtungsmaß wie "bfa": x = API7 + w_bf * B + w_sm * SM / 100. Anlass: Sturm 16.-18.11.2026, Boden nach nassem Oktober
+         gesättigt (111-132 % nFK), Grundabfluss aber 0,2 MQ; das Modell (Feuchte nur aus B) setzte 3-4-mal zu wenig Regen in Abfluss um.
+         In der Rückrechnung (Okt-Apr, Grundabfluss unter 0,5 MQ, mind. 20 mm in 48 h) lag gemessen/Modell bei feuchtem Boden 0,75-0,92,
+         bei trockenem 0,24-0,33 (Oberläufe): der Grundabfluss allein trennt das nicht.
+  "smf"  Bodenfeuchte als Faktor: phi = phi * S^g / (S^g + S50^g), S = SM / 100 (Anteil nFK). In der Anpassung je Prüfblock S50 0,86-1,03 und
+         g 10-20: unter Feldkapazität fließt viel weniger ab. Additiv ("sma") brachte nichts (Gewicht stets 0).
   "fast" schneller Abflussweg bei Starkregen: der Intensitätsanteil wie bei "int", f = (1 - phi_a) * rho * P^2 / (P^2 + Pc^2), läuft nicht durch
          K1/K2, sondern über zwei schnelle Linearspeicher mit Kf (Oberflächenabfluss); der Rest phi_a * P wie im Grundmodell. Anlass: Mit
          gemessenem Regen blieb die Kette bei den Hochwassern über HQ10 (2016, 2018, 2021) bei 7-33 % des Scheitels, und der Scheitel kam 2-13 h zu
@@ -51,11 +58,12 @@ DT_H = 0.25
 BOUNDS = dict(phi_max=(0.0, 1.0), log_s=(np.log(5.0), np.log(1000.0)), log_k1=(np.log(0.5), np.log(24.0)), log_k2=(np.log(2.0), np.log(96.0)),
               rho=(0.0, 1.0), log_pc=(np.log(2.0), np.log(60.0)), w_acc=(0.0, 10.0), log_b50=(np.log(0.01), np.log(10.0)), log_gb=(np.log(0.2), np.log(3.0)),
               w_bf=(0.0, 1000.0), log_kf=(np.log(0.25), np.log(12.0)), rs=(0.0, 1.0), log_sev=(np.log(10.0), np.log(3000.0)), g_ev=(0.0, 10.0),
-              lam=(0.02, 0.9), log_oref=(np.log(0.02), np.log(50.0)), a_nl=(0.0, 2.0))
+              lam=(0.02, 0.9), log_oref=(np.log(0.02), np.log(50.0)), a_nl=(0.0, 2.0), w_sm=(0.0, 1000.0), log_s50=(np.log(0.05), np.log(1.5)), log_gs=(np.log(0.5), np.log(40.0)))
 BASE_KEYS = ("phi_max", "log_s", "log_k1", "log_k2")
-TERM_KEYS = {"int": ("rho", "log_pc"), "acc": ("w_acc",), "bf": ("log_b50", "log_gb"), "bfa": ("w_bf",), "fast": ("rho", "log_pc", "log_kf"),
+SMA_START = 100.0                   # Startwert für w_sm
+TERM_KEYS = {"int": ("rho", "log_pc"), "acc": ("w_acc",), "bf": ("log_b50", "log_gb"), "bfa": ("w_bf",), "sma": ("w_sm",), "smf": ("log_s50", "log_gs"), "fast": ("rho", "log_pc", "log_kf"),
              "sat": ("rs", "log_sev", "g_ev", "log_kf", "lam"), "satx": (), "nlr": ("log_oref", "a_nl"), "nlrx": (), "ml": ()}
-TERM_ORDER = ("int", "acc", "bf", "bfa", "fast", "sat", "satx", "nlr", "nlrx", "ml")   # satx: Sättigungsüberschuss mit festen (gemeinsamen) Parametern, nicht angepasst
+TERM_ORDER = ("int", "acc", "bf", "bfa", "sma", "smf", "fast", "sat", "satx", "nlr", "nlrx", "ml")   # satx: Sättigungsüberschuss mit festen (gemeinsamen) Parametern, nicht angepasst
 
 
 @dataclass
@@ -81,6 +89,9 @@ class Lateral:
     log_oref: float = 0.0
     a_nl: float = 0.0
     net: dict | list | None = None  # Gewichte des Netzes für "ml" (ml_fit.py): W1, b1, W2, b2, W3, b3 als Listen
+    w_sm: float = 0.0               # Gewicht der Bodenfeuchte ("sma")
+    log_s50: float = float(np.log(0.5))   # Bodenfeuchte (Anteil nFK) mit halbem Faktor ("smf")
+    log_gs: float = float(np.log(2.0))    # Steilheit ("smf")
 
     def keys(self) -> list[str]:
         if "int" in self.terms and "fast" in self.terms:
@@ -104,13 +115,16 @@ class Lateral:
                        d.get("rho", self.rho), d.get("log_pc", self.log_pc), d.get("w_acc", self.w_acc), d.get("log_b50", self.log_b50),
                        d.get("log_gb", self.log_gb), d.get("w_bf", self.w_bf), d.get("log_kf", self.log_kf), d.get("rs", self.rs),
                        d.get("log_sev", self.log_sev), d.get("g_ev", self.g_ev), d.get("lam", self.lam),
-                       d.get("log_oref", self.log_oref), d.get("a_nl", self.a_nl), self.net)
+                       d.get("log_oref", self.log_oref), d.get("a_nl", self.a_nl), self.net, d.get("w_sm", self.w_sm),
+                       d.get("log_s50", self.log_s50), d.get("log_gs", self.log_gs))
 
     def with_terms(self, terms) -> "Lateral":
-        """Gleiche Grundparameter, andere Erweiterungen (Zusatzparameter mit Standardstartwerten, falls noch nie gesetzt)."""
+        """Gleiche Grundparameter, andere Erweiterungen (Zusatzparameter mit Standardstartwerten, falls noch nie gesetzt). Kommt "sma" neu dazu,
+        startet w_sm bei SMA_START statt an der Grenze 0 (dort blieb die Anpassung hängen)."""
+        w_sm = SMA_START if ("sma" in terms and "sma" not in self.terms and self.w_sm == 0.0) else self.w_sm
         return Lateral(self.name, self.area_km2, self.phi_max, self.log_s, self.log_k1, self.log_k2, tuple(terms), self.rho, self.log_pc, self.w_acc,
                        self.log_b50, self.log_gb, self.w_bf, self.log_kf, self.rs, self.log_sev, self.g_ev, self.lam, self.log_oref,
-                       self.a_nl, self.net)
+                       self.a_nl, self.net, w_sm, self.log_s50, self.log_gs)
 
     def to_dict(self) -> dict:
         d = dict(name=self.name, area_km2=self.area_km2, phi_max=self.phi_max, log_s=self.log_s, log_k1=self.log_k1, log_k2=self.log_k2)
@@ -120,6 +134,10 @@ class Lateral:
                 d.update(log_b50=self.log_b50, log_gb=self.log_gb)
             if "bfa" in self.terms:
                 d.update(w_bf=self.w_bf)
+            if "sma" in self.terms:
+                d.update(w_sm=self.w_sm)
+            if "smf" in self.terms:
+                d.update(log_s50=self.log_s50, log_gs=self.log_gs)
             if "fast" in self.terms or "sat" in self.terms or "satx" in self.terms:
                 d.update(log_kf=self.log_kf)
             if "ml" in self.terms:
@@ -135,7 +153,8 @@ class Lateral:
         return Lateral(d["name"], d["area_km2"], d["phi_max"], d["log_s"], d["log_k1"], d["log_k2"], tuple(d.get("terms", ())),
                        d.get("rho", 0.2), d.get("log_pc", float(np.log(10.0))), d.get("w_acc", 1.0), d.get("log_b50", float(np.log(0.3))),
                        d.get("log_gb", 0.0), d.get("w_bf", 20.0), d.get("log_kf", 0.0), d.get("rs", 0.0), d.get("log_sev", float(np.log(200.0))),
-                       d.get("g_ev", 1.0), d.get("lam", 0.2), d.get("log_oref", 0.0), d.get("a_nl", 0.0), d.get("net"))
+                       d.get("g_ev", 1.0), d.get("lam", 0.2), d.get("log_oref", 0.0), d.get("a_nl", 0.0), d.get("net"), d.get("w_sm", 0.0),
+                       d.get("log_s50", float(np.log(0.5))), d.get("log_gs", float(np.log(2.0))))
 
 
 @dataclass
@@ -148,10 +167,12 @@ class Rain:
     api_s: np.ndarray | None = None
     bf: np.ndarray | None = None          # Gebietsfeuchte je Fenster (Abfluss / MQ am Bezugspegel zu Beginn des Abflussfensters), nur für "bf"
     ex: np.ndarray | None = None          # Radargrößen [E, T_ext, 4] in mm/h: Gebietsmittel und Starkregenanteile über 4, 10, 20 mm/h (rain_fit.XCOLS), nur für "ml"
+    sm: np.ndarray | None = None          # Bodenfeuchte je Fenster in % nFK (Vortag des Fensteranfangs), nur für "sma"
 
     def subset(self, keep: np.ndarray) -> "Rain":
         return Rain(self.rain[keep], self.api[keep], self.lead, None if self.api_s is None else self.api_s[keep],
-                    None if self.bf is None else self.bf[keep], None if self.ex is None else self.ex[keep])
+                    None if self.bf is None else self.bf[keep], None if self.ex is None else self.ex[keep],
+                    None if self.sm is None else self.sm[keep])
 
 
 def _fast_part(r: Rain, lat: Lateral, phi_a: np.ndarray) -> np.ndarray:
@@ -249,6 +270,10 @@ def _slow_coefficient(r: Rain, lat: Lateral) -> np.ndarray:
         if r.bf is None:
             raise ValueError("Erweiterung 'bfa' braucht bf im Regenfenster")
         x = x + lat.w_bf * np.maximum(np.asarray(r.bf, float), 0.0)[:, None]
+    if "sma" in lat.terms:
+        if r.sm is None:
+            raise ValueError("Erweiterung 'sma' braucht sm im Regenfenster")
+        x = x + lat.w_sm * np.maximum(np.asarray(r.sm, float), 0.0)[:, None] / 100.0
     phi = lat.phi_max * (1.0 - np.exp(-x / np.exp(lat.log_s)))
     if "int" in lat.terms:
         p2 = np.square(r.rain)
@@ -259,6 +284,12 @@ def _slow_coefficient(r: Rain, lat: Lateral) -> np.ndarray:
         g = np.exp(lat.log_gb)
         b = np.maximum(np.asarray(r.bf, float), 1e-6)[:, None] ** g
         phi = phi * b / (b + np.exp(g * lat.log_b50))
+    if "smf" in lat.terms:
+        if r.sm is None:
+            raise ValueError("Erweiterung 'smf' braucht sm im Regenfenster")
+        gs = np.exp(lat.log_gs)
+        sv = np.maximum(np.asarray(r.sm, float) / 100.0, 1e-6)[:, None] ** gs
+        phi = phi * sv / (sv + np.exp(gs * lat.log_s50))
     return phi
 
 

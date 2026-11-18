@@ -149,6 +149,11 @@ def fetch() -> Path:
         hvz["pegel"][n] = json.loads(_get(f"https://www.hochwasser.rlp.de/api/v1/measurement-site/{n}"))
     (out / "hvz.json").write_text(json.dumps(hvz), encoding="utf-8")         # Landespegel sichern, bevor Zusatzdaten kommen
     hvz["kommunal"] = fetch_kommunal()
+    try:                                                          # Bodenfeuchte (DWD, täglich): nur wenn der Vortag fehlt, wenige MB
+        import bodenfeuchte_live as BFL
+        print("   Bodenfeuchte:", BFL.update())
+    except Exception as e:                                        # noqa: BLE001
+        print("   Bodenfeuchte übersprungen:", repr(e)[:150])
     (out / "hvz.json").write_text(json.dumps(hvz), encoding="utf-8")
     st = station_table()
     base = "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/"
@@ -419,13 +424,33 @@ def hourly_to_grid(h: pd.Series, grid: pd.DatetimeIndex) -> np.ndarray:
     return h.reindex(grid.ceil("1h")).to_numpy()
 
 
+SM_LIVE: dict[str, np.ndarray] | None = None                 # Bodenfeuchte je Regengebiet auf dem Raster des Laufs (build setzt sie)
+SM_LIVE_FILE = HERE / "data" / "live" / "bodenfeuchte.csv"    # im Betrieb abgerufene Tageswerte (bodenfeuchte_live.py), ergänzt die Tabelle im Image
+
+
+def soil_table() -> pd.DataFrame | None:
+    """Bodenfeuchte-Tabelle: data/bodenfeuchte/bf_0-60.csv (im Image) ergänzt um die live abgerufenen Tage."""
+    parts = []
+    for f in (C.SM_FILE, SM_LIVE_FILE):
+        try:
+            if f.exists():
+                parts.append(pd.read_csv(f, index_col=0, parse_dates=True))
+        except Exception as e:                                    # noqa: BLE001
+            print(f"   Bodenfeuchte {f.name} nicht lesbar: {e}")
+    if not parts:
+        return None
+    t = pd.concat(parts)
+    return t[~t.index.duplicated(keep="last")].sort_index()
+
+
 def build_frames(p: dict[str, np.ndarray], Qn: dict[str, np.ndarray]) -> dict[str, dict]:
     """p: Gebiet -> Intensität mm/h auf dem Raster (bis zum Ende der Vorhersage); Vorregenindizes fortlaufend (ab Rasterbeginn); Gebietsfeuchte aus
     dem gemessenen Abfluss (Qn: Pegelname -> Reihe auf demselben Raster)."""
     out = {}
     for k, v in p.items():
         out[k] = dict(p=v, api=RN.api_series(v, DT, RN.TAU_API_H), api_s=RN.api_series(v, DT, RN.TAU_API_S_H))
-    return C.add_wetness(out, Qn)
+    sm = {k: v[:len(next(iter(p.values())))] for k, v in SM_LIVE.items()} if SM_LIVE else None   # alle Raster beginnen gleich (HISTORY_D)
+    return C.add_wetness(out, Qn, sm=sm)
 
 
 def mixture(members: list[np.ndarray], tabs: list[np.ndarray], d: float, levels=UN.LEV) -> np.ndarray:
@@ -487,6 +512,8 @@ def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
               api0={k: [float(fr[k]["api"][r0 - 1]), float(fr[k]["api_s"][r0 - 1])] for k in C.RAINK},
               storm={k: "0" * C.A + ("1" if C.is_storm(k, np.array([i0]))[0] else "0") for k in C.ORDER})
     fl["niveau"] = dict(C.LEVEL)
+    if SM_LIVE:                                                  # Bodenfeuchte auf dem Abflussfenster (wie chain_fc.flood_windows)
+        fl["sm"] = {k: [round(float(np.nan_to_num(v[j], nan=C.SM_FALLBACK)), 2) for j in range(a, b + 1)] for k, v in SM_LIVE.items()}
     fl["celer"] = {k: dict(v) for k, v in C.CELER.items()}      # Faktor auf die Wellengeschwindigkeit (celer_live.py), leer = 1
     return dict(consts=doc["consts"], set=doc["sets"]["alle"], fl=fl, offset={k: float(offs[k]) for k in C.ORDER})
 
@@ -680,13 +707,31 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     t0 = min(hv[k]["Q"].dropna().index.max() for k in NUM)
     # Wellenlaufzeit Wiersdorf -> Prümzurlay aus den kommunalen Pegeln (celer_live.py): Faktor auf c(Q) der Strecke, sonst 1
     C.CELER.clear()
+    C.UP_LIFT.clear()
     import celer_live as CLV
     cel = CLV.estimate(raw, hv, models, t0, state_file=(hold_file.parent / "celer.json") if hold_file is not None else None)
     if cel.get("angewendet") and cel.get("f", 1.0) != 1.0:
         C.CELER["PZ"] = {"WI": float(cel["f"])}
     print(f"   Wellenlaufzeit Wiersdorf -> Prümzurlay: Faktor {cel.get('f', 1.0)}" + (f" (gemessen {cel.get('laufzeit_gemessen_h')} h, Modell "
           f"{cel.get('laufzeit_modell_h')} h)" if cel.get("angewendet") else f" ({cel.get('grund')})"))
+    import kommunal_nowcast as KN
+    KOM_W = KN.read_w(raw)                                         # kommunale Messstellen für die Kurzfristkorrektur (leer = keine)
     grid = pd.date_range(t0 - pd.Timedelta(days=HISTORY_D), t0 + pd.Timedelta(hours=C.H_H), freq="15min")
+    # Bodenfeuchte je Regengebiet auf dem längsten Raster des Laufs (Ausblick); Vortageswert, höchstens 3 Tage fortgeschrieben, sonst Ersatzwert
+    global SM_LIVE
+    sm_tab = soil_table()
+    grid_long = pd.date_range(grid[0], t0 + pd.Timedelta(hours=max(OUTLOOK_H, C.H_H) + 24), freq="15min")
+    SM_LIVE = C.soil_moisture(grid_long, sm_tab) if sm_tab is not None else None
+    C.SM_CURRENT = SM_LIVE
+    sm_info = None
+    if SM_LIVE:
+        i_t0 = int(grid_long.get_loc(t0))
+        sm_last = sm_tab.index.max()
+        sm_info = dict(stand=str(sm_last.date()), werte={k: (None if not np.isfinite(v[i_t0]) else round(float(v[i_t0]), 1)) for k, v in SM_LIVE.items()},
+                       alt_tage=int((t0.normalize() - pd.Timedelta(days=1) - sm_last).days))
+        print(f"   Bodenfeuchte: Stand {sm_info['stand']} ({sm_info['alt_tage']} Tage alt): " + ", ".join(f"{k} {v}" for k, v in sm_info["werte"].items()))
+    else:
+        print("   Bodenfeuchte: keine Tabelle, Ersatzwert", C.SM_FALLBACK)
     i0 = int(grid.get_loc(t0))
     n = len(grid)
     Qn = {}
@@ -780,6 +825,28 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
         S0 = C.forecast(models, target, Qn, build_frames(p_none, Qn), np.array([i0]), "kette_regen")[target][0]
         A, H = C.A, C.H
         mem = [out[nm][A + 1:] for nm in out]
+        # Kurzfristkorrektur aus der kommunalen Messstelle flussauf (kommunal_nowcast.py): hebt alle Läufe in den ersten Stunden an, wenn die
+        # Messstelle deutlich steigt und das Modell zu tief liegt; sonst und bei jedem Fehler unverändert
+        kn, mem0 = None, None
+        if target in KN.PAIRS:
+            kid, kname, kh = KN.PAIRS[target]
+            try:
+                kn = dict(messstelle=kname, stunden=kh, **KN.estimate(KOM_W.get(kid), hv[target]["W"], t0, kh, rc=rc[dn]))
+                if kn["dw"] is not None:
+                    w_now = float(RT.w_of_q(rc[dn], np.array([Qn[dn][i0]]))[0])
+                    add, c = KN.lift_w(RT.w_of_q(rc[dn], np.maximum(out["ICON-D2"][A + 1:], 0)), w_now, kn["dw"], kh)
+                    kn.update(dw=round(kn["dw"], 1), zuschlag_cm=round(c, 1), angewendet=bool(c >= 0.5))
+                    if c >= 0.5:
+                        if target in KN.CHAIN_PASS:                # auch in die Kette flussab (Sinspelt -> Prümzurlay)
+                            C.UP_LIFT[target] = KN.lifter(rc[dn], add)
+                        mem0 = [m.copy() for m in mem]
+                        for nm, m in zip(out, mem):
+                            m[:] = np.where(add > 0, KN.q_of_w(rc[dn], RT.w_of_q(rc[dn], np.maximum(m, 0)) + add), m)
+                        mem = [out[nm][A + 1:] for nm in out]
+                else:
+                    kn["angewendet"] = False
+            except Exception as e:                                 # noqa: BLE001  Zusatz: nie die Vorhersage stören
+                kn = dict(messstelle=KN.PAIRS[target][1], angewendet=False, grund=f"Fehler: {e!r}"[:160])
         wet = int(Qn[dn][i0] >= UN.WET_EDGE * U["mq"][target])
         lev_of = lambda s: int(np.digitize(max(s[A], np.max(s[A + 1:])) / U["mq"][target], UN.LEVEL_EDGES)) * 2 + wet   # noqa: E731
         # Starkregenlage je Lauf (Regen 24 h vor bis 24 h nach der Ausgabezeit, Vorhersage des Laufs): dann die Starkregentabelle
@@ -788,6 +855,9 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
         heavy0 = bool(feats[target]["hp"][0])
         tabs = [_interp(T_v[target]["q"][st * UN.NSUB + lev_of(out[nm]) + UN.NB * heavy_run[nm]]) for nm in out]
         band = mixture(mem, tabs, d)
+        if mem0 is not None:                                       # angehoben: untere Bandhälfte nicht über dem Band ohne Anhebung (unsichere Zusatzinformation)
+            nlo = band.shape[1] // 2
+            band[:, :nlo] = np.minimum(band[:, :nlo], mixture(mem0, tabs, d)[:, :nlo])
         # Läufe nach der Fehlerstatistik bereinigt (Median des Restfehlers je Lauf und Vorlauf): gleicht die Drift des Modells bei Niedrigwasser aus
         corr = {nm: np.maximum((np.maximum(m, 0) + d) * np.exp(t[:, 5]) - d, 0) for nm, m, t in zip(out, mem, tabs)}
         tab0 = _interp(T_r[target]["q"][st * UN.NSUB + lev_of(S0) + UN.NB * heavy0])
@@ -867,7 +937,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
                       eps=[[round(float(x), 1) for x in np.quantile([ms[nm][D] for nm in eps_names], [0.1, 0.5, 0.9])] for D in RTH.DURS_H],
                       nb=[round(max(RTH.max_sums(sum(w_ * pn[x] for w_, x in zip(*cw)), i0)[D] for pn in p_nb.values()), 1) for D in RTH.DURS_H] if p_nb else None)
         res[target] = dict(
-            nachbar=nb_res, regenschwellen=rs, ruc=ruc, dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
+            nachbar=nb_res, regenschwellen=rs, ruc=ruc, kurz=kn, dn=dn, state=st, dry=not wet, mq=U["mq"][target], q0=q0, w0=float(RT.w_of_q(rcv, np.array([q0]))[0]), w1=float(RT.w_of_q(rcv, np.array([Qn[dn][i0 - 4]]))[0]),
             obs_q=[None if not np.isfinite(x) else round(float(x), 3) for x in obs_hist], obs_w=[None if not np.isfinite(x) else v for x, v in zip(obs_hist, wq(np.nan_to_num(obs_hist)))],
             band_q=[[round(float(x), 3) for x in band[:, j]] for j in range(band.shape[1])], band_w=[wq(band[:, j]) for j in range(band.shape[1])],
             band0_q=[[round(float(x), 3) for x in band0[:, j]] for j in range(band0.shape[1])], band0_w=[wq(band0[:, j]) for j in range(band0.shape[1])],
@@ -886,7 +956,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     except Exception as e:                                         # noqa: BLE001  Ausblick ist Zusatz: scheitert er, bleibt die 48-h-Seite
         print("   Ausblick entfällt:", repr(e))
         aus = None
-    meta = dict(celer=cel, niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
+    meta = dict(bodenfeuchte=sm_info, celer=cel, niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
     data = dict(kommunal=read_kommunal(raw, t0), meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},

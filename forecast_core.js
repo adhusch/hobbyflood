@@ -3,6 +3,7 @@
  * Eingaben: Modellsatz (chain_models.json, ein Block), Hochwasserfenster (chain_floods.json, ein Eintrag), Zielpegel, Ausgabeindex, Variante. */
 const FC = (() => {
   const DT = 0.25;
+  const SM_FALLBACK = 100;                                 // Bodenfeuchte (% nFK), wenn kein Wert vorliegt (wie chain_fc.SM_FALLBACK)
   const DN = { P2: "Prüm 2", SI: "Sinspelt", GI: "Giesdorf", EC: "Echtershausen", WI: "Wiersdorf", PZ: "Prümzurlay", SE: "Seffern", AL: "Alsdorf-Oberecken" };
   const UPS = { EC: ["P2"], WI: ["EC"], PZ: ["WI", "SI"], SE: ["GI"], AL: ["SE"] };
   const ORDER = ["P2", "SI", "GI", "EC", "WI", "PZ", "SE", "AL"];
@@ -97,13 +98,18 @@ const FC = (() => {
     // Gebietsfeuchte (Erweiterung bf): B^g / (B^g + b50^g), B = Abfluss / MQ am Bezugspegel zu Beginn des Abflussfensters
     let wet = 1;
     if (terms.includes("bf")) { const g = Math.exp(lt.log_gb ?? 0), b = Math.pow(Math.max(r.bf ?? 0, 1e-6), g); wet = b / (b + Math.exp(g * lt.log_b50)); }
+    // Bodenfeuchte als Faktor (smf): S^g / (S^g + S50^g), S = Bodenfeuchte / 100 (wie lateral._slow_coefficient)
+    let smf = 1;
+    if (terms.includes("smf")) { const g = Math.exp(lt.log_gs ?? Math.log(2)), s = Math.pow(Math.max((r.sm ?? SM_FALLBACK) / 100, 1e-6), g); smf = s / (s + Math.exp(g * (lt.log_s50 ?? Math.log(0.5)))); }
     for (let t = 0; t < T; t++) {
       let x = r.api[t];
       if (terms.includes("acc")) x += lt.w_acc * r.aps[t];
       if (terms.includes("bfa")) x += lt.w_bf * Math.max(r.bf ?? 0, 0);
+      if (terms.includes("sma")) x += (lt.w_sm ?? 0) * Math.max(r.sm ?? SM_FALLBACK, 0) / 100;
       let phi = lt.phi_max * (1 - Math.exp(-x / S));
       if (terms.includes("int")) { const p2 = r.p[t] * r.p[t]; phi += (1 - phi) * lt.rho * p2 / (p2 + pc2); }
       if (terms.includes("bf")) phi *= wet;
+      if (terms.includes("smf")) phi *= smf;
       if (pf) {
         let qf = 0;
         if (fast) { const p2 = r.p[t] * r.p[t]; qf += (1 - phi) * lt.rho * p2 / (p2 + pc2); }
@@ -162,12 +168,13 @@ const FC = (() => {
   function rainWindow(fl, k, i, ideal) {
     const pr = prepFlood(fl), j0 = i - A, n = A + H + LEAD + 1;
     const w = WET[k], qb = w ? fl.q[w[0]][i - A] : null, bf = w && qb != null ? qb / w[1] : 0;
+    const smv = fl.sm && fl.sm[k] ? fl.sm[k][i - A] : null, sm = smv != null && isFinite(smv) ? smv : SM_FALLBACK;   // Bodenfeuchte (% nFK) am Fensteranfang
     const p = Float64Array.from(fl.p[k].slice(j0, j0 + n)), api = Float64Array.from(pr.api[k].slice(j0, j0 + n)), aps = Float64Array.from(pr.aps[k].slice(j0, j0 + n));
     if (!ideal) {
       const j = LEAD + A;
       for (let m = 1; m <= H; m++) { p[j + m] = 0; api[j + m] = api[j] * Math.exp(-m * DT / TAU); aps[j + m] = aps[j] * Math.exp(-m * DT / TAU_S); }
     }
-    return { p, api, aps, lead: LEAD, bf };
+    return { p, api, aps, lead: LEAD, bf, sm };
   }
 
   /* Scheitel-Regel: kein Scheitel am Unterlieger, solange an seinen Oberliegern kein Scheitel gemessen ist (wie chain_fc.peak_passed / hold_after_max).
