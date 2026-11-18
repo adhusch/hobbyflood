@@ -593,7 +593,7 @@ function kommunal() {                                     // kommunale Messstell
   }
   // Kurzfristkorrektur (kommunal_nowcast.py): je Landespegel, ob die Messstelle flussauf die ersten Stunden angehoben hat
   const ku = Object.values(D.res).filter(r => r.kurz).map(r => { const k = r.kurz;
-    return k.angewendet ? `${esc(r.dn)}: ${esc(k.messstelle)} stieg in ${nf(k.stunden, 0)} h um ${nf(k.anstieg_cm, 0)} cm, im Ereignis gelernter Faktor ${nf(k.beta, 2)} (r ${nf(k.r, 2)}), erwartet ${dd(k.dw, 1, 0)} cm in ${nf(k.stunden, 0)} h; Linie um bis zu ${nf(k.zuschlag_cm, 0)} cm angehoben`
+    return k.angewendet ? `${esc(r.dn)}: ${esc(k.messstelle)} stieg in ${nf(k.stunden, 0)} h um ${nf(k.anstieg_cm, 0)} cm, Zusammenhang im Ereignis gelernt (r ${nf(k.r, 2)}), erwartet ${dd(k.dw, 1, 0)} cm in ${nf(k.stunden, 0)} h; Linie um bis zu ${nf(k.zuschlag_cm, 0)} cm angehoben`
       : k.dw != null ? `${esc(r.dn)}: ${esc(k.messstelle)} erwartet ${dd(k.dw, 1, 0)} cm, das Modell liegt schon so hoch` : `${esc(r.dn)}: ${esc(k.messstelle)} – ${esc(k.grund || "nicht verwendet")}`; });
   const kuTxt = ku.length ? `<b>Kurzfristkorrektur der ersten Stunden:</b> ${ku.join("; ")}. Nur nach oben, danach mit 6 h abklingend; die untere Hälfte des Bands bleibt beim Modell ohne Anhebung. Geprüft nur am Sturm im November 2026. ` : "";
   const fehlt = (K.fehlt || []).length ? ` Derzeit ohne aktuelle Daten: ${K.fehlt.map(esc).join(", ")}.` : "";

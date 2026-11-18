@@ -830,7 +830,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
         if target in KN.PAIRS:
             kid, kname, kh = KN.PAIRS[target]
             try:
-                kn = dict(messstelle=kname, stunden=kh, **KN.estimate(KOM_W.get(kid), hv[target]["W"], t0, kh))
+                kn = dict(messstelle=kname, stunden=kh, **KN.estimate(KOM_W.get(kid), hv[target]["W"], t0, kh, rc=rc[dn]))
                 if kn["dw"] is not None:
                     w_now = float(RT.w_of_q(rc[dn], np.array([Qn[dn][i0]]))[0])
                     add, c = KN.lift_w(RT.w_of_q(rc[dn], np.maximum(out["ICON-D2"][A + 1:], 0)), w_now, kn["dw"], kh)
