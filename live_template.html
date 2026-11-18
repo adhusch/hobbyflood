@@ -437,7 +437,7 @@ function szenarioInit() {
   $("#scn-go").onclick = szenario;
   $("#scn-off").onclick = () => { state.scn = null; detail(); };
 }
-function ausblick() {                                      // 7 Tage: eine Linie ohne Band, Regen aus ICON-D2 -> ICON-EU -> ICON global
+function ausblick() {                                      // 7 Tage: Linie mit Regen aus ICON-D2 -> ICON-EU -> ICON global, Band aus dem ICON-Ensemble (falls da)
   const A = D.ausblick, sec = $("#sec-a");
   if (!A || !A.pegel[state.k]) { sec.style.display = "none"; return; }
   sec.style.display = "";
@@ -446,8 +446,9 @@ function ausblick() {                                      // 7 Tage: eine Linie
   const y0 = cm ? r.w0 : r.q0, v = cm ? a.w : a.q, xa = -72, xb = A.stunden;
   const obs = (cm ? r.obs_w : r.obs_q).map((x, j) => [(j - (r.obs_q.length - 1)) / 4, x]).filter(p => p[1] != null);
   const line = [[0, y0], ...v.map((x, l) => [l + 1, x])];
+  const Bd = a.band ? (cm ? a.band.w : a.band.q) : null, bp = arr => [[0, y0], ...arr.map((x, l) => [l + 1, x])];
   const ths = r.thresholds.map(t => ({ ...t, y: cm ? t.w : t.q }));
-  let ymax = Math.max(...obs.map(p => p[1]), ...v), ymin = Math.min(...obs.map(p => p[1]), ...v);
+  let ymax = Math.max(...obs.map(p => p[1]), ...v, ...(Bd ? [...Bd.ehi, ...Bd.hi] : [])), ymin = Math.min(...obs.map(p => p[1]), ...v, ...(Bd ? [...Bd.elo, ...Bd.lo] : []));
   const nx = ths.find(t => t.y > ymax); if (nx && nx.y < ymax * 1.35) ymax = nx.y;
   const yt = niceTicks(cm ? Math.max(0, ymin - 0.1 * (ymax - ymin + 10)) : 0, ymax * 1.05, 4), Y0 = yt[0], Y1 = yt[yt.length - 1];
   const cl = p => [p[0], Math.max(Y0, Math.min(Y1, p[1]))];
@@ -456,18 +457,23 @@ function ausblick() {                                      // 7 Tage: eine Linie
   if (E["ICON-D2"] != null) vl.push({ x: E["ICON-D2"], label: "ab hier ICON-EU" });
   if (E["ICON-EU"] != null && E["ICON global"] != null) vl.push({ x: E["ICON-EU"], label: "ICON global" });
   plot($("#ch-a"), { x: { min: xa, max: xb, ticks }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
+    bands: Bd ? [{ hi: bp(Bd.ehi).map(cl), lo: bp(Bd.elo).map(cl), col: "var(--c-full)", op: .08 }, { hi: bp(Bd.hi).map(cl), lo: bp(Bd.lo).map(cl), col: "var(--c-full)", op: .16 }] : [],
     hlines: ths.map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: t.info, label: `${t.name} ${cm ? nf(t.w, 0) + " cm" : qf(t.q) + " m³/s"}` })),
     lines: [{ pts: line.map(cl), col: "var(--c-run)", dash: true }, { pts: obs.map(cl), col: "var(--c-obs)" }], vlines: vl,
     tip: x => { const l = Math.round(x), rows = [];
       if (l <= 0) { const j = r.obs_q.length - 1 + l * 4; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cm ? r.obs_w[j] : r.obs_q[j]) }); }
-      else if (l <= v.length) rows.push({ col: "var(--c-run)", name: "Ausblick", val: fmt(v[l - 1]) });
+      else if (l <= v.length) { rows.push({ col: "var(--c-run)", name: "Ausblick", val: fmt(v[l - 1]) });
+        if (Bd) rows.push({ col: "var(--c-full)", name: l <= 48 ? "80 % der Fälle" : "Band (geschätzt)", val: `${cm ? nf(Math.round(Bd.lo[l - 1]), 0) : qf(Bd.lo[l - 1])} bis ${fmt(Bd.hi[l - 1])}` },
+                          { col: "var(--c-full)", name: "Ensemble", val: `${cm ? nf(Math.round(Bd.elo[l - 1]), 0) : qf(Bd.elo[l - 1])} bis ${fmt(Bd.ehi[l - 1])}` }); }
       return { t: fdt(T0 + l * 3600000) + (l > 0 ? ` · in ${nf(l / 24, 1)} Tagen` : ""), x: l, rows }; } }, 240);
-  $("#leg-a").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-run)"></i>Ausblick (eine Rechnung, ohne Unsicherheitsband)</span>`;
+  $("#leg-a").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-run)"></i>Ausblick (${Bd ? "Hauptlauf" : "eine Rechnung, ohne Unsicherheitsband"})</span>` +
+    (Bd ? `<span><i class="area" style="--col:var(--c-full)"></i>Band (bis 48 h 80 % der Fälle, danach geschätzt)</span><span><i class="area" style="--col:var(--c-full);opacity:.45"></i>Spannweite der Ensembleläufe</span>` : "");
   const tage = a.regen_tag.filter(([d]) => d >= D.meta.t0.slice(0, 10)).map(([d, mm]) => `${WD[new Date(parse(d + " 12:00")).getUTCDay()]} ${nf(mm, 0)} mm`).join(" · ");
   const mx = Math.max(...v), im = v.indexOf(mx);
   $("#note-a").innerHTML = `Höchstwert im Ausblick: <b>${fmt(mx)}</b> am ${WD[new Date(T0 + (im + 1) * 3600000).getUTCDay()]} ${fdt(T0 + (im + 1) * 3600000)}. Regen im Einzugsgebiet je Tag: ${tage}. ` +
     `Regen bis ${nf(E["ICON-D2"] || 48, 0)} h aus ICON-D2, danach aus ICON-EU${E["ICON global"] != null ? `, ab ${nf(E["ICON-EU"], 0)} h aus ICON global` : ""}. ` +
-    `<b>Nur zur Orientierung:</b> Für mehr als 48 h gibt es keine Rückrechnung und kein Band, die Regenvorhersage wird mit jedem Tag unsicherer, und nach 48 h läuft die Rechnung ohne neue Messwerte weiter. Die Warnung oben gilt nur für 48 h.`;
+    (Bd ? `<b>Band:</b> Bis 48 h dasselbe Band wie oben. Danach rechnet die Kette jeden der ${A.band.laeufe} Läufe des ICON-Ensembles (bis 5 Tage ICON-EU-EPS, danach ICON-EPS global) und mischt sie wie oben mit dem Fehler des Abflussmodells aus der Rückrechnung; für diesen Fehler gilt ab 48 h der Stand bei 48 h, weil es für längere Vorläufe keine Rückrechnung gibt. Die hellste Fläche reicht vom niedrigsten bis zum höchsten Lauf. ` : "") +
+    `<b>Nur zur Orientierung:</b> Für mehr als 48 h gibt es keine Rückrechnung${Bd ? "; das Band ab 48 h ist geschätzt und nicht geprüft" : " und kein Band"}. Die Regenvorhersage wird mit jedem Tag unsicherer, und nach 48 h läuft die Rechnung ohne neue Messwerte weiter. Die Warnung oben gilt nur für 48 h.`;
 }
 function alter() {                                        // Hinweis, wenn die Rechnung alt ist (Abruf oder Lauf gescheitert): die Seite zeigt dann den letzten Stand
   const h = (Date.now() - (T0 - 3600000)) / 3600000, el = $("#alt");
