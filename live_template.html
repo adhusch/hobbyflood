@@ -521,7 +521,10 @@ function theme() {
   b.onclick = () => { c = order[(order.indexOf(c) + 1) % 3]; apply(c); try { if (c) localStorage.setItem("theme", c); else localStorage.removeItem("theme"); } catch (e) {} detail(); };
 }
 const m = D.meta;
-$("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> · Pegel bis ${fdt(parse(m.t0)).slice(7)} · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ, Ensemble ${m.members - 1} Läufe ICON-D2-EPS · Vorhersage 48 h`;
+const rucTxt = (() => { const r = Object.values(D.res).map(x => x.ruc).find(Boolean);              // ICON-RUC: stündlich neu, nur als Zusatzlinie
+  if (!r) return "ohne ICON-RUC";
+  return m.icon.meta_ruc ? `ICON-RUC-Lauf ${fdt(parse(m.icon.meta_ruc)).slice(7)}` : `ICON-RUC bis +${nf(r.ende_h, 0)} h`; })();
+$("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> (Stand der Pegel${m.icon.abgerufen ? `, gerechnet ${fdt(parse(m.icon.abgerufen.slice(0, 19))).slice(7)}` : ""}) · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) : "–"} MEZ (alle 3 h neu), Ensemble ${m.members - 1} Läufe ICON-D2-EPS · ${rucTxt} · Vorhersage 48 h`;
 if (!D.res[state.k]) state.k = "PZ";
 function regenschwellen() {                                // Regenmenge bis zur Vorwarnung / Warnung beim jetzigen Zustand, daneben der vorhergesagte Regen
   const r = D.res[state.k], x = r.regenschwellen, nb = r.nachbar, sec = $("#sec-rs");
