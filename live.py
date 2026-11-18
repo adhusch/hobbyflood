@@ -530,7 +530,7 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
             r = float(np.clip((abs(b[-1]) / max(abs(b[-97]), 1e-9)) ** (1 / 96), 0.0, 1.0)) if len(b) >= 97 and b[-97] != 0 else 0.0
             m.beta = np.concatenate([b, b[-1] * r ** np.arange(1, H7 - len(b) + 1)])
     keep = {k: C._S.get(k) for k in ("pm", "month")}
-    out = {}
+    out, raw_det = {}, {}
     try:
         C.H = H7
         C._S.update(pm=C.storm_index({k: dict(p=np.where(grid > t0, 0.0, p[k])) for k in C.RAINK}, info), month=grid.month.to_numpy())
@@ -545,11 +545,12 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
             cw = _chain_weights(target, info)
             pa = sum(w * p[x] for w, x in zip(*cw))
             day = pd.Series(pa[i0 + 1:] * DT, index=grid[i0 + 1:]).resample("1D").sum()
+            raw_det[target] = np.maximum(raw, 0)
             out[target] = dict(q=[round(float(x), 3) for x in q], w=[round(float(x), 1) for x in RT.w_of_q(rc[dn], q)],
                                regen_tag=[[str(t)[:10], round(float(v), 1)] for t, v in day.items()])
         band_info = None
         try:
-            band_info = _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7)
+            band_info = _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7)
         except Exception as e:                                    # noqa: BLE001  Band ist Zusatz zum Zusatz
             print("   Band im Ausblick entfällt:", repr(e))
     finally:
@@ -558,10 +559,15 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
     return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H, band=band_info)
 
 
-def _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7) -> dict | None:
+def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7) -> dict | None:
     """Band des Ausblicks, siehe outlook(). Schreibt je Pegel out[k]["band"] und gibt Angaben zum Ensemble zurück (oder None).
-    Wie das 48-h-Band: Mischung über die Läufe, jeder mit den Fehlerquantilen seiner Klasse (Zustand, Abflussstufe, Starkregenlage); die Quantile
-    gelten je Vorlauf bis 48 h und bleiben danach auf dem Stand bei 48 h (_interp hält den letzten gespeicherten Vorlauf, C.H steht auf H7)."""
+
+    Um die Linie des Ausblicks gelegt und bei 48 h stetig: In log(Q + d) ist die halbe Breite nach oben bei 48 h die des Bands der Hauptgrafik
+    (u48, enthält Regenstreuung der ersten 48 h und Modellfehler). Danach kommt nur hinzu, was die Ensembleläufe an Streuung über ihren Stand bei
+    48 h hinaus aufbauen: u(t) = sqrt(u48² + max(0, a(t)² - a48²)), a = 90-%-Quantil der Abweichung der Läufe von ihrem Median (Abweichung je Lauf
+    gegen die Rohrechnung der Linie). Unten ebenso mit 10 %, die Spannweite (nur Regenstreuung wie in der Hauptgrafik, kann schmaler sein als das Band) mit dem höchsten und niedrigsten Lauf. Erste Fassung (18.11.2026,
+    verworfen): Läufe mit den Fehlerquantilen bei 48 h gemischt; das sprang bei 48 h (anderes Ensemble, andere Korrektur als die Linie), und die
+    Linie lag teils außerhalb."""
     e7 = icon.get("eps7")
     if not e7 or not band48 or U is None:
         return None
@@ -572,7 +578,6 @@ def _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0
         return None
     members = list(e0.columns)
     sims = {k: [] for k in out}
-    heavy = {k: [] for k in out}
     t_run = time.time()
     for mem in members:
         st_m = {}
@@ -586,25 +591,30 @@ def _outlook_band(m7, out, icon, band48, obs_filled, w_live, hours, tH, grid, i0
         fr = build_frames(p, Qn)
         for target in out:
             sims[target].append(np.maximum(C.forecast(m7, target, Qn, fr, np.array([i0]), "kette_vorhersage")[target][0][C.A + 1:], 0))
-            cw = _chain_weights(target, info)
-            heavy[target].append(bool(UN.heavy_flags(sum(w * p[x] for w, x in zip(*cw)), np.array([i0]))[1][0]))
-    T_v = U["vorhersage"]["alle"]
     for target in out:
-        dn, d, mq = C.DN[target], U["offset"][target], U["mq"][target]
-        st = int(band48[target]["state"])
-        wet = int(Qn[dn][i0] >= UN.WET_EDGE * mq)
-        tabs = []
-        for r_, hv_ in zip(sims[target], heavy[target]):
-            lev = int(np.digitize(max(Qn[dn][i0], float(r_.max())) / mq, UN.LEVEL_EDGES)) * 2 + wet
-            tabs.append(_interp(T_v[target]["q"][st * UN.NSUB + lev + UN.NB * hv_])[H0:])      # ab 48 h: Stand bei 48 h
-        mem_ = [r_[H0:] for r_ in sims[target]]
-        bl = mixture(mem_, tabs, d, levels=UN.LEV[[1, 9]])[3::4]                    # [stündlich ab 49 h, (10 %, 90 %)]: nur die gebrauchten Stufen
-        corr = np.stack([np.maximum((m + d) * np.exp(t[:, 5]) - d, 0) for m, t in zip(mem_, tabs)])[:, 3::4]
+        dn, d = C.DN[target], U["offset"][target]
+        line = np.asarray(out[target]["q"], float)                                   # Linie, stündlich 1..168 h
+        n = len(line)
+        L = np.log(line + d)
+        dev = np.stack([np.log(r_ + d) - np.log(raw_det[target] + d) for r_ in sims[target]])[:, 3::4][:, :n]   # [Läufe, Stunden]
+        dev = dev - np.median(dev, axis=0)
+        a_hi, a_lo = np.quantile(dev, 0.9, axis=0), -np.quantile(dev, 0.1, axis=0)
+        e_hi, e_lo = dev.max(0), -dev.min(0)
         b = np.asarray(band48[target]["band_q"], float)                              # [Stufen, 192]: Band der Hauptgrafik
         runs48 = np.stack([np.asarray(v, float) for v in band48[target]["runs_q"].values()])
-        n = len(out[target]["q"])
-        lo = np.concatenate([b[1, 3::4], bl[:, 0]])[:n]; hi = np.concatenate([b[9, 3::4], bl[:, 1]])[:n]          # UN.LEV: 10 % und 90 %
-        elo = np.concatenate([runs48.min(0)[3::4], corr.min(0)])[:n]; ehi = np.concatenate([runs48.max(0)[3::4], corr.max(0)])[:n]
+        j48 = H0 // 4 - 1                                                            # Stundenindex bei 48 h
+        pos = lambda x: max(float(x), 0.0)                                           # noqa: E731
+        u48, l48 = pos(np.log(b[9, -1] + d) - L[j48]), pos(L[j48] - np.log(b[1, -1] + d))
+        eu48, el48 = pos(np.log(runs48.max(0)[-1] + d) - L[j48]), pos(L[j48] - np.log(runs48.min(0)[-1] + d))   # nur Regenstreuung, wie oben
+        grow = lambda w48, a: np.sqrt(w48 ** 2 + np.maximum(a ** 2 - a[j48] ** 2, 0.0))   # noqa: E731
+        u, l = grow(u48, a_hi), grow(l48, a_lo)
+        eu, el = grow(eu48, e_hi), grow(el48, e_lo)
+        later = np.arange(n) > j48
+        lo = np.where(later, np.exp(L - l) - d, np.r_[b[1, 3::4], np.zeros(n)][:n])
+        hi = np.where(later, np.exp(L + u) - d, np.r_[b[9, 3::4], np.zeros(n)][:n])
+        elo = np.where(later, np.exp(L - el) - d, np.r_[runs48.min(0)[3::4], np.zeros(n)][:n])
+        ehi = np.where(later, np.exp(L + eu) - d, np.r_[runs48.max(0)[3::4], np.zeros(n)][:n])
+        lo, elo = np.maximum(lo, 0), np.maximum(elo, 0)
         rcv = rc[dn]
         pack = lambda f: {nm: [round(float(x), f[1]) for x in f[0](v)] for nm, v in dict(lo=lo, hi=hi, elo=elo, ehi=ehi).items()}   # noqa: E731
         out[target]["band"] = dict(q=pack((lambda v: v, 3)), w=pack((lambda v: RT.w_of_q(rcv, v), 1)))
