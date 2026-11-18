@@ -802,5 +802,5 @@ Modell: Faktor auf den Abflussbeiwert des Zwischengebiets, `phi · S^g / (S^g + 
 Grundabfluss war überall schlechter. Angepasst: S50 meist 0,9–1,05, Steilheit g 8–40 (an Prümzurlay flach). Kreuzvalidierung 2004–2022
 (Nash-Sutcliffe, Kette mit gemessenem Regen, Mittel über die acht Pegel, neu minus alt): 6 h +0,002, 12 h +0,006, 24 h +0,04, 48 h +0,10; im
 Starkregensatz 6 h +0,011, 12 h +0,022, 24 h +0,075, 48 h +0,22. Einzeln etwas schlechter: Sinspelt 12 h (0,369 statt 0,389). Scheitel
-unverändert (Median des Scheitelverhältnisses ±0,02). Übernommen, dazu Unsicherheitstabellen neu. Den Sturm erklärt das nur teilweise:
+unverändert (Median des Scheitelverhältnisses ±0,02). Übernommen, dazu Unsicherheitstabellen neu: 80-%-Band unverändert bei 79 % Abdeckung; Warnung für HW 10 (Vorhersagevariante, 13 Hochwasser) mit weniger Fehlalarmen (Stufe 10 %: 10 statt 35 Warnphasen ohne Hochwasser, Stufe 50 %: 0 statt 5) und einem verpassten Hochwasser weniger. Den Sturm erklärt das nur teilweise:
 gesättigte Böden bei leerem Grundwasser kamen 2004–2022 kaum vor.
