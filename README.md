@@ -776,7 +776,10 @@ bei Anstieg um mindestens 3 cm; Modell → mit Korrektur):
 
 Gegenüber einer Rechnung nur in Wasserständen gleicher mittlerer Fehler, aber kleinere Überschätzungen (Sinspelt 2 h: größte 10 statt 13 cm,
 Prüm 2: 4 statt 8 cm). Größter Fehlgriff: 18.11., 11:15 Uhr, Neuerburg stieg in 2 h um 12 cm und blieb dann stehen; erwartet +13 cm in
-Sinspelt, gekommen +3 cm (Lokalregen hatte Sinspelt schon vorher steigen lassen); der Messwert lag in der unteren Bandhälfte. Nicht
+Sinspelt, gekommen +3 cm (Lokalregen hatte Sinspelt schon vorher steigen lassen); der Messwert lag in der unteren Bandhälfte. Weitergabe an den Unterlieger (`CHAIN_PASS`, über `chain_fc.UP_LIFT` in die Kette eingespeist) geprüft und
+ausgeschaltet: Mit der angehobenen Sinspelt-Vorhersage als Zufluss wurde Prümzurlay in den 5 betroffenen Ausgaben des Sturms schlechter
+(mittlerer Fehler 2 h 0,6 → 1,5 cm, 3 h 1,3 → 4,1 cm, 4 h 2,1 → 4,8 cm, 6 h 3,7 → 4,8 cm); die Kette nach Prümzurlay ist mit Zwischengebiet und
+Korrektur auf die übliche, zu tiefe Sinspelt-Vorhersage eingestellt und zählt den Anstieg dann doppelt. Nicht
 verwendet: Prümzurlay, Wiersdorf, Alsdorf-Oberecken (Modell in den ersten Stunden schon so gut oder besser). Der Zug nach unten bei 12–24 h
 an der Enz bleibt; er kommt aus der unterschätzten Gebietsfeuchte. Ein einzelnes Ereignis mit Ständen nur im unteren Bereich: nach den
 nächsten Hochwassern neu bewerten.

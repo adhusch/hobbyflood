@@ -92,6 +92,9 @@ BASE_CACHE = os.environ.get("PRUEM_BASE")                    # Grundmodelle aus 
 # angepasst. Gedacht für die im Ereignis gemessene Laufzeit des Scheitels (kommunale Pegel); derzeit nirgends gesetzt. Grenzen CELER_MIN..MAX.
 CELER: dict[str, dict[str, float]] = {}
 CELER_MIN, CELER_MAX = 0.5, 2.0
+# Kurzfristkorrektur eines Oberliegers (kommunal_nowcast.py, nur live): Pegel -> Funktion, die dessen Vorhersage [Fälle, H] (Abfluss) anhebt.
+# Wirkt nur, wenn der Pegel Oberlieger des Ziels ist; die Vorhersage des Pegels selbst hebt live.py an (leer = aus).
+UP_LIFT: dict = {}
 LEVEL: dict[str, float] = {}                                # Niveaufaktor je Pegel auf die Simulation (leer = aus; der Live-Betrieb setzt ihn aus data/niveau.json)
 ML_NET = True                                               # lernender Abflussbeiwert (lateral "ml", ml_fit.py) nach der gemeinsamen Anpassung
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
@@ -544,6 +547,8 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
                 passed &= peak_passed(Qn[DN[u]][idx])
             if (~passed).any():
                 fc[~passed] = hold_after_max(fc[~passed], obs[~passed, A])
+        if k != target and k in UP_LIFT:
+            fc = UP_LIFT[k](fc)
         S[k] = np.concatenate([obs[:, :A + 1], fc], axis=1)
     return S
 

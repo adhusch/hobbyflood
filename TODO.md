@@ -51,7 +51,7 @@ Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 - [ ] **Kurzfristkorrektur aus kommunalen Pegeln** (`kommunal_nowcast.py`) nach den nächsten Hochwassern prüfen: Paare, Vorlauf H, Abklingzeit 6 h, ob der Zuschlag gedämpft werden sollte (bisher nur Sturm November 2026). Dazu:
   - [ ] **Ersatzabfluss der Messstellen** ((W − W0)^(5/3), W0 = Tiefststand minus 20 cm) nach einem Hochwasser mit hohen Ständen prüfen; besser eine grobe Abflusskurve je Messstelle aus dem Vergleich mit den Landespegeln (Volumenbilanz der Welle), sobald einige Ereignisse archiviert sind. Ausuferung an der Messstelle ist bisher nicht abgebildet.
-  - [ ] **Weitergabe flussab:** Die Anhebung an Sinspelt geht bisher nicht in die Kette nach Prümzurlay ein (dort rechnet die Kette mit der eigenen Sinspelt-Vorhersage); prüfen, ob das hilft.
+  - [ ] **Weitergabe flussab** (`kommunal_nowcast.CHAIN_PASS`, eingebaut, aus): Sinspelt → Prümzurlay machte Prümzurlay im Sturm schlechter (5 Ausgaben). Nach weiteren Ereignissen erneut prüfen; vielleicht nur den Teil weitergeben, der über die übliche Unterschätzung hinausgeht.
   - [ ] **Weitere Paare** neu bewerten: Alsdorf-Oberecken ← Dockendorf (1 h, im Sturm bei Anstiegen besser, sonst neutral), Prümzurlay ← Holsthum Prüm / Brecht (Modell dort schon gut).
   - [ ] **Im Szenario der Live-Seite** (Rechnung im Browser) fehlt die Korrektur; dort nur Hinweis oder nachbauen.
 

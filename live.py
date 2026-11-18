@@ -707,6 +707,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     t0 = min(hv[k]["Q"].dropna().index.max() for k in NUM)
     # Wellenlaufzeit Wiersdorf -> Prümzurlay aus den kommunalen Pegeln (celer_live.py): Faktor auf c(Q) der Strecke, sonst 1
     C.CELER.clear()
+    C.UP_LIFT.clear()
     import celer_live as CLV
     cel = CLV.estimate(raw, hv, models, t0, state_file=(hold_file.parent / "celer.json") if hold_file is not None else None)
     if cel.get("angewendet") and cel.get("f", 1.0) != 1.0:
@@ -836,6 +837,8 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
                     add, c = KN.lift_w(RT.w_of_q(rc[dn], np.maximum(out["ICON-D2"][A + 1:], 0)), w_now, kn["dw"], kh)
                     kn.update(dw=round(kn["dw"], 1), zuschlag_cm=round(c, 1), angewendet=bool(c >= 0.5))
                     if c >= 0.5:
+                        if target in KN.CHAIN_PASS:                # auch in die Kette flussab (Sinspelt -> Prümzurlay)
+                            C.UP_LIFT[target] = KN.lifter(rc[dn], add)
                         mem0 = [m.copy() for m in mem]
                         for nm, m in zip(out, mem):
                             m[:] = np.where(add > 0, KN.q_of_w(rc[dn], RT.w_of_q(rc[dn], np.maximum(m, 0)) + add), m)

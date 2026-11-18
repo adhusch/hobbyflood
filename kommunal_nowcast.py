@@ -16,7 +16,8 @@ Messstelle in cm.
 
 Liegt die Modelllinie zur Zeit t0 + H darunter, wird sie angehoben: bis t0 + H linear ansteigend, danach mit TAU_H Stunden abklingend
 (wie die Fehlerkorrektur am Pegel). Nur nach oben und nur bei steigender Messstelle; fällt sie oder liegt das Modell höher, bleibt alles wie
-es ist. Der Zuschlag wird in Wasserstand über die Abflusskurve auf alle Läufe angewendet; die untere Bandhälfte bleibt beim Band ohne
+es ist. Der Zuschlag wird in Wasserstand über die Abflusskurve auf alle Läufe angewendet (Weitergabe an den Unterlieger
+vorbereitet, CHAIN_PASS, aber aus); die untere Bandhälfte bleibt beim Band ohne
 Anhebung.
 
 Prüfung am Sturm 16.-18.11.2026 gegen die 71 tatsächlich ausgegebenen Vorhersagen: siehe README (Abschnitt Kurzfristkorrektur). Abfluss
@@ -35,6 +36,11 @@ import pandas as pd
 PAIRS = {"SI": ("1034232130", "Neuerburg", 2.0), "P2": ("1034232010", "Hermespand", 2.0), "SE": ("1034232250", "Nimsreuland", 2.0),
          "GI": ("1034232240", "Rommersheim", 1.0), "EC": ("1034232060", "Kinzenburg", 3.0)}
 TAU_H = 6.0
+# Anhebung auch an den Unterlieger weitergeben (chain_fc.UP_LIFT), z. B. ("SI",) für Sinspelt -> Prümzurlay. Aus: Im Sturm November 2026
+# (5 Ausgaben mit Anhebung an Sinspelt) wurde Prümzurlay damit schlechter (mittlerer Fehler 2 h 0,6 -> 1,5 cm, 3 h 1,3 -> 4,1 cm,
+# 4 h 2,1 -> 4,8 cm, 6 h 3,7 -> 4,8 cm): Die Kette nach Prümzurlay war in den ersten Stunden schon gut, weil ihr Zwischengebiet und ihre
+# Korrektur auf die übliche, zu tiefe Sinspelt-Vorhersage eingestellt sind; die Anhebung zählt den Anstieg dann doppelt.
+CHAIN_PASS: tuple = ()
 WINDOW_H = 24.0
 BETA_MAX = 3.0                 # Zuschlag höchstens so viel mal der Anstieg der Messstelle (cm/cm)
 MIN_PAIRS = 24                 # Viertelstundenpaare im Fenster
@@ -145,3 +151,19 @@ def read_w(raw) -> dict[str, pd.Series]:
         return out
     except Exception:                                                 # noqa: BLE001
         return {}
+
+
+def lifter(rc: dict, add_w: np.ndarray):
+    """Funktion für chain_fc.UP_LIFT: hebt Abflussvorhersagen [Fälle, n] um add_w (cm je Viertelstunde ab t0 + 15 min) auf der Abflusskurve rc an."""
+    from rating import w_of_q
+    add_w = np.asarray(add_w, float)
+
+    def f(fc: np.ndarray) -> np.ndarray:
+        n = fc.shape[1]
+        a = np.zeros(n)
+        a[:min(n, len(add_w))] = add_w[:n]
+        if not (a > 0).any():
+            return fc
+        lifted = q_of_w(rc, w_of_q(rc, np.maximum(fc, 0)) + a[None, :])
+        return np.where(a[None, :] > 0, np.maximum(lifted, fc), fc)
+    return f
