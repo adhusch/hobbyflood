@@ -267,11 +267,13 @@ def _read_kommunal(raw: Path, t0: pd.Timestamp) -> dict | None:
         hr = s[s.index >= tl - pd.Timedelta(hours=72)].resample("1h").last().dropna()
         return dict(w=last, zeit=str(tl), d1=ago(1), d3=ago(3), d24=ago(24), max5=float(s.max()), min5=float(s.min()), reihe=[round(float(v), 2) for v in hr])
 
-    out = dict(pegel=[], stausee=rec(STAUSEE))
+    out = dict(pegel=[], stausee=rec(STAUSEE), fehlt=[])
     for n, name, river, lage in KOMMUNAL:
         r = rec(n)
         if r:
             out["pegel"].append(dict(nr=n, name=name, gewaesser=river, lage=lage, **r))
+        else:
+            out["fehlt"].append(name)                          # keine oder keine aktuellen Daten (älter als 3 h)
     return out if out["pegel"] or out["stausee"] else None
 
 
