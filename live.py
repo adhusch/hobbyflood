@@ -487,7 +487,7 @@ def sim_data(Qn: dict, p_d2: dict, i0: int, offs: dict) -> dict:
               api0={k: [float(fr[k]["api"][r0 - 1]), float(fr[k]["api_s"][r0 - 1])] for k in C.RAINK},
               storm={k: "0" * C.A + ("1" if C.is_storm(k, np.array([i0]))[0] else "0") for k in C.ORDER})
     fl["niveau"] = dict(C.LEVEL)
-    fl["celer"] = {k: dict(v) for k, v in C.CELER.items()}      # Faktor auf die Wellengeschwindigkeit, derzeit leer (= 1)
+    fl["celer"] = {k: dict(v) for k, v in C.CELER.items()}      # Faktor auf die Wellengeschwindigkeit (celer_live.py), leer = 1
     return dict(consts=doc["consts"], set=doc["sets"]["alle"], fl=fl, offset={k: float(offs[k]) for k in C.ORDER})
 
 
@@ -678,6 +678,14 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
 
     # Ausgabezeit: letzter 15-min-Zeitpunkt, zu dem alle acht Pegel einen Abfluss haben
     t0 = min(hv[k]["Q"].dropna().index.max() for k in NUM)
+    # Wellenlaufzeit Wiersdorf -> Prümzurlay aus den kommunalen Pegeln (celer_live.py): Faktor auf c(Q) der Strecke, sonst 1
+    C.CELER.clear()
+    import celer_live as CLV
+    cel = CLV.estimate(raw, hv, models, t0, state_file=(hold_file.parent / "celer.json") if hold_file is not None else None)
+    if cel.get("angewendet") and cel.get("f", 1.0) != 1.0:
+        C.CELER["PZ"] = {"WI": float(cel["f"])}
+    print(f"   Wellenlaufzeit Wiersdorf -> Prümzurlay: Faktor {cel.get('f', 1.0)}" + (f" (gemessen {cel.get('laufzeit_gemessen_h')} h, Modell "
+          f"{cel.get('laufzeit_modell_h')} h)" if cel.get("angewendet") else f" ({cel.get('grund')})"))
     grid = pd.date_range(t0 - pd.Timedelta(days=HISTORY_D), t0 + pd.Timedelta(hours=C.H_H), freq="15min")
     i0 = int(grid.get_loc(t0))
     n = len(grid)
@@ -878,7 +886,7 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     except Exception as e:                                         # noqa: BLE001  Ausblick ist Zusatz: scheitert er, bleibt die 48-h-Seite
         print("   Ausblick entfällt:", repr(e))
         aus = None
-    meta = dict(niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
+    meta = dict(celer=cel, niveau={C.DN[k]: v for k, v in niveau.items()}, t0=str(t0), grid0=str(grid[i0 - 72 * 4]), abruf=json.loads((raw / "abruf.json").read_text(encoding="utf-8")) if (raw / "abruf.json").exists() else {},
                 stationen_letzte=dict((k, str(v)) for k, v in t_obs_end.items()), stationen=live_ids, icon=icon["meta"], members=len(p_runs),
                 gauges_last={C.DN[k]: str(hv[k]["Q"].dropna().index.max()) for k in NUM}, faktoren={k: v["faktor"] for k, v in fac.items()})
     data = dict(kommunal=read_kommunal(raw, t0), meta=meta, res=res, ausblick=aus, sim=sim_data(Qn, p_runs["ICON-D2"], i0, U["offset"]), lev=UN.LEV.tolist(), kennwerte=K, rating={g: dict(q=c["q"], w=c["w"]) for g, c in rc.items()},
