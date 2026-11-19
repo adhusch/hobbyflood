@@ -190,6 +190,7 @@ def fetch() -> Path:
                     pass
             break
     print("   ICON-RUC:", data.get("icon_ruc_modell", "nicht verfügbar"))
+    _log_runs(data)
     # Ensemble über 7 Tage (nur für das Band im Ausblick); fehlt es, bleibt der Ausblick eine einzelne Linie
     for mid in EPS7_MODELS:
         try:
@@ -225,6 +226,31 @@ def fetch() -> Path:
 
 
 # ------------------------------------------------------------------ Einlesen
+def _log_runs(data: dict) -> None:
+    """Start und Verfügbarkeit der ICON-Läufe bei Open-Meteo fortschreiben (data/live/laeufe.csv), um den Takt daran auszurichten.
+    Nur Protokoll: jeder Fehler wird ignoriert."""
+    try:
+        f = HERE / "data" / "live" / "laeufe.csv"
+        now = pd.Timestamp.now(tz="UTC").tz_convert(None).floor("s")
+        rows = []
+        for k in ("meta_d2", "meta_d2_eps", "meta_ruc"):
+            m = data.get(k) or {}
+            if "last_run_initialisation_time" in m and "last_run_availability_time" in m:
+                i, a = pd.Timestamp(m["last_run_initialisation_time"], unit="s"), pd.Timestamp(m["last_run_availability_time"], unit="s")
+                rows.append(f"{now:%Y-%m-%dT%H:%M:%S},{k[5:]},{i:%Y-%m-%dT%H:%M},{a:%Y-%m-%dT%H:%M},{(a - i) / pd.Timedelta(minutes=1):.0f}")
+                if k == "meta_ruc":
+                    print(f"   ICON-RUC-Lauf {i + MEZ:%H:%M} MEZ, bei Open-Meteo seit {a + MEZ:%H:%M} ({(a - i) / pd.Timedelta(minutes=1):.0f} min nach dem Start)")
+        if rows:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            new = not f.exists()
+            with f.open("a", encoding="utf-8") as fh:
+                if new:
+                    fh.write("abruf_utc,modell,start_utc,verfuegbar_utc,verzug_min\n")
+                fh.write("\n".join(rows) + "\n")
+    except Exception:                                              # noqa: BLE001
+        pass
+
+
 def _mez(t) -> pd.DatetimeIndex:
     """UTC (mit oder ohne Zeitzone) -> MEZ ohne Zone."""
     t = pd.to_datetime(t, utc=True)
@@ -394,6 +420,8 @@ def read_icon(raw: Path) -> dict:
         m = j["data"].get(k) or {}
         if "last_run_initialisation_time" in m:
             meta[k] = str(pd.Timestamp(m["last_run_initialisation_time"], unit="s") + MEZ)
+        if "last_run_availability_time" in m:                     # seit wann der Lauf bei Open-Meteo abrufbar ist
+            meta[k + "_ab"] = str(pd.Timestamp(m["last_run_availability_time"], unit="s") + MEZ)
     # Lauf des Ensembles aus den Daten: letzte Stunde mit Werten minus 48 h (die Meta-Datei des Ensembles ist nicht immer aktuell)
     e0 = next(iter(eps.values()))
     last = e0["precipitation"].dropna().index.max()

@@ -724,7 +724,7 @@ Ein Lauf brauchte auf dem Entwicklungsrechner 94 s, davon 59 s in der Python-Sch
 
 ## Takt und Kopfzeile (18.11.2026)
 
-`deploy/run_live.sh` rechnet jetzt zu festen Uhrzeiten (`OFFSET_MIN` Minuten nach jedem Vielfachen von `INTERVAL_MIN`, Standard 7 nach, bei 30 Minuten also hh:07 und hh:37), statt nach jedem Lauf `INTERVAL_MIN` zu warten; vorher wanderte der Takt um Abruf- und Rechenzeit. Die Kopfzeile der Live-Seite nennt die Ausgabezeit als Stand der Pegel (letzter Viertelstundenwert), dazu die Uhrzeit der Rechnung, den ICON-D2-Lauf (alle 3 h neu, bei Open-Meteo rund 2 h nach dem Start verfügbar) und den ICON-RUC-Lauf (stündlich neu; Startzeit, falls Open-Meteo sie in der Meta-Datei nennt, sonst die Reichweite). ICON-RUC bleibt eine Zusatzlinie; Vorhersage, Band und Warnung beruhen auf ICON-D2 und ICON-D2-EPS, weil nur dafür die Rückrechnung vorliegt.
+`deploy/run_live.sh` rechnet jetzt zu festen Uhrzeiten (`OFFSET_MIN` Minuten nach jedem Vielfachen von `INTERVAL_MIN`, damals Standard 7 nach, seit 19.11.2026 40 nach, siehe unten), statt nach jedem Lauf `INTERVAL_MIN` zu warten; vorher wanderte der Takt um Abruf- und Rechenzeit. Die Kopfzeile der Live-Seite nennt die Ausgabezeit als Stand der Pegel (letzter Viertelstundenwert), dazu die Uhrzeit der Rechnung, den ICON-D2-Lauf (alle 3 h neu, bei Open-Meteo rund 2 h nach dem Start verfügbar) und den ICON-RUC-Lauf (stündlich neu; Startzeit, falls Open-Meteo sie in der Meta-Datei nennt, sonst die Reichweite). ICON-RUC bleibt eine Zusatzlinie; Vorhersage, Band und Warnung beruhen auf ICON-D2 und ICON-D2-EPS, weil nur dafür die Rückrechnung vorliegt.
 
 ## Download von Rohdaten und Seiten (18.11.2026)
 
@@ -804,3 +804,12 @@ Grundabfluss war überall schlechter. Angepasst: S50 meist 0,9–1,05, Steilheit
 Starkregensatz 6 h +0,011, 12 h +0,022, 24 h +0,075, 48 h +0,22. Einzeln etwas schlechter: Sinspelt 12 h (0,369 statt 0,389). Scheitel
 unverändert (Median des Scheitelverhältnisses ±0,02). Übernommen, dazu Unsicherheitstabellen neu: 80-%-Band unverändert bei 79 % Abdeckung; Warnung für HW 10 (Vorhersagevariante, 13 Hochwasser) mit weniger Fehlalarmen (Stufe 10 %: 10 statt 35 Warnphasen ohne Hochwasser, Stufe 50 %: 0 statt 5) und einem verpassten Hochwasser weniger. Den Sturm erklärt das nur teilweise:
 gesättigte Böden bei leerem Grundwasser kamen 2004–2022 kaum vor.
+
+## Takt passend zu ICON-D2-RUC (19.11.2026)
+
+Bisher rechnete der Container stündlich um hh:07; ICON-D2-RUC war dann gut 2 h alt, weil ein Lauf erst rund 1 h 27 min nach dem Start bei
+Open-Meteo abrufbar ist (40 min Rechnung beim DWD, dazu Bereitstellung und Umwandlung; gemessen am 18.11., 15:00-UTC-Lauf). Neuer Standard
+in `deploy/run_live.sh`: stündlich um **hh:40** (`OFFSET_MIN=40`). Dann ist der RUC-Lauf von hh-1:00 sicher da (gut 1 h alt statt gut 2 h),
+und der Viertelstundenwert hh:30 der Pegel ebenfalls; ein Lauf dauert auf dem Raspberry Pi rund 7 min. Die Kopfzeile nennt jetzt zu ICON-D2
+und ICON-RUC, seit wann der Lauf abrufbar ist und wie lange nach dem Start; jeder Abruf schreibt Start und Verfügbarkeit nach
+`data/live/laeufe.csv`, um den Takt nach einigen Tagen an den gemessenen Verzug anzupassen.
