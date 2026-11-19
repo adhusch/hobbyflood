@@ -11,7 +11,9 @@ Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 ## Modell
 
 - [x] **Bodenfeuchte im Abflussbeiwert** (18.11.2026): DWD AMBAV 0–60 cm je Teilgebiet, Faktor `smf` zusätzlich zum Grundabfluss, in der Kreuzvalidierung leicht besser (vor allem lange Vorläufe und Starkregen), live über HTTP-Teilabrufe. Folgepunkte:
-  - [ ] **Zustand „Boden nass, Grundwasser leer“** (Herbst 2026) kam 2004–2022 kaum vor; das Modell lernt ihn deshalb nicht. Ideen: Bodenfeuchte und Grundabfluss nicht nur multiplizieren, sondern die Schwelle des Abflussbeiwerts an der Bodenfeuchte festmachen; Sturm November 2026 ins Training, sobald die LfU-Reihen vorliegen.
+  - [x] **Zustand „Boden nass, Grundwasser leer“** (19.11.2026): Untergrenze der Gebietsfeuchte aus der Bodenfeuchte (`bf_untergrenze.py`), Sinspelt im Sturm 24 h vorher −17 → −8 cm.
+  - [ ] **Alsdorf-Oberecken nach der Untergrenze** im Sturm 24 h vorher 10 cm zu hoch (Zufluss aus Seffern/Giesdorf); beim nächsten Hochwasser prüfen, ggf. Untergrenze nur an den Oberläufen oder Quantil je Gebiet.
+  - [ ] **Untergrenze nur aus Trainingsjahren** je Block der Kreuzvalidierung berechnen (bisher aus allen Jahren 2004–2022).
   - [ ] **Andere Schichten** prüfen (0–10 cm für schnelle Reaktion, tiefere Schicht oder Sickerwasser für das Grundwasser); der DWD bietet weitere Tiefen und Größen.
   - [ ] **Anpassung an der Grenze:** Steilheit g an mehreren Pegeln bei 40 (fast eine Stufe, Sinspelt und Prümzurlay Winter), an Prümzurlay S50 bei 1,5 und g 2; Grenzen und Glättung prüfen.
   - [ ] **Bodenfeuchte in den Zustandsklassen der Unsicherheit:** Im Sturm lag die Messung am oberen Rand des Bands; das Band unterscheidet nur nass/trocken nach Abfluss.

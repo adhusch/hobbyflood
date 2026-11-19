@@ -11,9 +11,18 @@ const FC = (() => {
   const NORAIN = new Set(["einzeln", "kette"]);
   const SWITCH = new Set(["kette_regen", "kette_ideal", "kette_vorhersage"]);    // Umschalten Winter / Starkregen (Einteilung je Zielpegel und Index in fl.storm)
   const FUTURE_RAIN = new Set(["kette_ideal", "kette_vorhersage"]);             // Regen nach der Ausgabezeit aus fl.p (gemessen = perfekte Vorhersage)
-  let A = 192, H = 192, LEAD = 288, TAU = 168, TAU_S = 24, WET = {};
+  let A = 192, H = 192, LEAD = 288, TAU = 168, TAU_S = 24, WET = {}, BFMIN = {};
 
-  function setConsts(c) { A = Math.round(c.A_H / DT); H = Math.round(c.H_H / DT); LEAD = Math.round(c.LEAD_H / DT); TAU = c.TAU_API_H; TAU_S = c.TAU_API_S_H; WET = c.WET || {}; }
+  function setConsts(c) { A = Math.round(c.A_H / DT); H = Math.round(c.H_H / DT); LEAD = Math.round(c.LEAD_H / DT); TAU = c.TAU_API_H; TAU_S = c.TAU_API_S_H; WET = c.WET || {}; BFMIN = c.BFMIN || {}; }
+  /* Untergrenze der Gebietsfeuchte aus der Bodenfeuchte (wie chain_fc.bf_floor): linear zwischen den Stützstellen, außen konstant */
+  function bfFloor(k, sm) {
+    const t = BFMIN[k]; if (!t) return 0;
+    const [xs, ys] = t, n = xs.length;
+    if (sm <= xs[0]) return ys[0];
+    if (sm >= xs[n - 1]) return ys[n - 1];
+    let j = 1; while (xs[j] < sm) j++;
+    return ys[j - 1] + (ys[j] - ys[j - 1]) * (sm - xs[j - 1]) / (xs[j] - xs[j - 1]);
+  }
 
   function chain(k) {
     const need = new Set(), todo = [k];
@@ -167,8 +176,8 @@ const FC = (() => {
   /* Regenfenster für Ausgabeindex i (Index im Abflussfenster): Regenindex = Abflussindex + LEAD, Fenster ab i - A - LEAD */
   function rainWindow(fl, k, i, ideal) {
     const pr = prepFlood(fl), j0 = i - A, n = A + H + LEAD + 1;
-    const w = WET[k], qb = w ? fl.q[w[0]][i - A] : null, bf = w && qb != null ? qb / w[1] : 0;
     const smv = fl.sm && fl.sm[k] ? fl.sm[k][i - A] : null, sm = smv != null && isFinite(smv) ? smv : SM_FALLBACK;   // Bodenfeuchte (% nFK) am Fensteranfang
+    const w = WET[k], qb = w ? fl.q[w[0]][i - A] : null, bf = w && qb != null ? Math.max(qb / w[1], fl.sm ? bfFloor(k, sm) : 0) : 0;
     const p = Float64Array.from(fl.p[k].slice(j0, j0 + n)), api = Float64Array.from(pr.api[k].slice(j0, j0 + n)), aps = Float64Array.from(pr.aps[k].slice(j0, j0 + n));
     if (!ideal) {
       const j = LEAD + A;
