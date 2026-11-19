@@ -527,7 +527,7 @@ const m = D.meta;
 const ab = (start, avail) => { if (!avail) return ""; const d = Math.round((parse(avail) - parse(start)) / 6e4);
   return `, abrufbar seit ${fdt(parse(avail)).slice(7)} (${Math.floor(d / 60)} h ${String(d % 60).padStart(2, "0")} min nach dem Start)`; };
 const rucTxt = (() => { const r = Object.values(D.res).map(x => x.ruc).find(Boolean);              // ICON-RUC: stündlich neu, nur als Zusatzlinie
-  if (!r) return "ohne ICON-RUC";
+  if (!r) return m.icon.meta_ruc_veraltet_h ? `ICON-RUC nicht verwendet: neuester Lauf ${fdt(parse(m.icon.meta_ruc)).slice(7)} ist ${nf(m.icon.meta_ruc_veraltet_h, 0)} h alt` : "ohne ICON-RUC";
   return m.icon.meta_ruc ? `ICON-RUC-Lauf ${fdt(parse(m.icon.meta_ruc)).slice(7)}${ab(m.icon.meta_ruc, m.icon.meta_ruc_ab)} (stündlich neu)` : `ICON-RUC bis +${nf(r.ende_h, 0)} h`; })();
 $("#stand").innerHTML = `Ausgabe <b>${fdt(T0)} MEZ</b> (Stand der Pegel${m.icon.abgerufen ? `, gerechnet ${fdt(parse(m.icon.abgerufen.slice(0, 19))).slice(7)}` : ""}) · ICON-D2-Lauf ${m.icon.meta_d2 ? fdt(parse(m.icon.meta_d2)) + " MEZ" + ab(m.icon.meta_d2, m.icon.meta_d2_ab) : "–"} (alle 3 h neu), Ensemble ${m.members - 1} Läufe ICON-D2-EPS · ${rucTxt} · Vorhersage 48 h`;
 if (!D.res[state.k]) state.k = "PZ";
