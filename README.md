@@ -834,5 +834,5 @@ künftiger Regen perfekt bekannt −0,001 / −0,005 / −0,020 (Scheitel im Med
 mit perfektem Regen +0,005 / +0,007 / +0,009. Sturm November 2026 (nicht im Training), mittlere Abweichung 24 h vorher: Sinspelt −17,4 → −8,1 cm
 (erfasster Anteil eines Anstiegs 24 % → 61 %), Prümzurlay −9,9 → −1,5 cm, Prüm 2 −11,7 → −4,2 cm, Echtershausen −9,8 → −0,3 cm, Seffern −7,5 →
 +2,6 cm, Alsdorf-Oberecken −6,1 → +10,4 cm (zu hoch durch den höheren Zufluss aus Seffern und Giesdorf; die Untergrenze im eigenen
-Zwischengebiet griff dort nicht). Übernommen, obwohl die Kreuzvalidierung mit perfektem Regen bei 24 h knapp schlechter ist: Eine
+Zwischengebiet griff dort nicht). Unsicherheitstabellen neu: 80-%-Band unverändert (79 %), HW-10-Warnung gleich (ein Fehlalarm weniger). Übernommen, obwohl die Kreuzvalidierung mit perfektem Regen bei 24 h knapp schlechter ist: Eine
 systematisch zu tiefe Vorhersage bei nassem Boden und leerem Grundwasser wiegt schwerer.
