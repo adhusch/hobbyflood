@@ -111,6 +111,7 @@ NB_KM = 30.0                                                     # Versatz der N
 _D = 0.7071
 NB_DIRS = {"N": (0, 1), "NO": (_D, _D), "O": (1, 0), "SO": (_D, -_D), "S": (0, -1), "SW": (-_D, -_D), "W": (-1, 0), "NW": (-_D, _D)}   # (Ost, Nord)
 HOLD_H = 12                                                      # Haltezeit einer Vorwarnung oder Warnung in Stunden
+RUC_MAX_AGE_H = 4.0                                              # älterer ICON-D2-RUC-Lauf wird nicht verwendet (Open-Meteo lieferte am 19.11.2026 9 h lang keinen neuen)
 RUC_MAX_H = 30.0                                                 # längste glaubhafte Reichweite von ICON-D2-RUC ab jetzt (Läufe bis 27 h)
 RUC_MODELS = ("dwd_icon_d2_ruc", "icon_d2_ruc", "dwd_icon_d2_ruc_native")
 # Ensemble für das Band im 7-Tage-Ausblick (ICON-EU-EPS bis 5 Tage, danach ICON-EPS global, je 40 Läufe); Kennung bei Open-Meteo nicht eindeutig
@@ -592,7 +593,7 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
     for ms in m7.values():
         for m in ms.values():
             b = np.asarray(m.beta, float)
-            r = float(np.clip((abs(b[-1]) / max(abs(b[-97]), 1e-9)) ** (1 / 96), 0.0, 1.0)) if len(b) >= 97 and b[-97] != 0 else 0.0
+            r = float(np.clip((abs(b[-1]) / max(abs(b[-97]), 1e-9)) ** (1 / 96), 0.0, BETA_R_MAX)) if len(b) >= 97 and b[-97] != 0 else 0.0
             m.beta = np.concatenate([b, b[-1] * r ** np.arange(1, H7 - len(b) + 1)])
     keep = {k: C._S.get(k) for k in ("pm", "month")}
     out, raw_det = {}, {}
@@ -622,6 +623,12 @@ def outlook(models: dict, hv: dict, t0: pd.Timestamp, obs_filled: dict, w_live: 
         C.H = H0
         C._S.update(**keep)
     return dict(pegel=out, ende={k: round((v - t0) / pd.Timedelta(hours=1), 1) for k, v in ends.items()}, stunden=OUTLOOK_H, band=band_info)
+
+
+# Fortsetzung der Fehlerkorrektur am Pegel über 48 h hinaus: Abklingen wie zwischen 24 und 48 h, aber mindestens mit 24 h Halbwertszeit.
+# Bei Seffern und Alsdorf-Oberecken ist beta zwischen 24 und 48 h fast gleich (0,6); ohne Mindestabklingen blieb der Abzug 7 Tage stehen und
+# drückte den Ausblick nach der Welle bis auf null (Live 19.11.2026, 18:40 UTC: Alsdorf-Oberecken ab 87 h 0,06 m3/s bei MQ 2,75).
+BETA_R_MAX = 0.5 ** (1 / 96)
 
 
 def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH, grid, i0, t0, Qn, info, U, rc, H0, H7) -> dict | None:
@@ -834,6 +841,12 @@ def build(raw: Path, out_html: Path, hold_file: Path | None = None) -> dict:
     # ICON-RUC als zusätzlicher Lauf (nicht im Band und nicht in der Warnwahrscheinlichkeit): RUC-Regen, soweit er reicht, danach ICON-D2;
     # ohne Angleichfaktor, weil es für RUC keine Prüfung gegen die Stationen gibt
     p_ruc, ruc_end = None, None
+    mr = icon["meta"].get("meta_ruc")
+    if icon.get("ruc") and mr and (t0 - pd.Timestamp(mr)) / pd.Timedelta(hours=1) > RUC_MAX_AGE_H:
+        age = (t0 - pd.Timestamp(mr)) / pd.Timedelta(hours=1)
+        print(f"   ICON-RUC verworfen: Lauf {mr[:16]} MEZ ist {age:.1f} h alt (höchstens {RUC_MAX_AGE_H:g} h)")
+        icon["meta"]["meta_ruc_veraltet_h"] = round(float(age), 1)
+        icon["ruc"] = None
     if icon.get("ruc"):
         comb, ends = {}, []
         for sid in d2h:

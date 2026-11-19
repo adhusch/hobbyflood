@@ -846,3 +846,14 @@ Hauptgrafik (Quantile über die Läufe, oben oft flach) in die Rechnung um die L
 höchstens 12 h); danach wieder: Gesamtbreite nie kleiner. Größter Knick (zweite Differenz je Stunde) am Sturmbeispiel 18.11., 17:30:
 Alsdorf-Oberecken obere Kante 4,7 → 1,1 cm, Spannweite 6,7 → 2,9 cm; Seffern ähnlich. Zwischen 36 und 48 h weicht das Band im Ausblick
 dadurch um wenige cm von der Hauptgrafik ab.
+
+## Ausblick ohne Absturz nach der Welle, veralteter ICON-RUC (19.11.2026)
+
+- **Fehlerkorrektur im Ausblick:** Über 48 h hinaus klingt beta jetzt mit mindestens 24 h Halbwertszeit ab (`BETA_R_MAX`). Bei Seffern und
+  Alsdorf-Oberecken ist beta zwischen 24 und 48 h fast gleich (0,6); der Abzug aus der Abweichung zur Ausgabezeit blieb deshalb 7 Tage
+  stehen und drückte die Rezession bis auf null (Live 19.11.2026, 19:30: Alsdorf-Oberecken ab 87 h 0,06 m³/s bei MQ 2,75, Seffern 0,08).
+  Jetzt: kleinster Wert nach 48 h Alsdorf-Oberecken 2,1 m³/s, Seffern 2,5 m³/s.
+- **ICON-RUC höchstens 4 h alt:** Am 19.11.2026 lieferte Open-Meteo von 10:00 bis mindestens 19:40 MEZ keinen neuen RUC-Lauf; die Seite
+  rechnete die RUC-Linie mit dem 9,5 h alten Lauf weiter. Jetzt wird ein Lauf, der zur Ausgabezeit älter als 4 h ist, nicht verwendet, und die
+  Kopfzeile sagt das. Verzug Start bis Abrufbarkeit bei Open-Meteo 18./19.11. (17 Läufe): 44–127 min, Median 93 min; bei Takt hh:40 kommt in
+  rund 70 % der Fälle der Lauf von vor 1 h 40 min mit (`OFFSET_MIN=50`: rund 80 %).
