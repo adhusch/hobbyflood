@@ -697,12 +697,34 @@ def _outlook_band(m7, out, raw_det, icon, band48, obs_filled, w_live, hours, tH,
             hi2 = np.where(later, np.maximum(hi2, lo2 + wmax), hi2)                   # der Rezession abgibt, kommt oben dazu
             return lo2, hi2
 
-        lo_q, hi_q = widen(line, lo, hi, elo)
+        def smooth(ln, lo_, hi_):
+            """Ab 36 h die Abstände zur Linie glätten (Gauß, Breite 1 h je 4 h Vorlauf über 36 h, höchstens 12 h), damit das Band bei 48 h
+            nicht abknickt (vor 48 h kommt es aus der Hauptgrafik, danach aus der Rechnung um die Linie). Zwischen 36 und 48 h weicht es
+            dadurch um wenige cm von der Hauptgrafik ab.
+            Ohne das hat das Band Ecken und Sprünge: wo die Untergrenze vom Abstand zur Linie auf den niedrigsten Lauf umschaltet, wo im
+            Ensemble Läufe enden oder das Modell wechselt (ICON-EU-EPS -> ICON-EPS), und bei steil fallender Linie nach dem Scheitel.
+            Glätten eines nie fallenden Abstands lässt ihn nie fallend."""
+            ln, lo_, hi_ = (np.asarray(x, float) for x in (ln, lo_, hi_))
+            du, dl = hi_ - ln, ln - lo_
+            su, sl = du.copy(), dl.copy()
+            for i in range(j48 - 11, len(ln)):
+                sg = min(12.0, 0.25 * (i - (j48 - 12)))
+                k = np.arange(max(0, i - int(3 * sg)), min(len(ln) - 1, i + int(3 * sg)) + 1)
+                w = np.exp(-0.5 * ((k - i) / sg) ** 2)
+                su[i], sl[i] = (w * du[k]).sum() / w.sum(), (w * dl[k]).sum() / w.sum()
+            wmax = np.maximum.accumulate(np.where(np.arange(len(ln)) >= j48, su + sl, 0.0))   # Gesamtbreite nie kleiner (wie widen)
+            su = np.where(later, np.maximum(su, wmax - sl), su)
+            return np.maximum(ln - np.maximum(sl, 0.0), 0.0), ln + np.maximum(su, 0.0)
+
+        lo_q, hi_q = smooth(line, *widen(line, lo, hi, elo))
+        elo_q, ehi_q = smooth(line, elo, ehi)
         lw = np.asarray(out[target]["w"], float)                                    # Linie in cm genau wie angezeigt
-        lo_w, hi_w = widen(lw, np.asarray(RT.w_of_q(rcv, lo), float), np.asarray(RT.w_of_q(rcv, hi), float), np.asarray(RT.w_of_q(rcv, elo), float))
+        elo_w0, ehi_w0 = np.asarray(RT.w_of_q(rcv, elo), float), np.asarray(RT.w_of_q(rcv, ehi), float)
+        lo_w, hi_w = smooth(lw, *widen(lw, np.asarray(RT.w_of_q(rcv, lo), float), np.asarray(RT.w_of_q(rcv, hi), float), elo_w0))
+        elo_w, ehi_w = smooth(lw, elo_w0, ehi_w0)
         rd = lambda v, k: [round(float(x), k) for x in v]                           # noqa: E731
-        out[target]["band"] = dict(q=dict(lo=rd(lo_q, 3), hi=rd(hi_q, 3), elo=rd(elo, 3), ehi=rd(ehi, 3)),
-                                   w=dict(lo=rd(lo_w, 1), hi=rd(hi_w, 1), elo=rd(RT.w_of_q(rcv, elo), 1), ehi=rd(RT.w_of_q(rcv, ehi), 1)))
+        out[target]["band"] = dict(q=dict(lo=rd(lo_q, 3), hi=rd(hi_q, 3), elo=rd(elo_q, 3), ehi=rd(ehi_q, 3)),
+                                   w=dict(lo=rd(lo_w, 1), hi=rd(hi_w, 1), elo=rd(elo_w, 1), ehi=rd(ehi_w, 1)))
     print(f"   Band im Ausblick: {len(members)} Läufe, {time.time() - t_run:.0f} s")
     return dict(laeufe=len(members), modell=icon.get("eps7_modell"), reicht_h=round(float(reach), 0))
 
