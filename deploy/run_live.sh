@@ -5,8 +5,11 @@
 set -u
 INTERVAL_MIN="${INTERVAL_MIN:-60}"
 # Feste Uhrzeiten statt Pause nach jedem Lauf (sonst wandert der Takt um die Rechenzeit): Läufe um OFFSET_MIN nach jedem Vielfachen von
-# INTERVAL_MIN, Standard 7 Minuten, damit die Viertelstundenwerte der Pegel (kommen mit einigen Minuten Verzug) schon da sind.
-OFFSET_MIN="${OFFSET_MIN:-7}"
+# INTERVAL_MIN, Standard stündlich um hh:40: ICON-D2-RUC ist bei Open-Meteo rund 1 h 27 min nach dem Start abrufbar (Rechnung beim DWD,
+# Bereitstellung, Umwandlung), um hh:40 MEZ also sicher der Lauf von hh-1:00 (um hh:07 war es der von hh-2:00); der Viertelstundenwert
+# hh:30 der Pegel (kommt mit einigen Minuten Verzug) ist dann auch da. Ein Lauf dauert auf dem Raspberry Pi rund 7 min, die Seite steht
+# also gegen hh:47. Start und Verfügbarkeit jedes ICON-Laufs stehen in data/live/laeufe.csv; danach den Takt nachjustieren.
+OFFSET_MIN="${OFFSET_MIN:-40}"
 PORT="${PORT:-8080}"
 mkdir -p gui/archiv data/live
 [ -f gui/index.html ] || printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=live.html"><a href="live.html">Live-Vorhersage</a> · <a href="archiv/">Archiv</a>\n' > gui/index.html
