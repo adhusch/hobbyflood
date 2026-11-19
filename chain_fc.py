@@ -217,6 +217,20 @@ def soil_moisture(index: pd.DatetimeIndex, table: pd.DataFrame | None = None) ->
     return {k: t[k].reindex(day).to_numpy(float) for k in RAINK if k in t}
 
 
+# Untergrenze der Gebietsfeuchte aus der Bodenfeuchte (bf_untergrenze.py): B_eff = max(B, typischer Grundabfluss bei dieser Bodenfeuchte im Winter,
+# unteres Viertel 2004-2022). Anlass: Herbst 2026, Oberboden gesättigt, Grundwasser leer. Aus mit PRUEM_BFMIN=0.
+BF_FLOOR_FILE = HERE / "data" / "bodenfeuchte" / "bf_untergrenze.json"
+BF_FLOOR: dict[str, tuple[list, list]] = {}
+if os.environ.get("PRUEM_BFMIN", "1") == "1" and BF_FLOOR_FILE.exists():
+    BF_FLOOR = {k: (v["sm"], v["b"]) for k, v in json.loads(BF_FLOOR_FILE.read_text(encoding="utf-8"))["tabelle"].items()}
+
+
+def bf_floor(k: str, sm) -> np.ndarray:
+    """Untergrenze von B für Gebiet k aus der Bodenfeuchte (% nFK; fehlend = SM_FALLBACK), linear zwischen den Stützstellen, außen konstant."""
+    s = np.asarray(sm, float)
+    return np.interp(np.where(np.isfinite(s), s, SM_FALLBACK), *BF_FLOOR[k])
+
+
 def add_wetness(frames: dict, Q, sm_table: pd.DataFrame | None = None, sm: dict | None = None) -> dict:
     """Spalten bf (Gebietsfeuchte = Abfluss am Bezugspegel / MQ) und sm (Bodenfeuchte, soil_moisture) je Regengebiet; Q: DataFrame oder dict
     Pegelname -> Reihe auf demselben Raster; sm: fertige Reihen je Gebiet auf dem Raster (Live-Betrieb), sonst aus der Tabelle über Q.index."""
@@ -231,6 +245,8 @@ def add_wetness(frames: dict, Q, sm_table: pd.DataFrame | None = None, sm: dict 
         extra = dict(bf=q / mq[k])
         if sm is not None and k in sm:
             extra["sm"] = sm[k]
+            if k in BF_FLOOR:
+                extra["bf"] = np.maximum(extra["bf"], bf_floor(k, sm[k]))     # NaN im Abfluss bleibt NaN
         if isinstance(frames[k], pd.DataFrame):
             frames[k] = frames[k].assign(**extra)
         else:
@@ -744,7 +760,7 @@ def run(jobs: int) -> None:
     mlinfo = {str(r["block"]) if r["block"] is not None else "alle": r.get("ml") for r in res}
     (HERE / "data" / "chain_models.json").write_text(json.dumps(dict(sets=sets, events=ev, sat=sat, ml=mlinfo, hw={k: dict(**v, area_km2=info[k]["area_km2"],
                                                                                                         weights=info[k]["weights"]) for k, v in HW.items()},
-                                                                       consts=dict(A_H=A_H, H_H=H_H, LEAD_H=LEAD_H, WET={k: [WET_REF[k], v] for k, v in wet_mq().items()},
+                                                                       consts=dict(A_H=A_H, H_H=H_H, LEAD_H=LEAD_H, WET={k: [WET_REF[k], v] for k, v in wet_mq().items()}, BFMIN={k: [list(v[0]), list(v[1])] for k, v in BF_FLOOR.items()},
                                                                                    TAU_API_H=RN.TAU_API_H, TAU_API_S_H=RN.TAU_API_S_H,
                                                                                    P_STORM=P_STORM, STORM_MONTHS=list(STORM_MONTHS), STORM_WIN_H=STORM_WIN_H)),
                                                                   ensure_ascii=False, indent=1), encoding="utf-8")

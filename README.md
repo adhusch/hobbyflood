@@ -813,3 +813,26 @@ in `deploy/run_live.sh`: stündlich um **hh:40** (`OFFSET_MIN=40`). Dann ist der
 und der Viertelstundenwert hh:30 der Pegel ebenfalls; ein Lauf dauert auf dem Raspberry Pi rund 7 min. Die Kopfzeile nennt jetzt zu ICON-D2
 und ICON-RUC, seit wann der Lauf abrufbar ist und wie lange nach dem Start; jeder Abruf schreibt Start und Verfügbarkeit nach
 `data/live/laeufe.csv`, um den Takt nach einigen Tagen an den gemessenen Verzug anzupassen.
+
+## Untergrenze der Gebietsfeuchte aus der Bodenfeuchte (19.11.2026)
+
+Anlass: Im Sturm November 2026 lag Sinspelt 24 h vorher im Mittel 17 cm zu tief, auch mit Bodenfeuchte-Faktor. Die Gebietsfeuchte im
+Abflussbeiwert kommt an den Oberläufen fast nur aus dem Abfluss vor dem Ereignis (B = Q / MQ). Der 7-Tage-Vorregen trägt dort nichts bei:
+Mit weit geöffneten Grenzen drückt die Anpassung sein Gewicht auf praktisch null (Sinspelt 1/S von 0,0010 auf 0,00007 je mm, Zielwert 0,5 %
+besser; Prüm 2 und Giesdorf ebenso), die bisherigen Grenzen verfälschten also nichts. Nach dem trockenen Sommer war das Grundwasser leer
+(Sinspelt B = 0,2), der Oberboden aber gesättigt (Vortag 128–130 % nFK); bei dieser Bodenfeuchte lag der Grundabfluss im Winter 2004–2022
+im unteren Viertel bei 0,8 MQ. Der Bodenfeuchte-Faktor (`smf`) kann den Beiwert nur dämpfen, nicht anheben.
+
+`bf_untergrenze.py` schreibt je Regengebiet eine Tabelle Bodenfeuchte des Vortags → unteres Viertel des Grundabflusses (kleinstes Tagesmittel
+der letzten 3 Tage, Oktober–März 2004–2022, Klassen zu 5 %, nach oben nie fallend) nach `data/bodenfeuchte/bf_untergrenze.json`. Im Modell
+gilt B_eff = max(B, Untergrenze(Bodenfeuchte)) (`chain_fc.add_wetness`, im Browser `forecast_core.js`, Tabelle in `consts.BFMIN`; aus mit
+`PRUEM_BFMIN=0`). 2004–2022 greift sie an 12–28 % der Zeitpunkte, im Mittel um 0,07–0,13 MQ. Die Tabelle stammt aus allen Jahren; die
+Kreuzvalidierung ist für sie also nicht ganz unabhängig (sie beschreibt nur die Verteilung von B und Bodenfeuchte, keine Hochwasser).
+
+Kreuzvalidierung 2004–2022 (Nash-Sutcliffe, Mittel der acht Pegel, neu minus alt): Regen bis zur Ausgabe 0,000 / −0,001 / 0,000 bei 6 / 12 / 24 h;
+künftiger Regen perfekt bekannt −0,001 / −0,005 / −0,020 (Scheitel im Median 2–4 % niedriger, vor allem Giesdorf und Seffern); Starkregensatz
+mit perfektem Regen +0,005 / +0,007 / +0,009. Sturm November 2026 (nicht im Training), mittlere Abweichung 24 h vorher: Sinspelt −17,4 → −8,1 cm
+(erfasster Anteil eines Anstiegs 24 % → 61 %), Prümzurlay −9,9 → −1,5 cm, Prüm 2 −11,7 → −4,2 cm, Echtershausen −9,8 → −0,3 cm, Seffern −7,5 →
++2,6 cm, Alsdorf-Oberecken −6,1 → +10,4 cm (zu hoch durch den höheren Zufluss aus Seffern und Giesdorf; die Untergrenze im eigenen
+Zwischengebiet griff dort nicht). Übernommen, obwohl die Kreuzvalidierung mit perfektem Regen bei 24 h knapp schlechter ist: Eine
+systematisch zu tiefe Vorhersage bei nassem Boden und leerem Grundwasser wiegt schwerer.
