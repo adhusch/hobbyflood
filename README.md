@@ -836,3 +836,13 @@ mit perfektem Regen +0,005 / +0,007 / +0,009. Sturm November 2026 (nicht im Trai
 +2,6 cm, Alsdorf-Oberecken −6,1 → +10,4 cm (zu hoch durch den höheren Zufluss aus Seffern und Giesdorf; die Untergrenze im eigenen
 Zwischengebiet griff dort nicht). Unsicherheitstabellen neu: 80-%-Band unverändert (79 %), HW-10-Warnung gleich (ein Fehlalarm weniger). Übernommen, obwohl die Kreuzvalidierung mit perfektem Regen bei 24 h knapp schlechter ist: Eine
 systematisch zu tiefe Vorhersage bei nassem Boden und leerem Grundwasser wiegt schwerer.
+
+## Ausblick: Band ohne Sprünge (19.11.2026)
+
+Das Band des 7-Tage-Ausblicks hatte wieder Ecken und Sprünge (Live 19.11.2026, Prümzurlay): wo die Untergrenze vom Abstand zur Linie auf
+den niedrigsten Lauf umschaltet, wo im Ensemble Läufe enden oder das Modell wechselt (ICON-EU-EPS → ICON-EPS) und bei 48 h, wo das Band der
+Hauptgrafik (Quantile über die Läufe, oben oft flach) in die Rechnung um die Linie übergeht. Jetzt werden ab 36 h die Abstände zur Linie
+(Band und Spannweite, in Abfluss und in cm) mit einem Gauß-Fenster geglättet, das mit dem Vorlauf breiter wird (1 h je 4 h über 36 h,
+höchstens 12 h); danach wieder: Gesamtbreite nie kleiner. Größter Knick (zweite Differenz je Stunde) am Sturmbeispiel 18.11., 17:30:
+Alsdorf-Oberecken obere Kante 4,7 → 1,1 cm, Spannweite 6,7 → 2,9 cm; Seffern ähnlich. Zwischen 36 und 48 h weicht das Band im Ausblick
+dadurch um wenige cm von der Hauptgrafik ab.
