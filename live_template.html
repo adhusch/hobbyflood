@@ -69,6 +69,7 @@ h2{font-size:15px;margin:0 0 6px;font-weight:650}
 .legs span{display:inline-flex;align-items:center;gap:6px}
 .legs i{width:16px;height:0;border-top:2px solid var(--col);display:inline-block}
 .legs i.dash{border-top-style:dashed}
+.legs i.thin{border-top-width:1.25px}
 .legs i.thin{border-top-width:1px}
 .legs i.area{height:10px;border:0;background:var(--col);opacity:.3;border-radius:2px}
 .chart{position:relative;width:100%;touch-action:pan-y}
@@ -214,7 +215,7 @@ function plot(el, spec, H = 220) {
   s += hlab;
   (spec.bars || []).forEach(b => { const y0 = ys(0), y1 = ys(Math.min(Y.max, b.y)); if (b.y > 0) s += `<rect x="${xs(b.x).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(1, xs(b.x + b.w) - xs(b.x) - 1).toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${b.col}" fill-opacity=".8"/>`; });
   (spec.vlines || []).forEach(v => { s += `<line x1="${xs(v.x).toFixed(1)}" x2="${xs(v.x).toFixed(1)}" y1="${pad.t}" y2="${H - pad.b}" stroke="${v.col || "var(--muted)"}" stroke-width="1" ${v.dash === false ? "" : 'stroke-dasharray="1 3"'}/>` + (v.label ? `<text x="${(xs(v.x) + 4).toFixed(1)}" y="${pad.t + 10}" font-size="11" fill="var(--ink2)">${v.label}</text>` : ""); });
-  (spec.lines || []).forEach(l => { if (l.hidden) return; s += `<path d="${l.pts.filter(p => p[1] != null).map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(Math.max(Y.min, Math.min(Y.max, p[1]))).toFixed(1)).join("")}" fill="none" stroke="${l.col}" stroke-width="${l.thin ? 1 : 2}" ${l.thin ? 'opacity=".55"' : ""} stroke-linejoin="round" stroke-linecap="round" ${l.dash ? 'stroke-dasharray="6 4"' : ""}/>`; });
+  (spec.lines || []).forEach(l => { if (l.hidden) return; s += `<path d="${l.pts.filter(p => p[1] != null).map((p, k) => (k ? "L" : "M") + xs(p[0]).toFixed(1) + " " + ys(Math.max(Y.min, Math.min(Y.max, p[1]))).toFixed(1)).join("")}" fill="none" stroke="${l.col}" stroke-width="${l.w || (l.thin ? 1 : 2)}" ${l.thin ? 'opacity=".55"' : ""} stroke-linejoin="round" stroke-linecap="round" ${l.dash ? `stroke-dasharray="${l.dashArr || "6 4"}"` : ""}/>`; });
   (spec.errs || []).forEach(e => { const cx = xs(e.x), cy = ys(e.y), c = e.col; s += `<g stroke="${c}" stroke-width="2" stroke-linecap="round"><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${cy.toFixed(1)}" y2="${cy.toFixed(1)}"/><line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/><line x1="${xs(e.x0).toFixed(1)}" x2="${xs(e.x0).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${xs(e.x1).toFixed(1)}" x2="${xs(e.x1).toFixed(1)}" y1="${(cy - 4).toFixed(1)}" y2="${(cy + 4).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y0).toFixed(1)}" y2="${ys(e.y0).toFixed(1)}"/><line x1="${(cx - 4).toFixed(1)}" x2="${(cx + 4).toFixed(1)}" y1="${ys(e.y1).toFixed(1)}" y2="${ys(e.y1).toFixed(1)}"/></g><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="${c}"/>`; });
   (spec.points || []).forEach(p => { s += `<circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="6.5" fill="var(--surface)"/><circle cx="${xs(p.x).toFixed(1)}" cy="${ys(p.y).toFixed(1)}" r="4" fill="${p.hollow ? "var(--surface)" : p.col}" stroke="${p.col}" stroke-width="${p.hollow ? 2 : 0}"/>`; });
   s += `<line class="xh" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--ink2)" visibility="hidden"/><g class="cur"></g><rect class="hit" x="${pad.l}" y="${pad.t}" width="${W - pad.l - pad.r}" height="${H - pad.t - pad.b}" fill="transparent"/></svg><div class="tip"></div>`;
@@ -333,7 +334,7 @@ function detail() {
   let hvzPts = null;
   if (hvzOn) { hvzPts = ["p10", "p50", "p90"].map(p => r.hvz[p].map(([t, v]) => [(parse(t) - T0) / 3600000, cm ? v : null]).filter(z => z[0] >= xa && z[0] <= xb && z[1] != null)); if (cm) lines.push({ pts: hvzPts[1], col: "var(--c-hvz)", dash: true }); }
   const d2 = cm ? r.runs_w["ICON-D2"] : r.runs_q["ICON-D2"];
-  lines.push({ pts: [[0, y0], ...d2.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", dash: true });
+  lines.push({ pts: [[0, y0], ...d2.map((x, l) => [(l + 1) / 4, x])], col: "var(--c-run)", dash: true, w: 1.25, dashArr: "4 3" });
   lines.push({ pts: ser(MED), col: "var(--c-full)" });
   const ruc = r.ruc && state.ruc !== false ? r.ruc : null;
   if (ruc) lines.push({ pts: [[0, y0], ...(cm ? ruc.w : ruc.q).map((x, l) => [(l + 1) / 4, x])], col: "var(--c-ruc)", dash: true });
@@ -362,7 +363,7 @@ function detail() {
         if (ruc && ruc.q[l - 1] != null) rows.push({ col: "var(--c-ruc)", name: "mit ICON-RUC", val: fmt(cv(ruc.q[l - 1])) });
         if (scn) rows.push({ col: "var(--c-scn)", name: "Szenario", val: fmt(cv(scn.q[l - 1])) }); }
       return { t: fdt(T0 + l * 900000) + (l > 0 ? ` · in ${nf(l / 4, 2)} h` : ""), x: l / 4, rows }; } }, 290);
-  $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="area" style="--col:var(--c-full);opacity:.45"></i>Spannweite des Ensembles (${runsAll.length} Läufe)</span><span><i class="dash" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
+  $("#leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>60 % / 80 % der Fälle</span><span><i class="area" style="--col:var(--c-full);opacity:.45"></i>Spannweite des Ensembles (${runsAll.length} Läufe)</span><span><i class="dash thin" style="--col:var(--c-run)"></i>ICON-D2-Hauptlauf (nach Fehlerstatistik bereinigt)</span>` +
     (ruc ? `<span><i class="dash" style="--col:var(--c-ruc)"></i>mit ICON-RUC, reicht ${nf(ruc.ende_h, 0)} h weit (Regen bis dahin ${nf(ruc.regen_mm, 1)} mm, ICON-D2 ${nf(ruc.regen_d2_mm, 1)} mm; ungeprüft, nicht im Band)</span>` : "") +
     (scn ? `<span><i style="--col:var(--c-scn)"></i>Szenario (${nf(scn.mm, 0)} mm)</span>` : "") +
     (state.runs ? `<span><i class="thin" style="--col:var(--c-run)"></i>Ensemble-Läufe</span>` : "") + (state.none ? `<span><i class="dash" style="--col:var(--c-none)"></i>ohne Regenvorhersage (wie bisher)</span>` : "") +
@@ -459,20 +460,20 @@ function ausblick() {                                      // 7 Tage: Linie mit 
   plot($("#ch-a"), { x: { min: xa, max: xb, ticks }, y: { min: Y0, max: Y1, ticks: yt, label: cm ? "Wasserstand (cm)" : "Abfluss (m³/s)" },
     bands: Bd ? [{ hi: bp(Bd.ehi).map(cl), lo: bp(Bd.elo).map(cl), col: "var(--c-full)", op: .08 }, { hi: bp(Bd.hi).map(cl), lo: bp(Bd.lo).map(cl), col: "var(--c-full)", op: .16 }] : [],
     hlines: ths.map(t => ({ y: t.y, col: TH_COL[t.id], bold: t.warn, faint: t.info, label: `${t.name} ${cm ? nf(t.w, 0) + " cm" : qf(t.q) + " m³/s"}` })),
-    lines: [{ pts: line.map(cl), col: "var(--c-run)", dash: true }, { pts: obs.map(cl), col: "var(--c-obs)" }], vlines: vl,
+    lines: [{ pts: (Bd ? line.slice(0, 49) : line).map(cl), col: "var(--c-run)", dash: true, w: 1.25, dashArr: "4 3" }, { pts: obs.map(cl), col: "var(--c-obs)" }], vlines: vl,
     tip: x => { const l = Math.round(x), rows = [];
       if (l <= 0) { const j = r.obs_q.length - 1 + l * 4; if (j >= 0 && r.obs_q[j] != null) rows.push({ col: "var(--c-obs)", name: "gemessen", val: fmt(cm ? r.obs_w[j] : r.obs_q[j]) }); }
-      else if (l <= v.length) { rows.push({ col: "var(--c-run)", name: "Ausblick", val: fmt(v[l - 1]) });
+      else if (l <= v.length) { if (!Bd || l <= 48) rows.push({ col: "var(--c-run)", name: Bd ? "Hauptlauf" : "Ausblick", val: fmt(v[l - 1]) });
         if (Bd) rows.push({ col: "var(--c-full)", name: l <= 48 ? "80 % der Fälle" : "Band (geschätzt)", val: `${cm ? nf(Math.round(Bd.lo[l - 1]), 0) : qf(Bd.lo[l - 1])} bis ${fmt(Bd.hi[l - 1])}` },
                           { col: "var(--c-full)", name: "Ensemble", val: `${cm ? nf(Math.round(Bd.elo[l - 1]), 0) : qf(Bd.elo[l - 1])} bis ${fmt(Bd.ehi[l - 1])}` }); }
       return { t: fdt(T0 + l * 3600000) + (l > 0 ? ` · in ${nf(l / 24, 1)} Tagen` : ""), x: l, rows }; } }, 240);
-  $("#leg-a").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-run)"></i>Ausblick (${Bd ? "Hauptlauf" : "eine Rechnung, ohne Unsicherheitsband"})</span>` +
+  $("#leg-a").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash thin" style="--col:var(--c-run)"></i>${Bd ? "Hauptlauf (bis 48 h)" : "Ausblick (eine Rechnung, ohne Unsicherheitsband)"}</span>` +
     (Bd ? `<span><i class="area" style="--col:var(--c-full)"></i>Band (bis 48 h 80 % der Fälle, danach geschätzt)</span><span><i class="area" style="--col:var(--c-full);opacity:.45"></i>Spannweite der Ensembleläufe</span>` : "");
   const tage = a.regen_tag.filter(([d]) => d >= D.meta.t0.slice(0, 10)).map(([d, mm]) => `${WD[new Date(parse(d + " 12:00")).getUTCDay()]} ${nf(mm, 0)} mm`).join(" · ");
-  const mx = Math.max(...v), im = v.indexOf(mx);
-  $("#note-a").innerHTML = `Höchstwert im Ausblick: <b>${fmt(mx)}</b> am ${WD[new Date(T0 + (im + 1) * 3600000).getUTCDay()]} ${fdt(T0 + (im + 1) * 3600000)}. Regen im Einzugsgebiet je Tag: ${tage}. ` +
+  const vv = Bd ? v.slice(0, 48) : v, mx = Math.max(...vv), im = vv.indexOf(mx), bhi = Bd && Bd.hi.length > 48 ? Math.max(...Bd.hi.slice(48)) : null;
+  $("#note-a").innerHTML = `Höchstwert ${Bd ? "des Hauptlaufs bis 48 h" : "im Ausblick"}: <b>${fmt(mx)}</b> am ${WD[new Date(T0 + (im + 1) * 3600000).getUTCDay()]} ${fdt(T0 + (im + 1) * 3600000)}${bhi != null ? `; danach reicht das Band bis ${fmt(bhi)}` : ""}. Regen im Einzugsgebiet je Tag: ${tage}. ` +
     `Regen bis ${nf(E["ICON-D2"] || 48, 0)} h aus ICON-D2, danach aus ICON-EU${E["ICON global"] != null ? `, ab ${nf(E["ICON-EU"], 0)} h aus ICON global` : ""}. ` +
-    (Bd ? `<b>Band:</b> Bis 48 h dasselbe Band wie oben. Danach liegt es um die Linie und wird mit dem Vorlauf breiter: Der Fehler des Abflussmodells wächst wie die Wurzel der Zeit weiter, dazu kommt die Streuung, die die ${A.band.laeufe} Läufe des ICON-Ensembles (bis 5 Tage ICON-EU-EPS, danach ICON-EPS global) nach 48 h zusätzlich aufbauen, und der Abstand zur Linie nimmt nicht mehr ab (kommt der Scheitel später, kann der Stand auch Tage danach noch so hoch sein). Nach unten reicht es höchstens bis zum niedrigsten Lauf. Die hellste Fläche zeigt den niedrigsten und höchsten Lauf. ` : "") +
+    (Bd ? `<b>Band:</b> Bis 48 h dasselbe Band wie oben. Danach zeigt die Grafik nur noch das Band, keine Linie: Eine einzelne Linie würde so weit voraus eine Genauigkeit vortäuschen, die es nicht gibt. Das Band liegt um den weitergerechneten Hauptlauf und wird mit dem Vorlauf breiter: Der Fehler des Abflussmodells wächst wie die Wurzel der Zeit weiter, dazu kommt die Streuung, die die ${A.band.laeufe} Läufe des ICON-Ensembles (bis 5 Tage ICON-EU-EPS, danach ICON-EPS global) nach 48 h zusätzlich aufbauen, und der Abstand zur Linie nimmt nicht mehr ab (kommt der Scheitel später, kann der Stand auch Tage danach noch so hoch sein). Nach unten reicht es höchstens bis zum niedrigsten Lauf. Die hellste Fläche zeigt den niedrigsten und höchsten Lauf. ` : "") +
     `<b>Nur zur Orientierung:</b> Für mehr als 48 h gibt es keine Rückrechnung${Bd ? "; das Band ab 48 h ist geschätzt und nicht geprüft" : " und kein Band"}. Die Regenvorhersage wird mit jedem Tag unsicherer, und nach 48 h läuft die Rechnung ohne neue Messwerte weiter. Die Warnung oben gilt nur für 48 h.`;
 }
 function alter() {                                        // Hinweis, wenn die Rechnung alt ist (Abruf oder Lauf gescheitert): die Seite zeigt dann den letzten Stand
