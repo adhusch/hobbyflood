@@ -201,7 +201,7 @@ details.more[open]>summary{margin-bottom:6px}
     <li>Jede Strecke ist eine Kaskade aus n Speichern mit K = Δx / c(Q); Verzögerung L / c(Q), Abflachung über n. Unterlieger = Sockel + Verstärkung · Kaskade(Oberlieger), bei Prümzurlay Summe aus Wiersdorf und Enz (Sinspelt). Details in <code>routing.py</code>.</li>
     <li>Die Karte zeigt die Strecken mit der Wellengeschwindigkeit bei dem Abfluss, der gerade am Oberlieger gemessen wird. Das Strichmuster bewegt sich mit c. Kreise: Messung; gestrichelter Ring: Simulation (Modell ohne dieses Hochwasser angepasst).</li>
     <li>Stausee Bitburg (zwischen Echtershausen und Wiersdorf): Speicher mit gesteuerter Abgabe, im Modell nur empirisch als Strecke mit c bis 12 m/s. Bei vier Hochwassern ist Wiersdorf bei 250 cm abgeschnitten; dort fehlen Prüfwerte für Wiersdorf, Prümzurlay wird dann mit Wiersdorf aus Echtershausen (Modell) gerechnet.</li>
-    <li>Vorhersage-Tab: Wasserstand in cm mit der heutigen W-Q-Beziehung (<code>rating.py</code>), Band aus den Fehlern eines stündlichen Vorhersagearchivs 2004–2022 je Zustand, Abflussstufe und Vorlauf (<code>uncert.py</code>, verschachtelt kreuzvalidiert), Schwellen und HQx der Hochwasservorhersagezentrale Rheinland-Pfalz. Die Rechnung im Browser stimmt mit Python überein (<code>test_uncert_js.py</code>).</li>
+    <li>Vorhersage-Tab: Wasserstand in cm mit der W-Q-Beziehung, wie sie beim jeweiligen Hochwasser galt (aus den damaligen Wertepaaren, sonst die heutige aus <code>rating.py</code>), Band aus den Fehlern eines stündlichen Vorhersagearchivs 2004–2022 je Zustand, Abflussstufe und Vorlauf (<code>uncert.py</code>, verschachtelt kreuzvalidiert), Schwellen und HQx der Hochwasservorhersagezentrale Rheinland-Pfalz. Die Rechnung im Browser stimmt mit Python überein (<code>test_uncert_js.py</code>).</li>
     <li>Vorhersage ohne Regenvorhersage („Regen bis jetzt“): Ein Pegel zeigt keinen Scheitel, solange an seinen Oberliegern noch keiner gemessen ist (Höchstwert der letzten 48 h mindestens 30 min her, jetzt mindestens 1 % darunter und in den letzten 30 min nicht gestiegen). Mit Regen als Vorhersage („perfekter Regen“, Live-Betrieb) gilt diese Regel seit 14.11.2026 nicht mehr: Sie verschlechterte dort die Vorhersage bei 24 und 48 h deutlich, ohne den Scheitel besser zu treffen. Die Kette über alle acht Pegel wird beim Verschieben der Ausgabezeit direkt im Browser gerechnet (<code>forecast_core.js</code>, gleiche Rechnung wie <code>chain_fc.py</code>, Übereinstimmung geprüft mit <code>test_forecast_js.py</code>). Die Gütekurven stammen aus der Kreuzvalidierung in <code>chain_fc.py</code>.</li>
     <li>Flussläufe sind Verbindungslinien durch die Pegelpositionen. Zeit in MEZ (angenommen, wie im Datenpaket).</li>
   </ul>
@@ -616,11 +616,16 @@ const relTicks = (a, b, st) => { const out = []; for (let v = Math.ceil(a / st) 
 if (D.unc) UQ.setTables(D.unc);
 const LO = 1, MED = 5, HI = 9;                          // Stufenindizes in D.unc.lev: 10 %, 50 %, 90 %
 const TH_COL = { MH: "var(--th0)", HW2: "var(--th1)", HW10: "var(--th2)", HW20: "var(--th3)", HW50: "var(--th4)", HW100: "var(--th5)" };
-function thresholdsOf(dn) {                             // aufsteigend: Meldehöhe (falls vergeben), HW 2 … HW 100; w in cm, q in m³/s
-  const k = D.unc.kennwerte[dn], rc = D.unc.rating[dn], out = [], wid = "HW" + ((D.unc.warn || {})[KEY_OF_DN[dn]] || { name: "HQ10" }).name.slice(2);
-  if (k.meldehoehe) out.push({ id: "MH", name: "Meldehöhe", w: k.meldehoehe, q: rc.q_meldehoehe });
-  ["2", "10", "20", "50", "100"].forEach(x => out.push({ id: "HW" + x, name: "HW " + x, w: k.W["HW" + x], q: k.Q["HQ" + x] }));
-  out.forEach(t => { t.warn = t.id === wid; t.info = t.w < k.W[wid]; });   // Warnung erst ab der Warnschwelle (HW 10, erste Schäden); darunter nur Einordnung
+// Beziehung Wasserstand-Abfluss, wie sie beim Hochwasser galt (aus den damaligen W-Q-Paaren, routing_map.py), sonst die heutige. Seit 2022 liegt
+// z. B. Prümzurlay bei gleichem Abfluss 40-55 cm tiefer; mit der heutigen Kurve zeigte die Karte 2003 458 statt der gemessenen 493 cm.
+const ratOf = (fw, dn) => (fw && fw.rat && fw.rat[dn]) || D.unc.rating[dn];
+function thresholdsOf(dn, fw) {                         // aufsteigend: Meldehöhe (falls vergeben), HW 2 … HW 100; w in cm, q in m³/s
+  // HQx aus der heutigen Statistik, in cm mit der Beziehung des Hochwassers (wie eval.html); Meldehöhe ist ein fester Wasserstand
+  const k = D.unc.kennwerte[dn], rc = ratOf(fw, dn), today = rc === D.unc.rating[dn], out = [], wid = "HW" + ((D.unc.warn || {})[KEY_OF_DN[dn]] || { name: "HQ10" }).name.slice(2);
+  if (k.meldehoehe) out.push({ id: "MH", name: "Meldehöhe", w: k.meldehoehe, q: today ? rc.q_meldehoehe : UQ.qOfW(rc, k.meldehoehe) });
+  ["2", "10", "20", "50", "100"].forEach(x => out.push({ id: "HW" + x, name: "HW " + x, w: today ? k.W["HW" + x] : Math.round(UQ.wOfQ(rc, k.Q["HQ" + x])), q: k.Q["HQ" + x] }));
+  const wW = (out.find(t => t.id === wid) || {}).w;
+  out.forEach(t => { t.warn = t.id === wid; t.info = t.w < wW; });          // Warnung erst ab der Warnschwelle (HW 10, erste Schäden); darunter nur Einordnung
   return out.sort((a, b) => a.w - b.w);
 }
 const WST = { keine: { col: "var(--c-ok)", t: "keine Warnung" }, "möglich": { col: "var(--th1)", t: "Vorwarnung" }, Warnung: { col: "var(--th3)", t: "Warnung" } };
@@ -667,12 +672,12 @@ function issueLabel(key, fw, i) {
 }
 
 function drawLage(key, f, fw, i) {
-  const dn = FC.DN[key], U = D.unc, rc = U.rating[dn], A = FC.A, H = FC.H, t0 = parse(fw.t_start), tI = t0 + i * 900000;
+  const dn = FC.DN[key], U = D.unc, rc = ratOf(fw, dn), A = FC.A, H = FC.H, t0 = parse(fw.t_start), tI = t0 + i * 900000;
   const variant = !fw.rain ? "kette" : state.fcRain === "perfekt" ? "kette_vorhersage" : "kette_regen", S = FC.forecast(D.chain.sets[fw.models], fw, key, i, variant);
   if (!S) { $("#lage").innerHTML = `<p class="note">Zu dieser Ausgabezeit fehlen Messwerte; keine Vorhersage.</p>`; ["#ch-lg", "#lg-warn", "#lg-note", "#lg-warn-note", "#lg-leg", "#lg-state"].forEach(s => $(s).innerHTML = ""); return; }
   const s = S[key], an = UQ.analyse(fw, key, i, s, A, H, variant), obs = fw.q[dn], cm = state.fcUnit === "cm";
   const W_ = q => UQ.wOfQ(rc, q), cv = q => q == null ? null : (cm ? W_(q) : q), fmt = v => v == null ? "–" : cm ? cmTxt(v) : qf(v) + " m³/s";
-  const ths = thresholdsOf(dn), q0 = obs[i];
+  const ths = thresholdsOf(dn, fw), q0 = obs[i];
   const hw = !UPS_OF[key], ups = upstreamPeaks(fw, key, i);
   const STATE = ["ruhig", "Anstieg", "Welle von oben unterwegs", "fallend"], LEVEL = ["unter 2 MQ", "2 bis 8 MQ", "ab 8 MQ"];
   $("#lg-state").innerHTML = `Zustand zur Ausgabezeit: <b>${STATE[an.state]}</b> · Abflussstufe ${LEVEL[an.level]}${an.dry ? " · trocken (jetzt unter 0,3 MQ)" : ""}${an.heavy ? ` · <b>Starkregenlage</b> <span title="mindestens 40 mm in 24 h oder 20 mm in 3 h im Gebiet, ${variant === "kette_vorhersage" ? "24 h vor bis 24 h nach der Ausgabezeit" : "in den 24 h bis zur Ausgabezeit"}; Band aus den Starkregenfällen aller Pegel">(eigene Fehlertabelle)</span>` : ""} · ${!fw.rain ? "Kette ohne Regen (für dieses Hochwasser kein Stundenregen)" : variant === "kette_vorhersage" ? "Kette mit dem später gemessenen Regen (perfekte Regenvorhersage)" : "Kette mit Regen bis zur Ausgabezeit"}`;
@@ -699,9 +704,10 @@ function drawLage(key, f, fw, i) {
     const open = ups.filter(u => !u.passed).map(u => u.dn).join(" und ");
     const nOpen = ups.filter(u => !u.passed).length, r = an.q[an.fcarg - 1];
     t2 = `<div class="tile"><div class="k">Scheitel noch nicht absehbar</div><div class="v">${fmt(cv(r[MED]))} <small>und mehr?</small></div><div class="s">Bis ${hmShort(tI + Math.round(an.fcarg) * 900000, tI)} erwartet (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}). ${esc(open || ups.map(u => u.dn).join(" und "))} ${nOpen > 1 ? "steigen" : "steigt"} noch: erst mit dem Scheitel dort gibt es eine Scheitelvorhersage.</div></div>`;
-  } else if (hw && variant === "kette_vorhersage" && an.fcmax > 1.02 * q0) {
-    const r = an.q[an.fcarg - 1];
-    t2 = `<div class="tile"><div class="k">Höchststand in 48 h</div><div class="v">${fmt(cv(r[MED]))}</div><div class="s">bis ${hmShort(tI + Math.round(an.fcarg) * 900000, tI)} erwartet (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}), mit dem später gemessenen Regen als Vorhersage</div></div>`;
+  } else if (variant === "kette_vorhersage" && an.fcmax > 1.02 * q0) {
+    // mit perfektem Regen kommt der Scheitel aus dem Regen, auch bevor oben eine Welle gemessen ist (sonst „keine Welle in Sicht“, bis 22.11.2026)
+    const r = an.q[an.fcarg - 1], inH = an.fcarg < H - 4;
+    t2 = `<div class="tile${inH ? " main" : ""}"><div class="k">${inH ? "Scheitel erwartet" : "Höchststand in 48 h"}</div><div class="v">${fmt(cv(r[MED]))}</div><div class="s">${inH ? "um" : "bis"} <b>${hmShort(tI + Math.round(an.fcarg) * 900000, tI)}</b> (80 %: ${fmt(cv(r[LO]))} bis ${fmt(cv(r[HI]))}), mit dem später gemessenen Regen als Vorhersage${inH && an.fcarg > 48 ? ". Scheitel erst in mehr als 12 h: Höhe und Zeit unsicher." : ""}</div></div>`;
   } else if (hw && an.state === 1) {
     t2 = `<div class="tile"><div class="k">Scheitel</div><div class="v" style="font-size:16px">hängt am weiteren Regen</div><div class="s">Oberlauf ohne Oberlieger, im Modell keine Regenvorhersage. Ohne weiteren Regen höchstens ${fmt(cv(Math.max(an.fcmax, q0)))}.</div></div>`;
   } else {
@@ -747,7 +753,8 @@ function drawLage(key, f, fw, i) {
   $("#lg-leg").innerHTML = `<span><i style="--col:var(--c-obs)"></i>gemessen</span><span><i class="dash" style="--col:var(--c-obs)"></i>später gemessen</span><span><i style="--col:var(--c-full)"></i>Vorhersage (Median)</span><span><i class="area" style="--col:var(--c-full)"></i>80 % der Fälle</span>${an.peak ? `<span><i class="dot" style="--col:var(--c-full);width:9px;height:9px;margin:0"></i>Scheitel mit 80 %-Spanne</span>` : ""}`;
   const wp = f.w_peak && f.w_peak[dn];
   $("#lg-note").innerHTML = `Band und Median aus den Fehlern der kreuzvalidierten Vorhersagen 2004–2022 (jede Stunde ausgegeben, nicht nur bei Hochwasser) in derselben Lage: Zustand, Abflussstufe und Vorlauf${an.heavy ? ", Starkregenlage (Tabelle aus den Starkregenfällen aller Pegel)" : ""}; ${fw.rain ? "Tabellen ohne die Jahre dieses Hochwassers" : "für die Kette ohne Regen"}. ` +
-    (cm ? `Wasserstand mit der heutigen W-Q-Beziehung aus dem Abfluss gerechnet${dn === "Prümzurlay" ? " (Prümzurlay: seit 2022 bei gleichem Abfluss rund 25 cm tiefer als vorher)" : ""}${wp ? `; damals gemessener Höchststand ${wp} cm` : ""}.` : "");
+    (cm ? (rc !== U.rating[dn] ? `Wasserstand mit der W-Q-Beziehung, wie sie bei diesem Hochwasser galt (aus den damals gemessenen Wertepaaren; Schwellen HQx der heutigen Statistik damit in cm)${wp ? `; damals gemessener Höchststand ${wp} cm` : ""}.`
+      : `Wasserstand mit der heutigen W-Q-Beziehung aus dem Abfluss gerechnet${wp ? `; damals gemessener Höchststand ${wp} cm` : ""}.`) : "");
 
   // Überschreitung je Schwelle
   const lead = [24, 48, 96, 192];
