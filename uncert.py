@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -26,7 +27,7 @@ import rain_fit as RF2
 import routing as R
 
 HERE = Path(__file__).parent
-SCR = Path("/tmp/claude-0/-home-claude/4bd0f43c-2dd9-566e-bd5b-bb61c4bf2100/scratchpad/uncert")
+SCR = Path(os.environ.get("PRUEM_UNCERT_SCR", "/tmp/claude-0/-home-claude/4bd0f43c-2dd9-566e-bd5b-bb61c4bf2100/scratchpad/uncert"))
 STEP = 4                                                       # Ausgabe jede Stunde
 LEADS = np.array([1, 2, 3] + list(range(4, C.H + 1, 4)))         # gespeicherte Vorläufe (Schritte): 15, 30, 45 min, dann stündlich bis 48 h
 CHUNK = 3000
