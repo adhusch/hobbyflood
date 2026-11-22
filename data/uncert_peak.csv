@@ -1,23 +1,23 @@
 pegel,variante,pruefung,vorlauf,faelle,hoehe_in80,zeit_in80,beide_in80,hoehe_fehler_med_roh,hoehe_fehler_med_korr,zeit_fehler_med_roh_h,zeit_fehler_med_korr_h
-Echtershausen,kette_regen,cv_2004_2022,alle,1515,0.756,0.804,0.669,0.049,0.053,3.75,2.5
-Echtershausen,kette_regen,cv_2004_2022,0-3 h,63,0.746,0.889,0.698,0.032,0.039,2.0,1.25
-Echtershausen,kette_regen,cv_2004_2022,3-6 h,648,0.787,0.809,0.705,0.035,0.04,3.38,2.0
-Echtershausen,kette_regen,cv_2004_2022,6-12 h,754,0.744,0.798,0.653,0.065,0.071,4.5,3.25
-Echtershausen,kette_regen,cv_2004_2022,12-48 h,50,0.56,0.72,0.4,0.194,0.193,5.38,5.88
+Echtershausen,kette_regen,cv_2004_2022,alle,1528,0.76,0.8,0.666,0.049,0.053,3.75,2.5
+Echtershausen,kette_regen,cv_2004_2022,0-3 h,61,0.738,0.82,0.639,0.033,0.041,2.0,1.25
+Echtershausen,kette_regen,cv_2004_2022,3-6 h,654,0.786,0.809,0.706,0.034,0.04,3.25,2.0
+Echtershausen,kette_regen,cv_2004_2022,6-12 h,759,0.742,0.791,0.639,0.065,0.071,4.5,3.5
+Echtershausen,kette_regen,cv_2004_2022,12-48 h,54,0.741,0.815,0.593,0.21,0.231,5.0,5.62
 Echtershausen,kette,cv_2004_2022,alle,686,0.762,0.783,0.627,0.069,0.066,29.0,5.25
 Echtershausen,kette,cv_2004_2022,12-48 h,674,0.763,0.783,0.626,0.069,0.066,29.25,5.0
 Echtershausen,kette,alt_1989_2003,alle,644,0.719,0.829,0.649,0.078,0.069,28.62,4.5
 Echtershausen,kette,alt_1989_2003,12-48 h,637,0.717,0.834,0.651,0.078,0.069,28.75,4.5
-Echtershausen,kette_vorhersage,cv_2004_2022,alle,2438,0.786,0.785,0.63,0.078,0.079,3.75,2.25
-Echtershausen,kette_vorhersage,cv_2004_2022,0-3 h,41,0.732,0.902,0.707,0.024,0.03,2.0,0.75
-Echtershausen,kette_vorhersage,cv_2004_2022,3-6 h,426,0.782,0.808,0.702,0.03,0.031,3.0,1.25
-Echtershausen,kette_vorhersage,cv_2004_2022,6-12 h,542,0.762,0.792,0.635,0.05,0.049,4.25,1.75
-Echtershausen,kette_vorhersage,cv_2004_2022,12-48 h,1429,0.798,0.772,0.605,0.158,0.159,4.25,3.0
-Wiersdorf,kette_regen,cv_2004_2022,alle,535,0.753,0.789,0.63,0.066,0.06,4.25,4.5
-Wiersdorf,kette_regen,cv_2004_2022,0-3 h,34,0.676,0.941,0.618,0.028,0.039,1.5,0.69
-Wiersdorf,kette_regen,cv_2004_2022,3-6 h,176,0.761,0.801,0.648,0.029,0.036,3.5,3.5
-Wiersdorf,kette_regen,cv_2004_2022,6-12 h,222,0.739,0.77,0.635,0.079,0.064,5.12,5.5
-Wiersdorf,kette_regen,cv_2004_2022,12-48 h,103,0.796,0.757,0.592,0.195,0.185,9.25,10.5
+Echtershausen,kette_vorhersage,cv_2004_2022,alle,2480,0.79,0.785,0.636,0.079,0.08,3.75,2.25
+Echtershausen,kette_vorhersage,cv_2004_2022,0-3 h,40,0.75,0.9,0.725,0.025,0.029,2.0,0.75
+Echtershausen,kette_vorhersage,cv_2004_2022,3-6 h,429,0.786,0.814,0.704,0.029,0.031,3.0,1.25
+Echtershausen,kette_vorhersage,cv_2004_2022,6-12 h,536,0.772,0.789,0.642,0.049,0.048,4.25,1.75
+Echtershausen,kette_vorhersage,cv_2004_2022,12-48 h,1475,0.799,0.772,0.612,0.165,0.17,4.25,3.0
+Wiersdorf,kette_regen,cv_2004_2022,alle,534,0.758,0.788,0.635,0.066,0.061,4.25,4.5
+Wiersdorf,kette_regen,cv_2004_2022,0-3 h,33,0.727,0.939,0.667,0.027,0.038,1.5,0.62
+Wiersdorf,kette_regen,cv_2004_2022,3-6 h,177,0.763,0.802,0.655,0.029,0.035,3.5,3.25
+Wiersdorf,kette_regen,cv_2004_2022,6-12 h,222,0.743,0.766,0.631,0.079,0.062,5.0,5.25
+Wiersdorf,kette_regen,cv_2004_2022,12-48 h,102,0.794,0.765,0.598,0.195,0.184,9.5,10.5
 Wiersdorf,kette,cv_2004_2022,alle,374,0.77,0.773,0.642,0.057,0.061,7.5,5.69
 Wiersdorf,kette,cv_2004_2022,3-6 h,42,0.786,0.714,0.667,0.031,0.028,3.75,1.75
 Wiersdorf,kette,cv_2004_2022,6-12 h,136,0.757,0.772,0.632,0.032,0.038,6.0,2.75
@@ -27,16 +27,16 @@ Wiersdorf,kette,alt_1989_2003,0-3 h,12,0.75,1.0,0.75,0.026,0.027,2.5,0.25
 Wiersdorf,kette,alt_1989_2003,3-6 h,26,0.923,0.769,0.731,0.02,0.019,3.88,1.25
 Wiersdorf,kette,alt_1989_2003,6-12 h,112,0.679,0.634,0.464,0.044,0.049,7.5,3.12
 Wiersdorf,kette,alt_1989_2003,12-48 h,141,0.816,0.794,0.688,0.093,0.101,13.5,8.5
-Wiersdorf,kette_vorhersage,cv_2004_2022,alle,1090,0.779,0.765,0.606,0.105,0.1,3.5,3.62
-Wiersdorf,kette_vorhersage,cv_2004_2022,0-3 h,35,0.714,0.914,0.629,0.027,0.038,1.5,0.5
-Wiersdorf,kette_vorhersage,cv_2004_2022,3-6 h,143,0.769,0.783,0.657,0.027,0.028,3.25,3.12
-Wiersdorf,kette_vorhersage,cv_2004_2022,6-12 h,182,0.791,0.769,0.626,0.049,0.05,3.88,4.0
-Wiersdorf,kette_vorhersage,cv_2004_2022,12-48 h,730,0.781,0.753,0.589,0.17,0.152,3.75,4.0
-Prümzurlay,kette_regen,cv_2004_2022,alle,261,0.724,0.709,0.605,0.029,0.031,1.25,1.25
-Prümzurlay,kette_regen,cv_2004_2022,0-3 h,95,0.789,0.768,0.674,0.021,0.018,0.75,0.5
-Prümzurlay,kette_regen,cv_2004_2022,3-6 h,70,0.771,0.743,0.671,0.024,0.02,1.12,1.0
-Prümzurlay,kette_regen,cv_2004_2022,6-12 h,54,0.574,0.63,0.407,0.033,0.05,2.75,2.88
-Prümzurlay,kette_regen,cv_2004_2022,12-48 h,42,0.69,0.619,0.595,0.111,0.117,8.75,10.0
+Wiersdorf,kette_vorhersage,cv_2004_2022,alle,1123,0.782,0.757,0.607,0.107,0.101,3.5,3.75
+Wiersdorf,kette_vorhersage,cv_2004_2022,0-3 h,34,0.735,0.912,0.647,0.027,0.037,1.5,0.5
+Wiersdorf,kette_vorhersage,cv_2004_2022,3-6 h,143,0.769,0.783,0.65,0.027,0.028,3.0,2.88
+Wiersdorf,kette_vorhersage,cv_2004_2022,6-12 h,183,0.792,0.76,0.623,0.049,0.049,3.75,4.0
+Wiersdorf,kette_vorhersage,cv_2004_2022,12-48 h,763,0.784,0.744,0.594,0.166,0.147,4.25,4.0
+Prümzurlay,kette_regen,cv_2004_2022,alle,261,0.732,0.713,0.609,0.029,0.031,1.25,1.25
+Prümzurlay,kette_regen,cv_2004_2022,0-3 h,96,0.792,0.771,0.677,0.021,0.018,0.75,0.5
+Prümzurlay,kette_regen,cv_2004_2022,3-6 h,68,0.765,0.735,0.662,0.025,0.019,1.12,1.0
+Prümzurlay,kette_regen,cv_2004_2022,6-12 h,54,0.593,0.63,0.426,0.033,0.049,2.88,3.0
+Prümzurlay,kette_regen,cv_2004_2022,12-48 h,43,0.721,0.651,0.605,0.104,0.125,8.5,9.38
 Prümzurlay,kette,cv_2004_2022,alle,249,0.735,0.759,0.606,0.026,0.03,2.75,2.0
 Prümzurlay,kette,cv_2004_2022,0-3 h,72,0.778,0.792,0.694,0.019,0.022,1.0,0.5
 Prümzurlay,kette,cv_2004_2022,3-6 h,71,0.775,0.775,0.634,0.02,0.024,1.5,1.25
@@ -46,15 +46,15 @@ Prümzurlay,kette,alt_1989_2003,alle,95,0.632,0.747,0.526,0.031,0.032,2.25,1.5
 Prümzurlay,kette,alt_1989_2003,0-3 h,38,0.605,0.711,0.5,0.024,0.027,1.25,0.5
 Prümzurlay,kette,alt_1989_2003,3-6 h,27,0.63,0.815,0.519,0.027,0.028,2.25,1.5
 Prümzurlay,kette,alt_1989_2003,12-48 h,22,0.636,0.727,0.591,0.075,0.066,20.12,15.88
-Prümzurlay,kette_vorhersage,cv_2004_2022,alle,431,0.78,0.775,0.638,0.05,0.057,2.5,2.75
+Prümzurlay,kette_vorhersage,cv_2004_2022,alle,441,0.755,0.769,0.612,0.059,0.064,2.75,2.75
 Prümzurlay,kette_vorhersage,cv_2004_2022,0-3 h,82,0.768,0.78,0.707,0.018,0.016,0.75,0.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,3-6 h,62,0.774,0.742,0.613,0.023,0.015,1.0,0.88
-Prümzurlay,kette_vorhersage,cv_2004_2022,6-12 h,41,0.634,0.634,0.39,0.023,0.029,2.5,2.5
-Prümzurlay,kette_vorhersage,cv_2004_2022,12-48 h,246,0.809,0.805,0.663,0.127,0.126,5.75,6.94
-Seffern,kette_regen,cv_2004_2022,alle,947,0.767,0.815,0.681,0.058,0.064,2.5,1.5
-Seffern,kette_regen,cv_2004_2022,0-3 h,326,0.764,0.819,0.687,0.04,0.056,1.88,1.5
-Seffern,kette_regen,cv_2004_2022,3-6 h,550,0.775,0.818,0.685,0.063,0.07,2.5,1.5
-Seffern,kette_regen,cv_2004_2022,6-12 h,71,0.718,0.775,0.62,0.132,0.132,3.5,0.75
+Prümzurlay,kette_vorhersage,cv_2004_2022,3-6 h,59,0.763,0.746,0.61,0.023,0.016,1.0,0.75
+Prümzurlay,kette_vorhersage,cv_2004_2022,6-12 h,40,0.575,0.625,0.4,0.025,0.032,2.38,2.44
+Prümzurlay,kette_vorhersage,cv_2004_2022,12-48 h,260,0.777,0.792,0.615,0.136,0.137,5.75,7.0
+Seffern,kette_regen,cv_2004_2022,alle,947,0.763,0.816,0.676,0.057,0.065,2.25,1.25
+Seffern,kette_regen,cv_2004_2022,0-3 h,328,0.762,0.811,0.683,0.039,0.055,1.75,1.25
+Seffern,kette_regen,cv_2004_2022,3-6 h,550,0.775,0.824,0.684,0.063,0.071,2.5,1.5
+Seffern,kette_regen,cv_2004_2022,6-12 h,69,0.681,0.783,0.58,0.131,0.139,3.5,0.75
 Seffern,kette,cv_2004_2022,alle,264,0.754,0.788,0.591,0.081,0.078,7.25,5.5
 Seffern,kette,cv_2004_2022,3-6 h,24,0.75,0.875,0.708,0.096,0.082,3.75,3.0
 Seffern,kette,cv_2004_2022,6-12 h,97,0.732,0.835,0.619,0.088,0.078,6.25,3.12
@@ -63,16 +63,16 @@ Seffern,kette,alt_1989_2003,alle,220,0.695,0.809,0.605,0.062,0.081,9.38,1.75
 Seffern,kette,alt_1989_2003,3-6 h,14,0.714,0.786,0.714,0.034,0.06,3.25,2.62
 Seffern,kette,alt_1989_2003,6-12 h,72,0.75,0.667,0.556,0.037,0.084,7.0,2.62
 Seffern,kette,alt_1989_2003,12-48 h,125,0.648,0.88,0.6,0.077,0.078,19.75,1.62
-Seffern,kette_vorhersage,cv_2004_2022,alle,2495,0.796,0.814,0.659,0.173,0.165,2.5,1.25
-Seffern,kette_vorhersage,cv_2004_2022,0-3 h,195,0.785,0.862,0.718,0.029,0.039,1.5,0.75
-Seffern,kette_vorhersage,cv_2004_2022,3-6 h,388,0.781,0.817,0.668,0.044,0.045,2.5,1.0
-Seffern,kette_vorhersage,cv_2004_2022,6-12 h,296,0.777,0.784,0.588,0.121,0.129,3.25,2.12
-Seffern,kette_vorhersage,cv_2004_2022,12-48 h,1616,0.804,0.813,0.663,0.29,0.273,2.75,1.5
-Alsdorf-Oberecken,kette_regen,cv_2004_2022,alle,414,0.722,0.732,0.616,0.107,0.105,2.75,3.0
-Alsdorf-Oberecken,kette_regen,cv_2004_2022,0-3 h,79,0.772,0.759,0.709,0.091,0.084,1.25,1.5
-Alsdorf-Oberecken,kette_regen,cv_2004_2022,3-6 h,238,0.714,0.748,0.622,0.099,0.108,2.62,2.5
-Alsdorf-Oberecken,kette_regen,cv_2004_2022,6-12 h,79,0.734,0.709,0.582,0.141,0.129,5.0,6.0
-Alsdorf-Oberecken,kette_regen,cv_2004_2022,12-48 h,18,0.556,0.5,0.278,0.315,0.25,5.75,6.5
+Seffern,kette_vorhersage,cv_2004_2022,alle,2709,0.793,0.809,0.644,0.179,0.17,2.5,1.25
+Seffern,kette_vorhersage,cv_2004_2022,0-3 h,191,0.775,0.853,0.707,0.028,0.038,1.5,0.75
+Seffern,kette_vorhersage,cv_2004_2022,3-6 h,385,0.784,0.818,0.668,0.043,0.044,2.5,1.0
+Seffern,kette_vorhersage,cv_2004_2022,6-12 h,301,0.781,0.774,0.581,0.123,0.135,3.25,2.25
+Seffern,kette_vorhersage,cv_2004_2022,12-48 h,1832,0.798,0.808,0.642,0.294,0.296,3.0,1.5
+Alsdorf-Oberecken,kette_regen,cv_2004_2022,alle,417,0.722,0.739,0.621,0.106,0.102,2.75,3.0
+Alsdorf-Oberecken,kette_regen,cv_2004_2022,0-3 h,80,0.775,0.762,0.713,0.09,0.083,1.38,1.38
+Alsdorf-Oberecken,kette_regen,cv_2004_2022,3-6 h,240,0.713,0.75,0.621,0.099,0.104,2.62,2.5
+Alsdorf-Oberecken,kette_regen,cv_2004_2022,6-12 h,78,0.731,0.718,0.59,0.139,0.128,4.88,6.0
+Alsdorf-Oberecken,kette_regen,cv_2004_2022,12-48 h,19,0.579,0.579,0.368,0.128,0.236,6.25,7.0
 Alsdorf-Oberecken,kette,cv_2004_2022,alle,415,0.752,0.754,0.627,0.087,0.091,6.25,3.0
 Alsdorf-Oberecken,kette,cv_2004_2022,0-3 h,12,0.833,0.833,0.833,0.041,0.038,1.25,1.75
 Alsdorf-Oberecken,kette,cv_2004_2022,3-6 h,117,0.684,0.735,0.641,0.05,0.056,3.5,2.0
@@ -83,8 +83,8 @@ Alsdorf-Oberecken,kette,alt_1989_2003,0-3 h,19,1.0,0.947,0.947,0.021,0.024,1.5,1
 Alsdorf-Oberecken,kette,alt_1989_2003,3-6 h,77,0.909,0.883,0.805,0.045,0.044,2.75,1.25
 Alsdorf-Oberecken,kette,alt_1989_2003,6-12 h,65,0.877,0.708,0.631,0.059,0.059,6.0,2.75
 Alsdorf-Oberecken,kette,alt_1989_2003,12-48 h,147,0.871,0.823,0.741,0.07,0.067,19.5,6.5
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,alle,1234,0.776,0.788,0.631,0.256,0.179,2.0,2.25
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,0-3 h,50,0.76,0.74,0.6,0.047,0.04,1.0,0.81
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,3-6 h,162,0.728,0.759,0.642,0.064,0.067,2.12,1.75
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,6-12 h,145,0.738,0.814,0.6,0.092,0.107,3.5,3.25
-Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,12-48 h,877,0.792,0.791,0.636,0.334,0.263,2.0,2.25
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,alle,1298,0.77,0.79,0.625,0.254,0.182,2.0,2.0
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,0-3 h,52,0.75,0.769,0.615,0.062,0.054,1.0,0.81
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,3-6 h,157,0.726,0.764,0.65,0.063,0.065,2.0,1.5
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,6-12 h,144,0.715,0.806,0.556,0.093,0.109,3.75,3.25
+Alsdorf-Oberecken,kette_vorhersage,cv_2004_2022,12-48 h,945,0.786,0.793,0.632,0.338,0.256,2.0,2.25

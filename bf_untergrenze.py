@@ -1,6 +1,7 @@
 """Untergrenze der Gebietsfeuchte aus der Bodenfeuchte: typischer Grundabfluss (Q / MQ am Bezugspegel) bei gegebener Bodenfeuchte im Winter.
 
-    python bf_untergrenze.py [Quantil]      -> data/bodenfeuchte/bf_untergrenze.json (Standard: Quantil 0,25)
+    python bf_untergrenze.py [Quantil] [Datei]   -> data/bodenfeuchte/bf_untergrenze.json (Standard: Quantil 0,25)
+    python bf_untergrenze.py 0.5 bf_typisch.json -> typischer Grundabfluss für die Anhebung (chain_fc.BF_LIFT)
 
 Anlass: Sturm 16.-18.11.2026. Das Modell schätzt die Gebietsfeuchte aus dem Abfluss vor dem Ereignis (B = Q / MQ). Nach dem trockenen Sommer
 war das Grundwasser leer (Sinspelt B = 0,2), der Oberboden nach dem nassen Oktober aber gesättigt (Vortag 128-130 % nFK); bei dieser
@@ -28,11 +29,12 @@ EDGES = np.arange(60.0, 160.1, 5.0)
 MIN_N = 40
 
 
-def main(q: float = 0.25) -> None:
+def main(q: float = 0.25, out=OUT) -> None:
     C.setup_state()
     Q = C._S["Q"]
     mq = C.wet_mq()
     sm_tab = pd.read_csv(C.SM_FILE, index_col=0, parse_dates=True)
+    dst = out
     out = dict(quantil=q, monate="10-3", jahre="2004-2022", tabelle={})
     for k in C.RAINK:
         b = (Q[C.WET_REF[k]] / mq[k]).resample("1D").mean().rolling(3).min()   # Grundabfluss: kleinstes Tagesmittel der letzten 3 Tage
@@ -50,9 +52,9 @@ def main(q: float = 0.25) -> None:
         b_pts = list(np.maximum.accumulate([p[1] for p in pts]))
         out["tabelle"][k] = dict(sm=sm_pts, b=[round(v, 4) for v in b_pts], n=[p[2] for p in pts])
         print(k, " ".join(f"{s:.0f}%:{v:.2f}" for s, v in zip(sm_pts, b_pts)))
-    OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
-    print("->", OUT)
+    dst.write_text(json.dumps(out, indent=1), encoding="utf-8")
+    print("->", dst)
 
 
 if __name__ == "__main__":
-    main(float(sys.argv[1]) if len(sys.argv) > 1 else 0.25)
+    main(float(sys.argv[1]) if len(sys.argv) > 1 else 0.25, OUT.parent / sys.argv[2] if len(sys.argv) > 2 else OUT)
