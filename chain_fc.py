@@ -229,6 +229,24 @@ if os.environ.get("PRUEM_BFMIN", "1") == "1" and BF_FLOOR_FILE.exists():
     BF_FLOOR = {k: (v["sm"], v["b"]) for k, v in json.loads(BF_FLOOR_FILE.read_text(encoding="utf-8"))["tabelle"].items()}
 
 
+# Anhebung der Gebietsfeuchte bei niedrigem Grundabfluss (22.11.2026), nur in der Vorhersage, nicht in der Anpassung:
+# B_eff = B + BF_LIFT * max(0, Bt - B), Bt = typischer Grundabfluss (Median von B im Winter 2004-2022) bei der Bodenfeuchte des Vortags
+# (data/bodenfeuchte/bf_typisch.json, bf_untergrenze.py 0.5). Anlass: Bei nassem Boden und leerem Grundwasser (B < 0,7 MQ) lag der Anstieg im
+# Modell über alle Regenereignisse im Median beim 0,80-Fachen, bei nassem Boden und B ab 1,5 MQ beim 0,94-Fachen. Die Anhebung greift nur unter
+# Bt, die Modelle bleiben unverändert; im häufigen Fall (nass, B >= 1,5 MQ) ändert sich deshalb fast nichts. PRUEM_BFLIFT=0: aus.
+BF_LIFT = float(os.environ.get("PRUEM_BFLIFT", "0.75"))
+BT_FILE = HERE / "data" / "bodenfeuchte" / "bf_typisch.json"
+BT_TAB: dict = {}
+if BT_FILE.exists() and BF_LIFT > 0:
+    BT_TAB = {k: (v["sm"], v["b"]) for k, v in json.loads(BT_FILE.read_text(encoding="utf-8"))["tabelle"].items()}
+
+
+def bt_typ(k: str, sm) -> np.ndarray:
+    """Typischer Grundabfluss / MQ bei der Bodenfeuchte (% nFK; fehlend = SM_FALLBACK)."""
+    s = np.asarray(sm, float)
+    return np.interp(np.where(np.isfinite(s), s, SM_FALLBACK), *BT_TAB[k])
+
+
 def bf_floor(k: str, sm) -> np.ndarray:
     """Untergrenze von B für Gebiet k aus der Bodenfeuchte (% nFK; fehlend = SM_FALLBACK), linear zwischen den Stützstellen, außen konstant."""
     s = np.asarray(sm, float)
@@ -251,6 +269,8 @@ def add_wetness(frames: dict, Q, sm_table: pd.DataFrame | None = None, sm: dict 
             extra["sm"] = sm[k]
             if k in BF_FLOOR:
                 extra["bf"] = np.maximum(extra["bf"], bf_floor(k, sm[k]))     # NaN im Abfluss bleibt NaN
+            if k in BT_TAB:
+                extra["bt"] = bt_typ(k, sm[k])
         if isinstance(frames[k], pd.DataFrame):
             frames[k] = frames[k].assign(**extra)
         else:
@@ -422,6 +442,10 @@ def rain_window(frame: pd.DataFrame | dict, t0: np.ndarray, ideal: bool) -> L.Ra
         ap[:, j + 1:] = ap[:, j:j + 1] * np.exp(-k / RN.TAU_API_H)[None, :]
         aps[:, j + 1:] = aps[:, j:j + 1] * np.exp(-k / RN.TAU_API_S_H)[None, :]
     bf = np.nan_to_num(np.asarray(frame["bf"])[ridx[:, LEAD]]) if "bf" in frame else None   # Gebietsfeuchte zu Beginn des Abflussfensters (t0 - A)
+    if bf is not None and BF_LIFT > 0 and "bt" in frame:          # Anhebung bei niedrigem Grundabfluss (nur Vorhersage, siehe BF_LIFT)
+        ok = np.isfinite(np.asarray(frame["bf"], float)[ridx[:, LEAD]])   # ohne gemessenen Abfluss keine Anhebung (wie forecast_core.js)
+        bt = np.nan_to_num(np.asarray(frame["bt"])[ridx[:, LEAD]])
+        bf = np.where(ok, bf + BF_LIFT * np.maximum(bt - bf, 0.0), bf)
     # Bodenfeuchte, Vortag des Fensteranfangs; fehlt sie ganz, der Ersatzwert (nie ein Abbruch im Betrieb)
     sm = (np.nan_to_num(np.asarray(frame["sm"])[ridx[:, LEAD]], nan=SM_FALLBACK) if "sm" in frame else np.full(len(t0), SM_FALLBACK))
     return L.Rain(np.nan_to_num(r), np.nan_to_num(ap), LEAD, np.nan_to_num(aps), bf, ex, sm)
@@ -764,7 +788,7 @@ def run(jobs: int) -> None:
     mlinfo = {str(r["block"]) if r["block"] is not None else "alle": r.get("ml") for r in res}
     (HERE / "data" / "chain_models.json").write_text(json.dumps(dict(sets=sets, events=ev, sat=sat, ml=mlinfo, hw={k: dict(**v, area_km2=info[k]["area_km2"],
                                                                                                         weights=info[k]["weights"]) for k, v in HW.items()},
-                                                                       consts=dict(A_H=A_H, H_H=H_H, LEAD_H=LEAD_H, WET={k: [WET_REF[k], v] for k, v in wet_mq().items()}, BFMIN={k: [list(v[0]), list(v[1])] for k, v in BF_FLOOR.items()},
+                                                                       consts=dict(A_H=A_H, H_H=H_H, LEAD_H=LEAD_H, WET={k: [WET_REF[k], v] for k, v in wet_mq().items()}, BFMIN={k: [list(v[0]), list(v[1])] for k, v in BF_FLOOR.items()}, BTYP={k: [list(v[0]), list(v[1])] for k, v in BT_TAB.items()}, BFLIFT=BF_LIFT,
                                                                                    TAU_API_H=RN.TAU_API_H, TAU_API_S_H=RN.TAU_API_S_H,
                                                                                    P_STORM=P_STORM, STORM_MONTHS=list(STORM_MONTHS), STORM_WIN_H=STORM_WIN_H)),
                                                                   ensure_ascii=False, indent=1), encoding="utf-8")

@@ -868,10 +868,11 @@ Gemessene Scheitel: Prümzurlay 200 cm (21.11. 15:45), Wiersdorf 161, Echtershau
   (Prümzurlay, 24 h vorher: mittlerer Betragsfehler HVZ 36 cm, Kette 48 cm); bei 6 und 12 h war die Kette besser (6 gegen 12 cm).
 - **Ursache Regenvorhersage:** ICON-D2 (mit den Stationsfaktoren aus `rain_factors.json`) sagte für 19.11. 12:00 bis 21.11. 12:00 im
   Median der Abrufe das 1,6-Fache des gemessenen Regens für Prüm 2 und Echtershausen voraus, 1,5-fach für Seffern, 1,2-fach für Sinspelt.
-- **Mit gemessenem Regen** (gleiche Ausgaben, Regen der DWD-Stationen statt Vorhersage): Scheitelfehler Prümzurlay +21 cm,
-  Alsdorf-Oberecken +20 cm, Sinspelt +9 cm, Echtershausen −4 cm, Wiersdorf +2 cm, die übrigen etwa 0. Das Abflussmodell liegt also nur in
-  Prümzurlay und Alsdorf-Oberecken deutlich zu hoch; Alsdorf-Oberecken war auch im Sturm 16.–18.11. zu hoch (eigenes Zwischengebiet,
-  Niveaufaktor 0,76 bei großem Abfluss womöglich falsch).
+- **Mit gemessenem Regen** (gleiche Ausgaben, Regen der DWD-Stationen statt Vorhersage; korrigiert 22.11.: die ersten Nachrechnungen
+  setzten den gemessenen Regen an die Stelle von ICON-D2, wo er von live.py mit den Stationsfaktoren 0,94–1,21 multipliziert wurde, also
+  rund 15 % zu hoch; die Zahlen hier mit Faktor 1, nach dem neuen Training und der Korrektur der Oberlieger-Skala): Scheitelfehler
+  Prümzurlay +10 cm, Alsdorf-Oberecken +8 cm, Sinspelt +6 cm, Echtershausen −8 cm, übrige −5 bis +2 cm; Scheitelabfluss Modell / Messung
+  roh 0,82–1,08. Das Abflussmodell lag also nicht wesentlich daneben; die Überschätzung live kam aus der Regenvorhersage.
 - Untergrenze der Gebietsfeuchte: in diesem Ereignis 1–5 cm; Faktor auf die Wellengeschwindigkeit (f ≈ 1,1): unter 1 cm;
   Kurzfristkorrektur aus kommunalen Pegeln: 3-mal angewendet, vernachlässigbar.
 - **Band:** nur rund die Hälfte der Messwerte lag im 80-%-Band, fast alle darunter (Folge der zu hohen Regenvorhersage).
@@ -896,7 +897,7 @@ nur eines dazu (die Welle 20./21.11.; der Sturm 16.–18.11. erfüllt die Auswah
   Alsdorf-Oberecken −1,34 → −1,33); Scheitelverhältnis 24 h vorher ±0,01.
 - Fehlerstatistik (Band, Warnung) neu gerechnet: Abdeckung des 80-%-Bands und Warnzeiten praktisch unverändert (±0,002 bzw. ±1 Ereignis).
 - Welle 19.–21.11., alle 20 Ausgaben (im Training enthalten, also kein unabhängiger Test), mittlerer Fehler des Höchstwerts in 48 h:
-  mit gemessenem Regen nur neues Training Prümzurlay +20,6 → +17,8 cm, Sinspelt +8,9 → +7,9 cm; mit neuem Training, neuer Fehlerstatistik
+  mit gemessenem Regen (noch mit den Stationsfaktoren, also rund 15 % zu viel Regen; siehe Auswertung der Welle) nur neues Training Prümzurlay +20,6 → +17,8 cm, Sinspelt +8,9 → +7,9 cm; mit neuem Training, neuer Fehlerstatistik
   und der Korrektur der Oberlieger-Skala (nächster Abschnitt) Prümzurlay +19,7, Sinspelt +8,0, Alsdorf-Oberecken +19,7 → +11,8 cm.
   Mit der damaligen ICON-Vorhersage: Prümzurlay +80 cm (unverändert, die Regenvorhersage dominiert), Alsdorf-Oberecken +51,5 → +40,1 cm.
 - Ein einzelnes Ereignis ändert die Anpassung kaum. Mehr Wirkung brächten mehr Ereignisse (jeder weitere Download geht mit
@@ -915,10 +916,49 @@ durch den Niveaufaktor (`LEVEL_IN`, mit `PRUEM_LEVEL_IN=0` aus). Anpassung, Kreu
 Welle 19.–21.11.2026, 6 Ausgaben mit gemessenem Regen: Scheitelfehler Alsdorf-Oberecken +23,7 → +14,7 cm, Seffern +0,8 → +0,1 cm, übrige
 unverändert (alle 20 Ausgaben zusammen mit dem neuen Training: +19,7 → +11,8 cm; mittlerer Fehler 24 h vorher 14,8 → 9,0 cm).
 
-Was bei dieser Welle sonst zu hoch war (gemessener Regen, nach der Korrektur, Scheitel-Abfluss Modell / Messung): Sinspelt roh 1,16,
-Prümzurlay roh 1,11, Alsdorf-Oberecken roh 1,15; die Mediankorrektur aus der Fehlerstatistik hebt das weiter auf 1,28, 1,14 und 1,26, weil die
-Kette in solchen Lagen historisch eher zu tief lag. Gemessen lieferten die Zwischengebiete kaum Ereigniswasser (Seffern → Alsdorf-Oberecken
-über die Welle nichts über den Startabfluss, Zwischengebiet Prümzurlay rund 0,7 Mio m³ bei 3,7 Mio m³ Regen), im Modell sind ihre
-Scheitelbeiträge etwa doppelt so groß. Beide Feuchtemaße meldeten sehr nass (Bodenfeuchte 139–141 % nFK, oberstes 1 % von 2004–2022;
-Gebietsfeuchte 5,3 MQ in Prümzurlay und 3,5 MQ in Alsdorf-Oberecken im Rückgang nach dem Sturm). B auf die Untergrenze bei dieser
-Bodenfeuchte zu setzen, brachte nur 1,5–3,5 cm. Vermutung: Grundwasser nach dem trockenen Sommer noch leer; ein Ereignis belegt das nicht.
+Die Zahlen dieses Abschnitts stammen aus Nachrechnungen mit den Stationsfaktoren auf dem gemessenen Regen (rund 15 % zu viel Regen, siehe
+Auswertung der Welle). Der Unterschied mit und ohne Korrektur bleibt gültig; die absolute Überschätzung war kleiner (Alsdorf-Oberecken mit
+Faktor 1: +8 cm). Die frühere Vermutung, die Zwischengebiete hätten wegen leeren Grundwassers zu wenig geliefert, trägt nicht (siehe
+Gebietsfeuchte bei leerem Grundwasser).
+
+## Gebietsfeuchte bei leerem Grundwasser: Anhebung ohne Neuanpassung (22.11.2026)
+
+Frage: Wie verhält sich das Modell, wenn der Oberboden nass, das Grundwasser aber leer ist (Sturm 16.–18.11.2026: Bodenfeuchte 117–129 % nFK,
+B = 0,10–0,16 MQ), und lässt sich das verbessern, ohne den häufigen Fall „alles nass“ zu verschlechtern?
+
+Lagen (Winter, Bodenfeuchte und B am Fensteranfang): Boden unter 120 % nFK; nass mit B unter 0,7 MQ (selten, „Grundwasser leer“); nass mit
+B 0,7–1,5 MQ; nass mit B ab 1,5 MQ (häufig, „alles nass“). Geprüft wird an **allen Regenereignissen** ab 15 mm in 48 h (nicht nur an
+Hochwassern: wer nur Hochwasser auswertet, findet in jeder Lage eine Unterschätzung, weil gerade die Ereignisse zum Hochwasser wurden, bei denen
+mehr abfloss als erwartet; ohne Hochwasser liegt das Modell im Mittel darüber), kreuzvalidiert (Modelle des jeweiligen Prüfblocks), Gebiet allein
+mit gemessenem Regen und gemessenen Oberliegern, Anstieg in 48 h ab Regenbeginn, Modell / Messung:
+
+| Lage | Ereignisse | Median vorher | Median mit Anhebung | mittlerer Betragsfehler (log) vorher → mit |
+|---|---|---|---|---|
+| Boden < 120 % | 334 | 0,88 | 0,90 | 0,26 → 0,25 |
+| nass, B < 0,7 MQ | 184 | 0,80 | 0,86 | 0,35 → 0,31 |
+| nass, B 0,7–1,5 MQ | 190 | 0,88 | 0,89 | 0,30 → 0,29 |
+| nass, B ≥ 1,5 MQ | 273 | 0,94 | 0,94 | 0,23 → 0,23 |
+
+Die Unterschätzung bei leerem Grundwasser ist also echt (sie besteht über alle Regenereignisse, nicht nur bei Hochwassern) und zieht sich durch
+alle Regenmengen (15–25 mm: 0,80; über 25 mm: 0,80).
+
+- **Versuch 1, nicht übernommen:** Untergrenze auf den Median statt das untere Viertel (`bf_untergrenze.py 0.5`) und alles neu angepasst.
+  Die Anpassung gleicht das aus (Gewicht von B an Prüm 2 998 → 540) und senkt damit den häufigen Fall: nass, B < 0,7: 0,80 → 0,82;
+  nass, B ≥ 1,5: 0,94 → 0,91 (Kreuzvalidierung, alle Regenereignisse).
+- **Übernommen: Anhebung nur in der Vorhersage** (`chain_fc.BF_LIFT = 0,75`, `PRUEM_BFLIFT`): B_eff = B + 0,75 · max(0, Bt − B), Bt = Median
+  von B im Winter 2004–2022 bei der Bodenfeuchte des Vortags (`data/bodenfeuchte/bf_typisch.json`). Die Modelle bleiben, wie sie angepasst
+  sind; die Anhebung greift nur, wenn B unter dem für diese Bodenfeuchte typischen Wert liegt (bei „nass, B < 0,7“ in 93 % der Fälle, bei
+  „nass, B ≥ 1,5“ in 3 %). Den Anteil 0,75 habe ich aus 0 / 0,25 / 0,5 / 0,75 / 1 gewählt (kleinster Betragsfehler bei „nass, B < 0,7“).
+  Gegenseite: Bei „nass, B < 0,7“ liegt das Modell jetzt in 9,8 % der Ereignisse über dem 1,5-Fachen der Messung (vorher 4,9 %, „alles nass“
+  11,4 %). Sommer und Starkregen (845 Ereignisse): Median 0,74 → 0,77, Betragsfehler 0,58 → 0,57, über dem 1,5-Fachen 13,7 → 15,5 %.
+- **Kette, Kreuzvalidierung an den Hochwassern** (gemessener Regen auch nach der Ausgabe): Scheitel 24 h vorher bei „nass, B < 0,7“ 0,58 → 0,64,
+  bei „alles nass“ unverändert 0,88; NSE im Mittel der Pegel +0,002 / +0,007 / +0,035 bei 6 / 12 / 24 h. Ohne Regen nach der Ausgabe
+  (`kette_regen`) praktisch unverändert (24 h: −0,003). Starkregen-Prüfung: −0,004 bis +0,006.
+- **Sturm 16.–18.11.2026** (18 Ausgaben, gemessener Regen mit Faktor 1), mittlerer Fehler des Höchstwerts in 48 h: Prümzurlay −17 → −3 cm,
+  Wiersdorf −13 → −6 cm, Sinspelt −12 → −8 cm, Prüm 2 −11 → −6 cm, Echtershausen −7 → −1 cm, Giesdorf −5 → +1 cm, Seffern −4 → −1 cm,
+  Alsdorf-Oberecken +2 → +6 cm. **Welle 19.–21.11.** (B hoch, Anhebung greift kaum): Prümzurlay +10 → +11 cm, Sinspelt +6 → +7 cm, übrige
+  unverändert.
+- Fehlerstatistik neu gerechnet: 80-%-Band (Vorhersagevariante) 24 h 74,4 → 74,9 % Abdeckung; Warnung: Vorwarnzeit im Mittel +0,07 h,
+  Fehlalarme über alle Prüfungen 777 → 781.
+- Offen (TODO): Größere Regenmengen werden in allen Lagen unterschätzt (über 25 mm: Median 0,73–0,80), an den Oberläufen Giesdorf, Prüm 2
+  und Sinspelt allgemein (Anstieg 0,53–0,69); das ist ein anderer Fehler als die Feuchte.

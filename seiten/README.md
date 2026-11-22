@@ -8,3 +8,6 @@ Hier liegen fertig gebaute Seiten, die der Container neben der Live-Vorhersage a
 Beide brauchen zum Bauen die Pegeldaten der LfU-Pakete und enthalten die gemessenen Ganglinien der Hochwasser
 (Quelle: Landesamt für Umwelt Rheinland-Pfalz). Sie sind deshalb nicht Teil des Repositorys (`.gitignore`).
 Im Betrieb den Ordner als Volume einhängen (`./seiten:/app/seiten:ro`, siehe `docker-compose.yml`) und den Container neu starten.
+
+Beide Seiten enthalten den Modellstand zum Zeitpunkt des Bauens (Modellsätze, Fehlerstatistik, `forecast_core.js`); ein neues Image ändert
+sie nicht. Nach jeder Änderung an Modell, Fehlerstatistik oder `forecast_core.js` neu bauen und in den Ordner `seiten/` legen.

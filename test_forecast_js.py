@@ -37,6 +37,8 @@ def py_forecast(fl: dict, models: dict, target: str, i: int, variant: str) -> di
                 frames[k]["sm"] = np.concatenate([pad, np.array(v, float)])
                 if "BFMIN" in C_CONSTS and k in C_CONSTS["BFMIN"] and "bf" in frames[k]:     # Untergrenze der Gebietsfeuchte wie chain_fc.add_wetness
                     frames[k]["bf"] = np.maximum(frames[k]["bf"], np.interp(np.where(np.isfinite(frames[k]["sm"]), frames[k]["sm"], C.SM_FALLBACK), *C_CONSTS["BFMIN"][k]))
+                if C_CONSTS.get("BFLIFT") and k in C_CONSTS.get("BTYP", {}):                  # typischer Grundabfluss für die Anhebung wie chain_fc.add_wetness
+                    frames[k]["bt"] = np.interp(np.where(np.isfinite(frames[k]["sm"]), frames[k]["sm"], C.SM_FALLBACK), *C_CONSTS["BTYP"][k])
     storm = np.array([fl.get("storm", {}).get(target, "0" * (i + 1))[i] == "1"])
     S = C.forecast(models, target, Qn, frames, np.array([i + C.LEAD]), variant, storm=storm)
     return {k: v[0] for k, v in S.items()}
