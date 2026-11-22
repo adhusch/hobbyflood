@@ -201,6 +201,16 @@ def build(out: Path) -> None:
     for f, fl in zip(floods, [x for x in fl_all if f"{x['t_peak']:%Y-%m-%d}" in sims]):
         win = F.window(Wd, fl)                                      # damals gemessener Wasserstand (Scheitel im 72-h-Fenster), alte W-Q-Beziehung
         f["w_peak"] = {g: None if not np.isfinite(win[g].max()) else int(round(float(win[g].max()))) for g in Q_GAUGES}
+        fw = f.get("fcw")
+        if fw and unc:                                              # Beziehung Wasserstand-Abfluss, wie sie beim Hochwasser galt (wie eval_view.py)
+            from eval_view import event_rating
+            i0 = int(Q.index.get_loc(pd.Timestamp(fw["t_start"])))
+            sl = slice(i0, i0 + len(next(iter(fw["q"].values()))))
+            fw["rat"] = {}
+            for dn in fw["q"]:
+                r = event_rating(Q[dn].to_numpy()[sl], Wd[dn].to_numpy()[sl], unc["rating"][dn])
+                if r:
+                    fw["rat"][dn] = r
     data = dict(nodes=nodes, rivers=RIVERS, reaches=reaches, groups=params, floods=floods, rain=rain, chain=chain, unc=unc,
                 skill=skill.round(3).where(skill.notna(), None).to_dict("records"))
     tpl = (HERE / "routing_map_template.html").read_text(encoding="utf-8")

@@ -962,3 +962,30 @@ alle Regenmengen (15–25 mm: 0,80; über 25 mm: 0,80).
   Fehlalarme über alle Prüfungen 777 → 781.
 - Offen (TODO): Größere Regenmengen werden in allen Lagen unterschätzt (über 25 mm: Median 0,73–0,80), an den Oberläufen Giesdorf, Prüm 2
   und Sinspelt allgemein (Anstieg 0,53–0,69); das ist ein anderer Fehler als die Feuchte.
+
+## Sättigungsüberschuss mit 3 Tagen Gedächtnis (22.11.2026)
+
+Anlass: Juli 2021. Die Oberläufe ließen bei 117–136 mm Gebietsregen (Stationen; Radar 104–123 mm) 55–73 % abfließen, das Modell 25–41 %, auch das
+Modell mit 2021 im Training. Der Sättigungsüberschuss (`satx`) rechnete mit einem Ereignisregen mit 24 h Gedächtnis (`api_s`, in der Spitze
+78–93 mm statt 130 mm) und war mit gemeinsamen Werten an 28 % des Restregens begrenzt (`rs` 0,28).
+
+Jetzt `rain.TAU_API_S_H = 72` (`PRUEM_TAU_S`) und der Anfangsverlust `lam` mit angepasst (`PRUEM_SAT_LAM`). Ergebnis der Anpassung: `rs` 1,0,
+Rückhalt 199 mm, Anfangsverlust 0,19 · 199 = 37 mm Ereignisregen.
+
+- Juli 2021 (Kreuzvalidierung, 2021 nicht im Training), Kette mit gemessenem Regen, Scheitel Modell / Messung 24 h vorher: Prümzurlay 0,41 → 0,69,
+  Echtershausen 0,41 → 0,73, Sinspelt 0,37 → 0,73, Giesdorf 0,64 → 0,86, Prüm 2 0,42 → 0,55, Seffern 0,52 → 1,01.
+- Alle Regenereignisse (Kreuzvalidierung, Anstieg Modell / Messung, Median): Winter unverändert; Sommer über 60 mm 0,56 → 0,69 (mittlerer
+  Betragsfehler log 0,58 → 0,37), 40–60 mm 0,62 → 0,59, 25–40 mm 0,82 → 0,78 (0,42 → 0,44, etwas schlechter), 15–25 mm unverändert.
+- Hochwasser: Winter unverändert; Starkregen- und Sommerhochwasser Scheitel 24 h vorher 0,66 → 0,68 (Betragsfehler 0,37 → 0,35), NSE 6–12 h
+  −0,02.
+- Fehlerstatistik: 80-%-Band 24 h (Vorhersagevariante) 74,9 → 75,8 %; Warnungen: nicht gewarnt 548 → 533, Fehlalarme 781 → 815, Vorwarnzeit im
+  Mittel +0,7 h.
+- Vorbereitet, aus: Sättigungsüberschuss je Gruppe (Oberläufe getrennt, `PRUEM_SAT_GROUPS`), Zeitversatz im Anstieg (`PRUEM_LAGCORR`) und Begrenzung
+  des Abzugs im Anstieg (`PRUEM_ERRCLIP`); siehe TODO.
+
+## Routing-Karte: Wasserstand wie damals, Scheitel mit perfektem Regen (22.11.2026)
+
+- Wasserstand in cm mit der W-Q-Beziehung, die beim jeweiligen Hochwasser galt (aus den damaligen Wertepaaren wie in `eval.html`, sonst die
+  heutige); Schwellen HQx der heutigen Statistik damit in cm. Prümzurlay 2003: 492 cm (gemessen 492 cm) statt 458 cm mit der heutigen Kurve.
+- Mit perfektem Regen zeigt die Scheitel-Kachel den vorhergesagten Scheitel, auch bevor oben eine Welle gemessen ist (vorher „keine Welle in
+  Sicht“).

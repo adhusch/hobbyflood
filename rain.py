@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 TAU_API_H = 168.0
-TAU_API_S_H = 24.0                                                  # kurzer Vorregenindex (Ereignisfeuchte)
+TAU_API_S_H = float(__import__("os").environ.get("PRUEM_TAU_S", "72.0"))   # Ereignisregen für den Sättigungsüberschuss (bis 22.11.2026: 24 h; PRUEM_TAU_S)
 
 
 def read_dwd_hourly(path, shift_h: float = 0.0) -> pd.Series:
@@ -93,7 +93,7 @@ def api_series(p_mm_h: np.ndarray, dt_h: float = 0.25, tau_h: float = TAU_API_H)
 
 def areal_frame(hourly_mm: pd.Series, index: pd.DatetimeIndex, dt_h: float = 0.25) -> pd.DataFrame:
     """Stundenreihe (mm je Stunde, Stempel = Ende des Intervalls) auf das 15-min-Raster von `index` (UTC, naiv): Intensität in mm/h, konstant im
-    Intervall. Rückgabe Spalten p (mm/h), api (mm, 7 Tage) und api_s (mm, 24 h). Zeiten ohne Stundenwert bleiben NaN (auch im api, damit Ereignisse mit Lücken entfallen)."""
+    Intervall. Rückgabe Spalten p (mm/h), api (mm, 7 Tage) und api_s (mm, TAU_API_S_H, seit 22.11.2026 72 h). Zeiten ohne Stundenwert bleiben NaN (auch im api, damit Ereignisse mit Lücken entfallen)."""
     h = hourly_mm.reindex(pd.date_range(hourly_mm.index.min(), hourly_mm.index.max(), freq="1h"))
     # Stundenwert gilt für die vier Viertelstunden vor dem Stempel: Zeitpunkt t (Ende des 15-min-Intervalls) -> nächster voller Stundenstempel
     stamp = index.ceil("1h")

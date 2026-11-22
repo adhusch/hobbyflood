@@ -105,6 +105,8 @@ REGIONAL_SAT = True                                         # gemeinsamer Sätti
 SAT_SPEC = dict(rs=(0.97, 0.0, 1.0), log_sev=(float(np.log(170.0)), float(np.log(10.0)), float(np.log(3000.0))), g_ev=(0.2, 0.0, 10.0),
                 log_kf=(float(np.log(2.5)), float(np.log(0.25)), float(np.log(12.0))),
                 log_oref=(float(np.log(4.0)), float(np.log(0.02)), float(np.log(50.0))), a_nl=(0.7, 0.0, 2.0))   # Start, untere, obere Grenze
+if os.environ.get("PRUEM_SAT_LAM", "1") == "1":                      # Anfangsverlust lam * Sv mit anpassen (seit 22.11.2026)
+    SAT_SPEC["lam"] = (0.2, 0.05, 0.9)
 SAT_TERMS = ("satx", "nlrx")
 WTS_EXP_KEY = {"WI": 1.0}    # Wiersdorf (Stausee): absolute Fehler, damit die großen Wellen die Wellengeschwindigkeit bei hohem Abfluss bestimmen
 WTS_EXP = 0.0                                               # Fehler je Fenster durch max(Scheitel, q95)^(1-g) * q95^g: g=0 relativ (jedes Fenster gleich), g>0 große Hochwasser zählen mehr
@@ -373,16 +375,35 @@ def _lat_shared(lt, P: dict):
     return lt2
 
 
+# Sättigungsüberschuss je Gruppe (PRUEM_SAT_GROUPS=1): Oberläufe (Prüm 2, Sinspelt, Giesdorf) und Zwischengebiete mit eigenen Werten für
+# Anteil, Rückhalt und Anfangsverlust; die Speicher (log_kf, log_oref, a_nl) bleiben gemeinsam. Anlass: über alle Regenereignisse steigt der
+# gemessene Abflussbeiwert der Oberläufe ab etwa 25 mm deutlich (Prüm 2 0,12 -> 0,19), der der Zwischengebiete kaum; mit gemeinsamen Werten
+# lag der Anfangsverlust bei 37 mm und die Oberläufe blieben bei großen Regenmengen zu tief.
+SAT_GROUPS = os.environ.get("PRUEM_SAT_GROUPS", "0") == "1"
+SAT_GROUP_KEYS = ("rs", "log_sev", "g_ev", "lam")
+
+
+def sat_group(k: str) -> str:
+    return "oben" if k in HW else "unten"
+
+
+def sat_params(P: dict, k: str) -> dict:
+    """Parameter des Sättigungsüberschusses für Gebiet k (gemeinsam, bei Gruppen mit den Werten der Gruppe)."""
+    g = (P.get("gruppen") or {}).get(sat_group(k))
+    return {**{a: x for a, x in P.items() if a != "gruppen"}, **(g or {})}
+
+
 def with_sat(models: dict, P: dict) -> dict:
-    """Kopie der Modelle mit Sättigungsüberschuss und nichtlinearen Speichern (gemeinsame Parameter P) in jedem Zwischengebiet."""
+    """Kopie der Modelle mit Sättigungsüberschuss und nichtlinearen Speichern (gemeinsame Parameter P, ggf. je Gruppe) in jedem Zwischengebiet."""
     out = {}
     for k, ms in models.items():
         out[k] = {}
+        Pk = sat_params(P, k)
         for v, m in ms.items():
             m2 = R.Model.from_dict(m.to_dict())
             m2.beta = np.array(m.beta, float)
             if m2.lat:
-                m2.lat = [_lat_shared(lt, P) for lt in m2.lat]
+                m2.lat = [_lat_shared(lt, Pk) for lt in m2.lat]
             out[k][v] = m2
     return out
 
@@ -397,22 +418,32 @@ def fit_regional_sat(models: dict, block: int | None, nstart: int = 2) -> tuple[
         d = _training(k, block)
         m = models[k][rain_type(k)]
         rest = m.route(d.X, d.P) - sum(L.response(d.P[lt.name], lt) for lt in m.lat)
-        stack.append((d, rest, m.lat))
-    names = list(SAT_SPEC)
-    lo = np.array([v[1] for v in SAT_SPEC.values()])
-    hi = np.array([v[2] for v in SAT_SPEC.values()])
+        stack.append((d, rest, m.lat, k))
+    spec = {n: v for n, v in SAT_SPEC.items() if not (SAT_GROUPS and n in SAT_GROUP_KEYS)}
+    if SAT_GROUPS:
+        for g in ("oben", "unten"):
+            spec.update({f"{g}:{n}": SAT_SPEC[n] for n in SAT_GROUP_KEYS if n in SAT_SPEC})
+    names = list(spec)
+    lo = np.array([v[1] for v in spec.values()])
+    hi = np.array([v[2] for v in spec.values()])
+
+    def unpack(th) -> dict:
+        P = {n: float(x) for n, x in zip(names, th) if ":" not in n}
+        if SAT_GROUPS:
+            P["gruppen"] = {g: {n.split(":")[1]: float(x) for n, x in zip(names, th) if n.startswith(g + ":")} for g in ("oben", "unten")}
+        return P
 
     def resid(th):
-        P = dict(zip(names, th))
-        return np.concatenate([((d.Y - rest - sum(L.response(d.P[lt.name], _lat_shared(lt, P)) for lt in lats)) / d.wts[:, None])[d.mask]
-                               for d, rest, lats in stack])
+        P = unpack(th)
+        return np.concatenate([((d.Y - rest - sum(L.response(d.P[lt.name], _lat_shared(lt, sat_params(P, k))) for lt in lats)) / d.wts[:, None])[d.mask]
+                               for d, rest, lats, k in stack])
     best, rng = None, np.random.default_rng(2)
     for j in range(nstart):
-        th0 = np.array([v[0] for v in SAT_SPEC.values()]) if j == 0 else lo + (hi - lo) * rng.uniform(0.2, 0.8, len(lo))
+        th0 = np.array([v[0] for v in spec.values()]) if j == 0 else lo + (hi - lo) * rng.uniform(0.2, 0.8, len(lo))
         r = least_squares(resid, np.clip(th0, lo + 1e-6, hi - 1e-6), bounds=(lo, hi), method="trf", x_scale="jac", max_nfev=60)
         if best is None or r.cost < best.cost:
             best = r
-    P = {n: float(x) for n, x in zip(names, best.x)}
+    P = unpack(best.x)
     out = with_sat(models, P)
     for k in RAINK:                                                       # Fehlerkorrektur mit den Bausteinen neu (wie fit_set)
         d = _training(k, block)
@@ -584,6 +615,12 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             err0 = err0 - shift
         if RATIO_UPDATE and k in RATIO_KEYS and variant not in NORAIN:
             sim, err0 = ratio_update(obs, sim, k)
+        if LAG_MAX_H > 0:
+            sim = lag_update(obs, sim)
+            err0 = obs[:, A] - sim[:, A]
+        if ERR_CLIP > 0:                                        # im Anstieg den Abzug begrenzen (Versuch, siehe ERR_CLIP)
+            rising = (obs[:, A] - obs[:, A - 4]) > LAG_RISE * np.maximum(obs[:, A], 1e-6)
+            err0 = np.where(rising & (err0 < 0), np.maximum(err0, -ERR_CLIP * obs[:, A]), err0)
         fc = np.maximum(sim[:, A + 1:] + err0[:, None] * m.beta[None, :], 0.0)
         if HOLD_RULE and variant not in FUTURE_RAIN and k in UPS:      # nur ohne Regenvorhersage (hold_test.py, 14.11.2026)
             passed = np.ones(len(t0), bool)
@@ -595,6 +632,41 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             fc = UP_LIFT[k](fc)
         S[k] = np.concatenate([obs[:, :A + 1], fc], axis=1)
     return S
+
+
+# Zeitversatz im Anstieg (PRUEM_LAGCORR = größter Versatz in h, 0 = aus): Steigt die Messung, wird die Modellreihe um den Versatz d verschoben, der die
+# letzten LAG_FIT_H Stunden am besten trifft (-LAG_MAX_H bis +LAG_MAX_H), erst danach die Fehlerkorrektur mit beta. Anlass: Juli 2021, Echtershausen
+# 8 h vor dem Scheitel: Modell im Anstieg früher als die Messung (rund 340 gegen 176 m³/s), die Korrektur zog die Differenz auf den Scheitel durch
+# (0,43 statt 0,76 des Scheitels).
+LAG_MAX_H = float(os.environ.get("PRUEM_LAGCORR", "0"))
+ERR_CLIP = float(os.environ.get("PRUEM_ERRCLIP", "0"))           # Alternative: im Anstieg Abzug höchstens ERR_CLIP * Messung
+LAG_FIT_H = 2.0
+LAG_RISE = 0.05                                                  # Messung in der letzten Stunde um mindestens 5 % gestiegen
+LAG_ONLY_LATE = os.environ.get("PRUEM_LAG_ONLYLATE", "1") == "1"   # nur verschieben, wenn das Modell zu früh ist (später schieben)
+LAG_MIN_RATIO = float(os.environ.get("PRUEM_LAG_MINRATIO", "1.2"))  # und nur, wenn das Modell zur Ausgabezeit deutlich über der Messung liegt
+
+
+def lag_update(obs: np.ndarray, sim: np.ndarray) -> np.ndarray:
+    n = int(round(LAG_MAX_H / DT)); w = int(round(LAG_FIT_H / DT))
+    out = sim.copy()
+    rising = (obs[:, A] - obs[:, A - 4]) > LAG_RISE * np.maximum(obs[:, A], 1e-6)
+    if LAG_ONLY_LATE:
+        rising &= sim[:, A] > LAG_MIN_RATIO * obs[:, A]
+    for c in np.flatnonzero(rising):
+        o = obs[c, A - w:A + 1]
+        best, bd = np.sum((sim[c, A - w:A + 1] - o) ** 2), 0
+        for d in range(0 if LAG_ONLY_LATE else -n, n + 1):
+            if d == 0 or A - w - d < 0 or A - d >= sim.shape[1]:
+                continue
+            e = np.sum((sim[c, A - w - d:A + 1 - d] - o) ** 2)
+            if e < best:
+                best, bd = e, d
+        if bd > 0:                                              # Modell zu früh: später schieben
+            out[c, bd:] = sim[c, :-bd]
+        elif bd < 0:                                            # Modell zu spät: früher schieben, am Ende den letzten Wert halten
+            out[c, :bd] = sim[c, -bd:]
+            out[c, bd:] = sim[c, -1]
+    return out
 
 
 def events_for(target: str, Q: pd.DataFrame, frames: dict, years: tuple[int, int], need_rain: bool, W: pd.DataFrame | None = None) -> np.ndarray:
