@@ -857,3 +857,68 @@ dadurch um wenige cm von der Hauptgrafik ab.
   rechnete die RUC-Linie mit dem 9,5 h alten Lauf weiter. Jetzt wird ein Lauf, der zur Ausgabezeit älter als 4 h ist, nicht verwendet, und die
   Kopfzeile sagt das. Verzug Start bis Abrufbarkeit bei Open-Meteo 18./19.11. (17 Läufe): 44–127 min, Median 93 min; bei Takt hh:40 kommt in
   rund 70 % der Fälle der Lauf von vor 1 h 40 min mit (`OFFSET_MIN=50`: rund 80 %).
+
+## Dauerregenwelle 19.–21.11.2026: Auswertung (22.11.2026)
+
+Grundlage: Download der Live-Seite vom 22.11.2026 (168 h, 20 Ausgaben vom 19.11. 05 UTC bis 21.11. 09 UTC ausgewählt). Kein Pegel erreichte HW 10.
+Gemessene Scheitel: Prümzurlay 200 cm (21.11. 15:45), Wiersdorf 161, Echtershausen 151, Alsdorf-Oberecken 119, Sinspelt 67 cm.
+
+- **Live viel zu hoch:** Am 19.11. lag der Höchstwert der Linie in Prümzurlay bei 299–432 cm; „möglich“ stand für Prümzurlay und
+  Echtershausen vom 19.11. 12:15 bis 20.11. 09:30 (höchste Wahrscheinlichkeit 21 %). Die HVZ lag ebenfalls zu hoch, aber weniger
+  (Prümzurlay, 24 h vorher: mittlerer Betragsfehler HVZ 36 cm, Kette 48 cm); bei 6 und 12 h war die Kette besser (6 gegen 12 cm).
+- **Ursache Regenvorhersage:** ICON-D2 (mit den Stationsfaktoren aus `rain_factors.json`) sagte für 19.11. 12:00 bis 21.11. 12:00 im
+  Median der Abrufe das 1,6-Fache des gemessenen Regens für Prüm 2 und Echtershausen voraus, 1,5-fach für Seffern, 1,2-fach für Sinspelt.
+- **Mit gemessenem Regen** (gleiche Ausgaben, Regen der DWD-Stationen statt Vorhersage): Scheitelfehler Prümzurlay +21 cm,
+  Alsdorf-Oberecken +20 cm, Sinspelt +9 cm, Echtershausen −4 cm, Wiersdorf +2 cm, die übrigen etwa 0. Das Abflussmodell liegt also nur in
+  Prümzurlay und Alsdorf-Oberecken deutlich zu hoch; Alsdorf-Oberecken war auch im Sturm 16.–18.11. zu hoch (eigenes Zwischengebiet,
+  Niveaufaktor 0,76 bei großem Abfluss womöglich falsch).
+- Untergrenze der Gebietsfeuchte: in diesem Ereignis 1–5 cm; Faktor auf die Wellengeschwindigkeit (f ≈ 1,1): unter 1 cm;
+  Kurzfristkorrektur aus kommunalen Pegeln: 3-mal angewendet, vernachlässigbar.
+- **Band:** nur rund die Hälfte der Messwerte lag im 80-%-Band, fast alle darunter (Folge der zu hohen Regenvorhersage).
+- ICON-RUC war bei 9–12 h etwas besser als der ICON-D2-Hauptlauf.
+- Laufzeit Wiersdorf → Prümzurlay: 2,9–3,7 h im Anstieg, 4,5 h Scheitel zu Scheitel (Modell 4,1 h).
+
+## Live-Daten im Training (22.11.2026)
+
+`live_training.py` macht aus den Downloads der Live-Seite Trainingsdaten: Pegel (W und Q der HVZ in 15 min, neuester Abruf gewinnt; Q durch
+den Niveaufaktor geteilt, damit alle Jahre auf der Skala bis 2022 liegen), Stationsregen (neueste `stundenwerte_RR_*_akt.zip` und die
+10-min-Werte der letzten Abrufe als Stundensummen) und fehlende Tage der Bodenfeuchte (aus den archivierten Seiten).
+`pkgdata.load_all(..., live=True)` hängt die Pegel an die LfU-Reihen an (Lücke 2023 bis Oktober 2026 als NaN), `rain_fit.load_stations`
+den Regen. Ein- und ausschalten mit `PRUEM_LIVE` (Standard 1). Die Messreihen (`data/live_pkg/`, `data/dwd_rr/akt/`) kommen nicht ins
+Repository.
+
+Erster Lauf mit den Downloads vom 18., 19. und 22.11.2026 (Pegel 10.–22.11.2026). Die Auswahl der Hochwasserfenster nimmt daraus je Pegel
+nur eines dazu (die Welle 20./21.11.; der Sturm 16.–18.11. erfüllt die Auswahlbedingung nicht), bei 180–220 Fenstern je Pegel aus
+2004–2022.
+
+- Kreuzvalidierung 2004–2022 (Fenster der Welle sind in allen Blöcken im Training, geprüft wird nur an 2004–2022): Änderungen im Rauschen.
+  NSE der Kette mit gemessenem Regen bei 6 h unverändert, bei 12 h ±0,01, bei 24 h −0,04 bis +0,01 (Sinspelt −1,90 → −1,94,
+  Alsdorf-Oberecken −1,34 → −1,33); Scheitelverhältnis 24 h vorher ±0,01.
+- Fehlerstatistik (Band, Warnung) neu gerechnet: Abdeckung des 80-%-Bands und Warnzeiten praktisch unverändert (±0,002 bzw. ±1 Ereignis).
+- Welle 19.–21.11., alle 20 Ausgaben (im Training enthalten, also kein unabhängiger Test), mittlerer Fehler des Höchstwerts in 48 h:
+  mit gemessenem Regen nur neues Training Prümzurlay +20,6 → +17,8 cm, Sinspelt +8,9 → +7,9 cm; mit neuem Training, neuer Fehlerstatistik
+  und der Korrektur der Oberlieger-Skala (nächster Abschnitt) Prümzurlay +19,7, Sinspelt +8,0, Alsdorf-Oberecken +19,7 → +11,8 cm.
+  Mit der damaligen ICON-Vorhersage: Prümzurlay +80 cm (unverändert, die Regenvorhersage dominiert), Alsdorf-Oberecken +51,5 → +40,1 cm.
+- Ein einzelnes Ereignis ändert die Anpassung kaum. Mehr Wirkung brächten mehr Ereignisse (jeder weitere Download geht mit
+  `python live_training.py ZIP` dazu) oder ein höheres Gewicht für Ereignisse mit der heutigen Abflusskurve (offen, siehe TODO).
+
+## Fehler: Oberlieger mit heutiger Abflusskurve an den Unterlieger (behoben 22.11.2026)
+
+Die Kette gab die live gemessenen und vorhergesagten Abflüsse eines Oberliegers unverändert an das Modell des Unterliegers weiter, also mit
+der heutigen Abflusskurve der HVZ. Die Modelle sind aber an den Abflüssen bis 2022 angepasst; der Niveaufaktor (`data/niveau.json`) wurde
+nur auf die Simulation des Pegels selbst angewendet. Betroffen war Alsdorf-Oberecken: Seffern liegt heute rund 1,3-fach über der alten Skala,
+das Modell von Alsdorf-Oberecken bekam also 30 % zu viel Zufluss aus der Nims. Ebenso ging die Gebietsfeuchte B (Abfluss / MQ) in
+Prümzurlay 16 % zu hoch und in Alsdorf-Oberecken 24 % zu tief ein. Jetzt teilt `chain_fc` (und gleich `forecast_core.js`) Oberlieger und B
+durch den Niveaufaktor (`LEVEL_IN`, mit `PRUEM_LEVEL_IN=0` aus). Anpassung, Kreuzvalidierung und Fehlerstatistik sind nicht betroffen
+(dort ist kein Niveaufaktor gesetzt).
+
+Welle 19.–21.11.2026, 6 Ausgaben mit gemessenem Regen: Scheitelfehler Alsdorf-Oberecken +23,7 → +14,7 cm, Seffern +0,8 → +0,1 cm, übrige
+unverändert (alle 20 Ausgaben zusammen mit dem neuen Training: +19,7 → +11,8 cm; mittlerer Fehler 24 h vorher 14,8 → 9,0 cm).
+
+Was bei dieser Welle sonst zu hoch war (gemessener Regen, nach der Korrektur, Scheitel-Abfluss Modell / Messung): Sinspelt roh 1,16,
+Prümzurlay roh 1,11, Alsdorf-Oberecken roh 1,15; die Mediankorrektur aus der Fehlerstatistik hebt das weiter auf 1,28, 1,14 und 1,26, weil die
+Kette in solchen Lagen historisch eher zu tief lag. Gemessen lieferten die Zwischengebiete kaum Ereigniswasser (Seffern → Alsdorf-Oberecken
+über die Welle nichts über den Startabfluss, Zwischengebiet Prümzurlay rund 0,7 Mio m³ bei 3,7 Mio m³ Regen), im Modell sind ihre
+Scheitelbeiträge etwa doppelt so groß. Beide Feuchtemaße meldeten sehr nass (Bodenfeuchte 139–141 % nFK, oberstes 1 % von 2004–2022;
+Gebietsfeuchte 5,3 MQ in Prümzurlay und 3,5 MQ in Alsdorf-Oberecken im Rückgang nach dem Sturm). B auf die Untergrenze bei dieser
+Bodenfeuchte zu setzen, brachte nur 1,5–3,5 cm. Vermutung: Grundwasser nach dem trockenen Sommer noch leer; ein Ereignis belegt das nicht.

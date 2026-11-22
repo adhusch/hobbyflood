@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
+Stand 22.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 
 ## Vor dem Sturm am 17./18.11.2026
 
@@ -29,6 +29,9 @@ Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 - [ ] **Winterhochwasser der frühen 1990er (1991, 1993, 1995) ins Training:** Der Regen dafür ist gebaut und geprüft (`day_rain.py`: Tagessummen von 24 DWD-Stationen, Stundenverlauf aus ERA5; an 2004–2022 liefert die Kette damit bei Winterhochwassern praktisch dieselben Scheitel wie mit gemessenem Stundenregen, siehe README). Es fehlt die **Schneeschmelze**: Dezember 1991 (20 cm Schnee, am Scheiteltag weg), Dezember 1993 (25 cm), Januar 1995 (18 cm), auch Januar 2011 (54 cm) und Januar 2021 (31 cm) hatten Schnee; nur Januar 1993 und Januar 2003 nicht. Die Kette liegt 1991 und 1995 weit zu niedrig (Prümzurlay 24 h vorher 0,39 und 0,75). Januar 1993 liegt ebenfalls zu niedrig (0,48), obwohl kein Schnee lag: dort die Ursache suchen, bevor es ins Training geht. Reihenfolge: erst das Schneemodul, dann den Zeitraum 1989–2003 mit Ersatzregen in Anpassung und Kreuzvalidierung aufnehmen. Wiersdorf ist 1991 lange abgeschnitten.
 - [ ] **Schneemodul:** Schneehöhen liegen als Tageswerte vor (in `data/tag/dwd_tageswerte_rr.json`). Einfachster Ansatz: Schmelze aus dem Rückgang der Schneehöhe mal einer angepassten Dichte, über den Tag verteilt; besser mit Temperatur (Grad-Tag-Verfahren, braucht Stundentemperaturen und im Betrieb die Temperaturvorhersage). Prüfsteine: Prüm 2 Januar 2021, Januar 2011, Dezember 1991.
 - [ ] **Große Winterhochwasser einen Tag vorher zu niedrig:** Bei den größten 10 % der Winterhochwasser liegt der Scheitel der Kette mit gemessenem Regen 24 h vorher im Median bei 0,53, 12 h vorher bei 0,72 (alle Winterhochwasser: 0,80 und 0,88). Ursache offen; Schnee ist ein Kandidat.
+- [ ] **Zwischengebiete Prümzurlay und Alsdorf-Oberecken bei Dauerregen zu hoch:** Welle 19.–21.11.2026 mit gemessenem Regen Scheitel +20 cm (Prümzurlay) und nach der Korrektur der Oberlieger-Skala +15 cm (Alsdorf-Oberecken); Scheitelbeiträge der Zwischengebiete etwa doppelt so groß wie gemessen, Sinspelt roh 1,16-fach. Prüfen: Speicherzustand nach Trockenheit (Grundwasser) statt nur Bodenfeuchte und B; B für Zwischengebiete nicht am Unterlieger messen (dort steckt der Oberlieger drin), sondern aus dem eigenen Anteil; Mediankorrektur der Fehlerstatistik, wenn das Modell schon roh zu hoch liegt (hebt Alsdorf-Oberecken und Sinspelt um weitere 11–12 %).
+- [ ] **Regenvorhersage bei Dauerregen zu hoch:** ICON-D2 mit Stationsfaktoren 19.–21.11.2026 das 1,5–1,6-Fache des gemessenen Regens (Prüm 2, Echtershausen, Seffern). Stationsfaktoren (`rain_factors.json`, 1,0–1,21) getrennt nach Lage (Dauerregen/Schauer) prüfen, sobald mehr Ereignisse archiviert sind; Abrufe dafür aus den Downloads (`live_training.py`).
+- [ ] **Gewicht der Live-Ereignisse im Training:** Mit `live_training.py` kommt je Ereignis nur ein Fenster je Pegel dazu (Welle November 2026: kaum Wirkung). Ereignisse mit der heutigen Abflusskurve höher gewichten oder die Auswahlbedingung für Live-Fenster lockern; nur übernehmen, wenn die Kreuzvalidierung nicht schlechter wird.
 - [ ] **Niveaufaktor aus den Live-Daten nachführen,** sobald Hochwasserwerte mit der heutigen Kurve vorliegen; Seffern klären (bisher kein Faktor).
 - [ ] **Nachbargebiete dazunehmen** (Kyll, Our, Sauer, Ahr, Lieser, Salm): gemeinsames Modell über viele Pegel, um mehr Starkregen-Hochwasser zu haben. Braucht neue Daten.
 - [ ] **Längeres Nachtraining / anderes Gewicht des Scheitelfehlers** im Starkregensatz (0,5 statt 0,2 brachte HQ10 0,82 statt 0,77 bei 17,2 statt 16,0 % Überschätzung).
@@ -47,7 +50,7 @@ Stand 18.11.2026. Reihenfolge innerhalb der Abschnitte nach erwarteter Wirkung.
 - [ ] **Anfrage an den Betreiber des Stausees Bitburg:** Betriebsregeln bei Hochwasser (Vorabsenkung, Rückhalteraum, Abgabegrenzen) und Zeitreihen von Seestand und Abgabe.
 - [ ] **Regen vor 2001:** beim DWD (oder Kachelmannwetter) nach Radar- und Stundendaten der 1990er fragen.
 - [ ] **RADKLIM 2023–2025** liegt vor, nützt erst mit Pegeldaten dieser Jahre.
-- [ ] **Pegelreihen 2023–2026 in 15 min** (LfU oder Wasserportal): für den abflussabhängigen Seffern-Faktor, die Niveaufaktoren und um die Herbst-Ereignisse 2026 (Oktober, Sturm November) ins Training zu nehmen.
+- [ ] **Pegelreihen 2023–2026 in 15 min** (LfU oder Wasserportal): für den abflussabhängigen Seffern-Faktor, die Niveaufaktoren und um den Oktober 2026 ins Training zu nehmen (10.–22.11.2026 ist seit 22.11. über die Downloads der Live-Seite drin, `live_training.py`).
 
 ## Betrieb und Seiten
 

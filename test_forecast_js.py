@@ -30,7 +30,7 @@ def py_forecast(fl: dict, models: dict, target: str, i: int, variant: str) -> di
     if fl["rain"] and "WET" in C_CONSTS:
         for k, (ref, mq) in C_CONSTS["WET"].items():                  # Gebietsfeuchte wie in der Karte: Abfluss des Bezugspegels im Fenster / MQ
             if k in frames:
-                frames[k]["bf"] = Qn[ref] / mq
+                frames[k]["bf"] = Qn[ref] / C.LEVEL_IN.get(k, 1.0) / mq   # auf der Skala der Anpassung wie chain_fc.add_wetness
     if fl["rain"] and fl.get("sm"):                                    # Bodenfeuchte wie die Abflussreihen vorn um LEAD aufgefüllt
         for k, v in fl["sm"].items():
             if k in frames:
@@ -99,7 +99,7 @@ def main() -> None:
                         continue
                     cases.append(dict(f=fl["id"], target=target, i=i, v=v))
                     if fl is floods[-1] and target in ("PZ", "AL"):                 # dasselbe mit Niveaufaktor (niveau.py)
-                        cases.append(dict(f=fl["id"], target=target, i=i, v=v, nv={"PZ": 1.16, "AL": 0.76}))
+                        cases.append(dict(f=fl["id"], target=target, i=i, v=v, nv={"PZ": 1.16, "AL": 0.76, "SE": 1.3}))
                         cases.append(dict(f=fl["id"], target=target, i=i, v=v, cf={"PZ": {"WI": 0.7, "SI": 1.3}, "AL": {"SE": 1.6}}))
     js = r"""
 const fs = require("fs"), FC = require(process.argv[1]);

@@ -71,9 +71,23 @@ def stations() -> tuple[dict[str, tuple[float, float]], dict[str, str]]:
 
 
 def load_stations(shift_h: float) -> dict[str, pd.Series]:
+    """Stundenregen je Station aus den historischen DWD-Dateien; dahinter die aktuellen (data/dwd_rr/akt/, live_training.py), wo die historischen enden."""
     out = {}
     for f in sorted(glob.glob(str(HERE / "data" / "dwd_rr" / "stundenwerte_RR_*_hist.zip"))):
         out[Path(f).name.split("_")[2]] = RN.read_dwd_hourly(f, shift_h=shift_h)
+    for f in sorted(glob.glob(str(HERE / "data" / "dwd_rr" / "akt" / "stundenwerte_RR_*_akt.zip"))):
+        sid = Path(f).name.split("_")[2]
+        a = RN.read_dwd_hourly(f, shift_h=shift_h)
+        if sid in out:
+            h = out[sid]
+            out[sid] = pd.concat([h, a[a.index > h.index.max()]])
+        else:
+            out[sid] = a
+    for f in sorted(glob.glob(str(HERE / "data" / "dwd_rr" / "akt" / "jetzt_*.csv"))):   # letzte Stunden aus dem Live-Abruf, gleiche Zeitbasis
+        sid = Path(f).stem.split("_")[1]
+        a = pd.read_csv(f, index_col=0, parse_dates=True)["rr"]
+        if sid in out:
+            out[sid] = pd.concat([out[sid], a[a.index > out[sid].index.max()]])
     return out
 
 

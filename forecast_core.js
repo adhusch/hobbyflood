@@ -177,7 +177,7 @@ const FC = (() => {
   function rainWindow(fl, k, i, ideal) {
     const pr = prepFlood(fl), j0 = i - A, n = A + H + LEAD + 1;
     const smv = fl.sm && fl.sm[k] ? fl.sm[k][i - A] : null, sm = smv != null && isFinite(smv) ? smv : SM_FALLBACK;   // Bodenfeuchte (% nFK) am Fensteranfang
-    const w = WET[k], qb = w ? fl.q[w[0]][i - A] : null, bf = w && qb != null ? Math.max(qb / w[1], fl.sm ? bfFloor(k, sm) : 0) : 0;
+    const w = WET[k], qb = w && fl.q[w[0]][i - A] != null ? fl.q[w[0]][i - A] / ((fl.niveau && fl.niveau[k]) || 1) : null, bf = w && qb != null ? Math.max(qb / w[1], fl.sm ? bfFloor(k, sm) : 0) : 0;
     const p = Float64Array.from(fl.p[k].slice(j0, j0 + n)), api = Float64Array.from(pr.api[k].slice(j0, j0 + n)), aps = Float64Array.from(pr.aps[k].slice(j0, j0 + n));
     if (!ideal) {
       const j = LEAD + A;
@@ -224,8 +224,9 @@ const FC = (() => {
       } else {
         const X = {};
         UPS[k].forEach(u => {
-          if (variant === "einzeln") { const v = fl.q[DN[u]].slice(i - A, i + H + 1), s = new Float64Array(A + H + 1); for (let t = 0; t <= A + H; t++) s[t] = t <= A ? v[t] : v[A]; X[DN[u]] = s; }
-          else X[DN[u]] = S[u];
+          const lu = (fl.niveau && fl.niveau[u]) || 1;   // Oberlieger auf die Skala der Anpassung (wie chain_fc.LEVEL_IN)
+          if (variant === "einzeln") { const v = fl.q[DN[u]].slice(i - A, i + H + 1), s = new Float64Array(A + H + 1); for (let t = 0; t <= A + H; t++) s[t] = (t <= A ? v[t] : v[A]) / lu; X[DN[u]] = s; }
+          else X[DN[u]] = lu === 1 ? S[u] : S[u].map(v => v / lu);
         });
         m = set[k][((NORAIN.has(variant) || k === "WI") ? "route_full" : "rain_full") + suffix];
         const P = m.lat && m.lat.length ? { [k]: rainWindow(fl, k, i, ideal) } : null;
