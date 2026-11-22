@@ -95,7 +95,11 @@ CELER_MIN, CELER_MAX = 0.5, 2.0
 # Kurzfristkorrektur eines Oberliegers (kommunal_nowcast.py, nur live): Pegel -> Funktion, die dessen Vorhersage [Fälle, H] (Abfluss) anhebt.
 # Wirkt nur, wenn der Pegel Oberlieger des Ziels ist; die Vorhersage des Pegels selbst hebt live.py an (leer = aus).
 UP_LIFT: dict = {}
+LIVE_DATA = os.environ.get("PRUEM_LIVE", "1") == "1"         # Pegel aus Downloads der Live-Seite mit ins Training (live_training.py, pkgdata)
 LEVEL: dict[str, float] = {}                                # Niveaufaktor je Pegel auf die Simulation (leer = aus; der Live-Betrieb setzt ihn aus data/niveau.json)
+# Live-Abflüsse kommen mit der heutigen Abflusskurve; die Modelle sind an den Abflüssen bis 2022 angepasst. Oberlieger und Gebietsfeuchte deshalb durch
+# den Niveaufaktor teilen, bevor sie in das Modell des Unterliegers gehen (bis 22.11.2026 bekam Alsdorf-Oberecken Seffern 1,3-fach). PRUEM_LEVEL_IN=0: aus.
+LEVEL_IN = LEVEL if os.environ.get("PRUEM_LEVEL_IN", "1") == "1" else {}
 ML_NET = True                                               # lernender Abflussbeiwert (lateral "ml", ml_fit.py) nach der gemeinsamen Anpassung
 REGIONAL_SAT = True                                         # gemeinsamer Sättigungsüberschuss und nichtlineare Speicher in allen Zwischengebieten
 SAT_SPEC = dict(rs=(0.97, 0.0, 1.0), log_sev=(float(np.log(170.0)), float(np.log(10.0)), float(np.log(3000.0))), g_ev=(0.2, 0.0, 10.0),
@@ -241,7 +245,7 @@ def add_wetness(frames: dict, Q, sm_table: pd.DataFrame | None = None, sm: dict 
         n = len(np.asarray(next(iter(Q.values()))))
         sm = {k: v[:n] for k, v in SM_CURRENT.items()}
     for k in RAINK:
-        q = np.asarray(Q[WET_REF[k]], float)
+        q = np.asarray(Q[WET_REF[k]], float) / LEVEL_IN.get(k, 1.0)     # Gebietsfeuchte auf der Skala der Anpassung (MQ bis 2022)
         extra = dict(bf=q / mq[k])
         if sm is not None and k in sm:
             extra["sm"] = sm[k]
@@ -535,11 +539,11 @@ def _forecast(models: dict, target: str, Qn: dict, frames: dict, t0: np.ndarray,
             if variant == "einzeln":
                 X = {}
                 for u in UPS[k]:
-                    v = Qn[DN[u]][idx].copy()
+                    v = Qn[DN[u]][idx].copy() / LEVEL_IN.get(u, 1.0)
                     v[:, A + 1:] = v[:, A:A + 1]
                     X[DN[u]] = v
             else:
-                X = {DN[u]: S[u] for u in UPS[k]}
+                X = {DN[u]: S[u] / LEVEL_IN.get(u, 1.0) for u in UPS[k]}   # Oberlieger auf die Skala der Anpassung (heutige Abflusskurve / Niveaufaktor)
             m = celer_model(models[k][("route_full" if (variant in NORAIN or k == "WI") else "rain_full") + suffix], k)
             P = {k: rain_window(frames[k], t0, variant in FUTURE_RAIN)} if m.lat else None
             sim = m.route(X, P)
@@ -724,7 +728,7 @@ def flood_windows(Q: pd.DataFrame, W: pd.DataFrame, frames: dict, sets: dict) ->
 
 def setup_state() -> None:
     """Daten, Regenfenster, Startmodelle und Starkregen-Index in _S (für run() und extreme_fit.py)."""
-    Q, W = pkgdata.load_all("Q"), pkgdata.load_all("W")
+    Q, W = pkgdata.load_all("Q", live=LIVE_DATA), pkgdata.load_all("W", live=LIVE_DATA)
     frames, info = RF2.rain_frames(Q.index, 1.0, extra=HW)
     frames = add_wetness(frames, Q)
     rp = json.loads((HERE / "data" / "rain_params.json").read_text(encoding="utf-8"))

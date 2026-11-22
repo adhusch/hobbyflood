@@ -53,7 +53,7 @@ jobs:
 
       - name: Kurzprüfung im Container
         run: |
-          docker run --rm hobbyflood:test python -c "import routing, lateral, chain_fc, uncert, live, kommunal_nowcast, bodenfeuchte_live, h5py; print('Module ok')"
+          docker run --rm hobbyflood:test python -c "import routing, lateral, chain_fc, uncert, live, kommunal_nowcast, bodenfeuchte_live, live_training, h5py; print('Module ok')"
           docker run --rm hobbyflood:test python -c "import routing; assert routing._load_lib(); print('C-Rechenkern ok')"
           docker run --rm hobbyflood:test python test_rain.py
           docker run --rm hobbyflood:test sh -n deploy/run_live.sh

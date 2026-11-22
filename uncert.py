@@ -35,7 +35,7 @@ _S: dict = {}
 
 
 def setup() -> None:
-    Q, W = pkgdata.load_all("Q"), pkgdata.load_all("W")
+    Q, W = pkgdata.load_all("Q", live=C.LIVE_DATA), pkgdata.load_all("W", live=C.LIVE_DATA)
     frames, info = RF2.rain_frames(Q.index, 1.0, extra=C.HW)
     frames = C.add_wetness(frames, Q)
     C._S.update(Q=Q, W=W, frames=frames, info=info, pm=C.storm_index(frames, info), month=Q.index.month.to_numpy())

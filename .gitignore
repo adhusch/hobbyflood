@@ -252,3 +252,7 @@ data/tag/
 
 # Zwischenspeicher der historischen DWD-Stundenwerte (live.py)
 data/dwd_rr/*.pkl
+
+# Live-Daten als Trainingsdaten (live_training.py): Messreihen, nicht ins Repository
+data/live_pkg/
+data/dwd_rr/akt/
