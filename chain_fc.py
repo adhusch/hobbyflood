@@ -172,6 +172,31 @@ def rain_events(key: str, Q: pd.DataFrame, frame: pd.DataFrame, flood: np.ndarra
     return out[(out - int(60 / DT) - int(72 / DT) >= 0) & (out + int(24 / DT) < len(Q))]
 
 
+# Scheitelfehler in der Grundanpassung und höheres Gewicht großer Hochwasser (23.11.2026, Versuch; PRUEM_PEAK_W, PRUEM_HQ10_W).
+# Gewicht je Fenster 1 + (HQ10_W - 1) * clip((Scheitel / HQ10 - 0,5) / 0,5, 0, 1): ab halbem HQ10 ansteigend, ab HQ10 voll.
+PEAK_W_FIT = float(os.environ.get("PRUEM_PEAK_W", "0"))
+HQ10_W = float(os.environ.get("PRUEM_HQ10_W", "1"))
+PEAK_MIN = float(os.environ.get("PRUEM_PEAK_MIN", "0"))     # Scheitelfehler nur für Fenster mit Scheitel >= PEAK_MIN * HQ10
+R.PEAK_W = PEAK_W_FIT
+
+
+def _hq10(dn: str) -> float:
+    kw = json.loads((HERE / "data" / "pegelkennwerte.json").read_text(encoding="utf-8"))["pegel"][dn]
+    k = next((a for a, b in DN.items() if b == dn), None)
+    niv = {a: v["faktor"] for a, v in json.loads((HERE / "data" / "niveau.json").read_text(encoding="utf-8"))["pegel"].items() if v.get("angewendet")}
+    return float(kw["Q"]["HQ10"]) / niv.get(k, 1.0)                # HQ10 der HVZ auf die Skala der Anpassung (bis 2022)
+
+
+def _weight_big(d: R.Data, dn: str) -> R.Data:
+    pk = np.max(np.where(d.mask, d.Y, -np.inf), axis=1)
+    if PEAK_MIN > 0:
+        d.psel = pk >= PEAK_MIN * _hq10(dn)
+    if HQ10_W > 1.0:
+        w = 1.0 + (HQ10_W - 1.0) * np.clip((pk / _hq10(dn) - 0.5) / 0.5, 0.0, 1.0)
+        d.wts = d.wts / np.sqrt(w)
+    return d
+
+
 def data_for(key: str, Q, W, frames) -> R.Data:
     """Anpassungsfenster: Hochwasser (Scheitel über dem 95-%-Quantil) und Regenereignisse ohne Hochwasser; Fehler je Fenster durch
     max(Scheitel, 95-%-Quantil) geteilt."""
@@ -182,7 +207,7 @@ def data_for(key: str, Q, W, frames) -> R.Data:
         g = WTS_EXP_KEY.get(key, WTS_EXP)
         if g:
             d.wts = d.wts ** (1.0 - g) * float(np.min(d.wts)) ** g
-        return d
+        return _weight_big(d, "Wiersdorf")
     dn = DN[key]
     flood = R.find_events(Q, dn, pre_h=60, post_h=24)
     peaks = np.sort(np.r_[flood, rain_events(key, Q, frames[key], flood)]) if RAIN_EVENTS else flood
@@ -195,7 +220,7 @@ def data_for(key: str, Q, W, frames) -> R.Data:
     g = WTS_EXP_KEY.get(key, WTS_EXP)
     if g:
         d.wts = d.wts ** (1.0 - g) * max(1.0, floor) ** g
-    return d
+    return _weight_big(d, dn)
 
 
 WET_REF = {"P2": "Prüm 2", "SI": "Sinspelt", "GI": "Giesdorf", "EC": "Echtershausen", "PZ": "Prümzurlay", "SE": "Seffern", "AL": "Alsdorf-Oberecken"}
@@ -435,8 +460,14 @@ def fit_regional_sat(models: dict, block: int | None, nstart: int = 2) -> tuple[
 
     def resid(th):
         P = unpack(th)
-        return np.concatenate([((d.Y - rest - sum(L.response(d.P[lt.name], _lat_shared(lt, sat_params(P, k))) for lt in lats)) / d.wts[:, None])[d.mask]
-                               for d, rest, lats, k in stack])
+        out = []
+        for d, rest, lats, k in stack:
+            y = rest + sum(L.response(d.P[lt.name], _lat_shared(lt, sat_params(P, k))) for lt in lats)
+            r = ((d.Y - y) / d.wts[:, None])[d.mask]
+            out.append(r)
+            if R.PEAK_W > 0:
+                out.append(R.peak_resid(d.Y, y, d.mask, d.wts, r.size, d.psel))
+        return np.concatenate(out)
     best, rng = None, np.random.default_rng(2)
     for j in range(nstart):
         th0 = np.array([v[0] for v in spec.values()]) if j == 0 else lo + (hi - lo) * rng.uniform(0.2, 0.8, len(lo))

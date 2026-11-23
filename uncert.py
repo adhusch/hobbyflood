@@ -351,13 +351,29 @@ def warn_name(target: str) -> str:
     return WARN.get(target, WARN_DEFAULT)
 
 
-def thresholds(target: str) -> dict:
-    """Schwellen in m³/s: halbes HQ2, Meldehöhe (falls vergeben), HQ2 (Prüfung der Methode an kleineren Hochwassern), HQ10, HQ20 (Warnschwellen)."""
+def q_meldehoehe_hist(dn: str, mh: float) -> float | None:
+    """Abfluss bei der Meldehöhe mit der W-Q-Beziehung der Prüfjahre 2004-2021 (aus den LfU-Wertepaaren ±15 cm um die Meldehöhe, log Q linear in W).
+    Die heutige Kurve gilt an Prümzurlay erst seit 2022: 270 cm entsprachen vorher 78 m³/s, heute 105 m³/s."""
+    Q, W = _S["Q"][dn], _S["W"][dn] if "W" in _S else None
+    if W is None:
+        return None
+    d = pd.DataFrame(dict(q=Q, w=W)).dropna()
+    d = d[(d.index.year >= 2004) & (d.index.year <= 2021) & (d.w > mh - 15) & (d.w < mh + 15) & (d.q > 0)]
+    if len(d) < 20:
+        return None
+    b = np.polyfit(d.w.to_numpy(), np.log(d.q.to_numpy()), 1)
+    return float(np.exp(np.polyval(b, mh)))
+
+
+def thresholds(target: str, hist: bool = False) -> dict:
+    """Schwellen in m³/s: halbes HQ2, Meldehöhe (falls vergeben), HQ2 (Prüfung der Methode an kleineren Hochwassern), HQ10, HQ20 (Warnschwellen).
+    hist: Meldehöhe als Abfluss mit der W-Q-Beziehung der Prüfjahre (für die Auswertung früherer Hochwasser), sonst mit der heutigen."""
     k = kennwerte()[C.DN[target]]
     rc = json.loads((HERE / "data" / "rating_curves.json").read_text(encoding="utf-8"))["pegel"][C.DN[target]]
     out = {"HQ2/2": 0.5 * k["Q"]["HQ2"]}
     if rc.get("q_meldehoehe"):
-        out["Meldehöhe"] = rc["q_meldehoehe"]
+        qh = q_meldehoehe_hist(C.DN[target], k["meldehoehe"]) if hist else None
+        out["Meldehöhe"] = round(qh, 2) if qh else rc["q_meldehoehe"]
     out["HQ2"] = k["Q"]["HQ2"]
     out["HQ10"] = k["Q"]["HQ10"]
     out["HQ20"] = k["Q"]["HQ20"]
@@ -377,7 +393,7 @@ def evaluate(train: dict, test: dict, target: str, use_rain: bool = True, future
     q = T[cte]
     res = dict(cls=cte, cover80=(r >= q[..., 1]) & (r <= q[..., -2]), cover90=(r >= q[..., 0]) & (r <= q[..., -1]),
                below50=r <= q[..., 5], hw_obs=np.maximum(test["q0"], test["obspk"]) >= 0.5 * kennwerte()[C.DN[target]]["Q"]["HQ2"], exceed={})
-    for name, thr in thresholds(target).items():
+    for name, thr in thresholds(target, hist=True).items():
         P = exceed_prob(test["fc"].astype(float), q, thr, d)
         for w in WINDOWS_H:
             j = int(np.where(LEADS == w * 4)[0][0])
@@ -585,12 +601,12 @@ def tables() -> None:
                     p, y, det = e["p"][ok].astype(float), e["y"][ok], e["det"][ok]
                     yf, df = y.astype(float), det.astype(float)
                     if w == 48 and name == warn_name(target):    # Warnschwelle: Ereignis für Ereignis
-                        evs, phs = warn_events(r["t0"][ok], p, _S["Qn"][dn], thresholds(target)[name], _S["Q"].index)
-                        base_row = dict(pegel=dn, warnschwelle=name, schwelle_q=round(thresholds(target)[name], 1), variante=variant, pruefung=tag)
+                        evs, phs = warn_events(r["t0"][ok], p, _S["Qn"][dn], thresholds(target, hist=True)[name], _S["Q"].index)
+                        base_row = dict(pegel=dn, warnschwelle=name, schwelle_q=round(thresholds(target, hist=True)[name], 1), variante=variant, pruefung=tag)
                         rows_wev += [{**base_row, **x} for x in evs]
                         rows_wph += [{**base_row, **x} for x in phs]
                         for lev in WARN_LEVELS:
-                            lead, ep, fa = warning_times(r["t0"][ok], p, _S["Qn"][dn], thresholds(target)[name], level=lev)
+                            lead, ep, fa = warning_times(r["t0"][ok], p, _S["Qn"][dn], thresholds(target, hist=True)[name], level=lev)
                             pl = [x for x in phs if x["stufe"] == lev]
                             rows_ev.append(dict(pegel=dn, variante=variant, pruefung=tag, schwelle=name, stufe=lev, ereignisse=len(lead),
                                                 vorwarn_med_h=float(np.median(lead)) if lead else None,
@@ -614,7 +630,7 @@ def tables() -> None:
                                         treffer_det=round(float(det[y].mean()), 3), fehlalarm_det=round(float(1 - y[det].mean()), 3) if det.any() else None,
                                         zuverl=json.dumps(rel)))
                     if w == 48 and name in ("Meldehöhe", "HQ2", "HQ2/2"):   # Prüfung der Methode an kleineren Hochwassern (keine Warnung)
-                        lead, ep, fa = warning_times(r["t0"][ok], p, _S["Qn"][dn], thresholds(target)[name])
+                        lead, ep, fa = warning_times(r["t0"][ok], p, _S["Qn"][dn], thresholds(target, hist=True)[name])
                         if lead:
                             rows_ev.append(dict(pegel=dn, variante=variant, pruefung=tag, schwelle=name, stufe=0.5, ereignisse=len(lead),
                                                 vorwarn_med_h=float(np.median(lead)), ab3h=round(float(np.mean(np.array(lead) >= 3)), 2),
