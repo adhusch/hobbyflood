@@ -177,10 +177,12 @@ class Data:
     wts: np.ndarray
     times: np.ndarray                    # Zeit des Scheitels je Ereignis
     P: dict | None = None                # Regenfenster je Zwischengebiet (lateral.Rain), gleiche Ereignisse
+    psel: np.ndarray | None = None       # Fenster, deren Scheitelfehler zählt (None = alle)
 
     def subset(self, keep: np.ndarray) -> "Data":
         return Data(self.peaks[keep], {k: v[keep] for k, v in self.X.items()}, self.Y[keep], self.mask[keep], self.wts[keep], self.times[keep],
-                    None if self.P is None else {k: v.subset(keep) for k, v in self.P.items()})
+                    None if self.P is None else {k: v.subset(keep) for k, v in self.P.items()},
+                    None if self.psel is None else self.psel[keep])
 
 
 def make_data(Q: pd.DataFrame, W: pd.DataFrame | None, dn: str, ups: list[str], peaks: np.ndarray | None = None, pre_h: float = 60,
@@ -295,9 +297,27 @@ def _bounds(model: Model):
     return np.array(lo), np.array(hi)
 
 
+PEAK_W = 0.0      # Gewicht des Scheitelfehlers je Fenster in der Anpassung (chain_fc.PEAK_W_FIT setzt es), 0 = aus
+
+
+def peak_resid(Y: np.ndarray, sim: np.ndarray, mask: np.ndarray, wts: np.ndarray, n_res: int, sel: np.ndarray | None = None) -> np.ndarray:
+    """Fehler des Fensterhöchstwerts (wie ml_fit.peak_err), so skaliert, dass seine Quadratsumme PEAK_W-mal dem mittleren Fehler je Zeitschritt
+    entspricht. Die Abweichung je Zeitschritt bestraft eine steile Welle doppelt, sobald sie eine Stunde daneben liegt, und zieht die Anpassung
+    zu flachen, späten Wellen."""
+    ym = np.max(np.where(mask, sim, -np.inf), axis=1)
+    om = np.max(np.where(mask, Y, -np.inf), axis=1)
+    ok = np.isfinite(ym) & np.isfinite(om)
+    if sel is not None:
+        ok &= sel
+    return np.sqrt(PEAK_W * n_res / max(int(ok.sum()), 1)) * ((ym - om) / wts)[ok]
+
+
 def objective(model: Model, d: Data, th: np.ndarray, lam: float = 0.03) -> np.ndarray:
     m = _unpack(model, th)
-    r = ((d.Y - m.route(d.X, d.P)) / d.wts[:, None])[d.mask]
+    sim = m.route(d.X, d.P)
+    r = ((d.Y - sim) / d.wts[:, None])[d.mask]
+    if PEAK_W > 0:
+        r = np.concatenate([r, peak_resid(d.Y, sim, d.mask, d.wts, r.size, d.psel)])
     reg = []
     for lk in m.links:
         if len(lk.lc) >= 3 and not model.tied:
